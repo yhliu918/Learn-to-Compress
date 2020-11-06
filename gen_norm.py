@@ -9,7 +9,7 @@ np.random.seed(seed=42)
 NUM_KEYS = 200000000
 
 print("Generating linear data...")
-if not os.path.exists("data/linear_200M_uint32"):
+if not os.path.exists("data/linear_200M_uint32.txt"):
     print("32 bit...")
     keys = np.linspace(0, 1, NUM_KEYS + 2)[1:-1]
     keys = (keys - np.min(keys)) / (np.max(keys) - np.min(keys))
@@ -18,7 +18,7 @@ if not os.path.exists("data/linear_200M_uint32"):
     np.savetxt("data/linear_200M_uint32.txt", keys,fmt='%d')
 
 print("Generating noisy linear data...")
-if not os.path.exists("data/noisylinear_200M_uint32"):
+if not os.path.exists("data/noisylinear_200M_uint32.txt"):
     print("32 bit...")
     keys = np.linspace(0, 1, NUM_KEYS + 2)[1:-1]
     noise=np.random.normal(0, 2, NUM_KEYS )
@@ -37,7 +37,7 @@ if not os.path.exists("data/noisylinear_200M_uint32"):
 
 print("Generating normal data...")
 
-if not os.path.exists("data/normal_200M_uint32"):
+if not os.path.exists("data/normal_200M_uint32.txt"):
     print("32 bit...")
     keys = np.linspace(0, 1, NUM_KEYS + 2)[1:-1]
 
@@ -53,7 +53,7 @@ if not os.path.exists("data/normal_200M_uint32"):
     np.savetxt("data/normal_200M_uint32.txt", keys,fmt='%d')
 
 print("Generating noisy normal data...")   
-if not os.path.exists("data/noisynormal_200M_uint32"):
+if not os.path.exists("data/noisynormal_200M_uint32.txt"):
     print("32 bit...")
     keys = np.linspace(0, 1, NUM_KEYS + 2)[1:-1]
     noise=np.random.normal(0, 5, NUM_KEYS )
@@ -74,7 +74,7 @@ if not os.path.exists("data/noisynormal_200M_uint32"):
 
 
 print("Generating log normal data...")
-if not os.path.exists("data/lognormal_200M_uint32"):
+if not os.path.exists("data/lognormal_200M_uint32.txt"):
     print("32 bit...")
     keys = np.linspace(0, 1, NUM_KEYS + 2)[1:-1]
 
@@ -91,4 +91,9 @@ if not os.path.exists("data/lognormal_200M_uint32"):
     np.savetxt("data/lognormal_200M_uint32.txt", keys,fmt='%d')
 
 
-
+print("Generating books data...")
+if not os.path.exists("data/books_200M_uint32.txt"):
+    print("32 bit...")
+    import chardet
+    keys = np.fromfile("data/books_200M_uint32", dtype=np.uint32)[2:]
+    np.savetxt("data/books_200M_uint32.txt", keys,fmt='%d')   
