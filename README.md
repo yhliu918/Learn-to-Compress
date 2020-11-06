@@ -1,7 +1,10 @@
 # Learn-to-Compress
 To have a quick start, you can run to download and generate data needed
 ```
+mkdir data
+
 wget -O - https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/JGVF9A/5YTV8K | zstd -d > data/books_uint32_200M
+
 python gen_norm.py
 
 ```
