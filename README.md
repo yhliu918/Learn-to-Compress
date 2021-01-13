@@ -8,11 +8,10 @@ wget -O - https://dataverse.harvard.edu/api/access/datafile/:persistentId?persis
 python gen_norm.py
 
 ```
-Then, you can run the command
+Then, you can run the command (Need -std=c++11 supported)
 ```
-g++ piecewise.cpp -o piecewise
-taskset -c mask ./piecewise -f filename -e max_error
+mkdir build && cd build
+cmake ..
+make
 ```
-mask is which cpu to stick to 
-In which there are two hyper-parameter, filename in {linear,noisylinear,normal,noisynormal,lognormal,books}
-and max_error is an arbitrary int you choose (2^k - 1 like 7,15,31,63,127... is recommended)
+You can change the API of different compression methods in the example.cpp
