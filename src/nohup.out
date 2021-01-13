@@ -1,4 +1,0 @@
-[standard benchmark]
-vector size = 200000000
-vector size = 781250KB
-random access decompress!

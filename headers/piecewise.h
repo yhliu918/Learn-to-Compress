@@ -62,7 +62,7 @@ bool gt(float a, float b){
 // greater than
     return (a > b + epsilon);
 }
-
+/*
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     int code =0;
     int occupy = 0;
@@ -118,7 +118,60 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     return out;
 
 }
+*/
+uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
+    int code =0;
+    int occupy = 0;
+    int endbit = (l*numbers);
+    int end=0;
+    uint8_t* start=out;
+    if(endbit%8==0){
+        end=endbit/8;
+    }
+    else{
+        end = (int)endbit/8+1;
+    }
+
+    uint8_t* last=out+end;
+    uint32_t left_val = 0;
+
+    while(out<=last){
+
+        
+        while(occupy<8){
+            
+            bool sign = 1;
+            if (in[0] <= 0){
+                sign = 0;
+                in[0]=-in[0];
+            }
+            
+            uint32_t value1= ((in[0] & ((1U<<(l-1))-1)) + (sign<<(l-1)));
+            //std::cout<<"add: "<<in[0]<<" value1 "<<value1<<std::endl;
+            code += (value1<<occupy);
+            occupy += l;
+
+            in++;
+            
+        }//end while
+        while(occupy>=8){
+            left_val = code >> 8;
+            //std::cout<<code<<std::endl;
+            code = code & ((1U<<8) - 1);
+            occupy-=8;
+            out[0]= unsigned((uint8_t)code);
+            code = left_val;
+            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
+            out++;
+        }
+    }
     
+
+    
+    return out;
+
+}
+
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &nvalue) {
     uint8_t* start=out;
     std::vector<uint32_t> indexes;
@@ -161,7 +214,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
         else{
             
             float slope = (high_slope + low_slope) / 2.;
-            uint8_t max_error = 0;
+            int max_error = 0;
 
             if (end_index == origin_index){
                 slope = 1.;
@@ -169,7 +222,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
             int seg_len = end_index - origin_index + 1;
             int * delta = static_cast<int *>(malloc(seg_len * sizeof(int)));
             
-            max_error = 0;
+            
             for (int j = origin_index; j <= end_index; j++ ){
                 long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
                 long long truth = (long long)in[j];
@@ -197,8 +250,14 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
             newseg.max_error = tmp_bit;
             newseg.start_byte = start_byte;
             newseg.start_key = in[origin_index];
-                
+            //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
+            /*
+            for(int k=0;k<(end_index - origin_index + 1);k++){
+           std::cout<<k+origin_index<<" "<<delta[k]<<std::endl; 
+            }
+            */
             out = write_delta(delta, out, tmp_bit, (end_index - origin_index + 1));
+            
             start_byte= out - start;
             
             q.push_back(newseg);
@@ -222,7 +281,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     
     int seg_len = end_index - origin_index + 1;
     int * delta = static_cast<int *>(malloc(seg_len * sizeof(int)));
-    uint8_t max_error = 0;
+    int max_error = 0;
     for (int j = origin_index; j <= end_index; j++ ){
         long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
         long long truth = (long long)in[j];
@@ -248,7 +307,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     newseg.max_error = tmp_bit;
     newseg.start_byte = start_byte;
     newseg.start_key = in[origin_index];
-
+    std::cout<<"bit_length: "<<tmp_bit<<std::endl;
     out = write_delta(delta ,out, tmp_bit, (end_index - origin_index + 1));
     start_byte= out - start;
     q.push_back(newseg);

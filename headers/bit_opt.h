@@ -68,6 +68,53 @@ void read_all_bit(uint8_t *in ,int start_byte,int start_index, int numbers,int l
 }
 
 
+void read_all_bit_fix(uint8_t *in ,int start_byte,int start_index, int numbers,int l,float slope,float start_key, uint32_t *out) {
+    int left = 0;
+    int decode = 0;
+    int start = start_byte;
+    int end = 0;
+    int total_bit = l*numbers;
+    int writeind = 0;
+    end = start +(int)(total_bit/8);
+    if(total_bit%8!=0){
+      end++;
+    }
+    
+    while(start<=end){
+      if(writeind>= numbers){
+        break;
+      }
+      while(left>=l){
+        int tmp=decode&((1U<<l)-1);
+        int tmpval = tmp&((1U<<(l-1))-1);
+          
+        //std::cout<<"decode: "<<decode<<"tmp: "<<tmp<<" l: "<<l<<std::endl;
+        if(!(tmp>>(l-1))){
+          tmpval=-tmpval;
+        }
+        decode = (decode>>l);
+        
+        //std::cout<<"ind: "<<writeind<<" l: "<<l<< " predict: "<<(long long) (start_key +(((float)writeind)*slope))<<" delta: "<<tmpval<<std::endl;
+        
+        
+
+        tmpval+= (long long) (start_key +((float)writeind*slope));
+        
+        out[writeind+start_index]=tmpval;
+
+        writeind++;
+        left-=l;
+      }
+      decode+=(in[start]<<left);
+      start++;
+      left+=8;
+      
+    }
+    
+
+}
+
+    
 uint32_t read_bit(uint8_t *in ,int l ,int to_find, float slope,uint32_t start_key,int start) {
     int start_byte = start+to_find*l/8;
     int start_bit = to_find*l%8;

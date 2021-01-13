@@ -9,16 +9,18 @@
 
 #include "common.h"
 #include "codecs.h"
-#include "time.h"
 #include "bit_opt.h"
-#include "LinearRegression.h"
+#include "Utils.h"
 #define INF 0x7f7fffff
 
 namespace Codecset {
 
 
 
-
+struct lr{
+    double theta0;
+    double theta1;
+};
     
 class piecewise_fix : public IntegerCODEC {
 public:
@@ -28,7 +30,7 @@ public:
   using IntegerCODEC::encodeArray8;
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
-  LinearRegression lr;
+  lr mylr;
   uint8_t maxerror = 0;
 
 
@@ -36,57 +38,62 @@ public:
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     int code =0;
     int occupy = 0;
+    int endbit = (l*numbers);
+    int end=0;
+    uint8_t* start=out;
+    if(endbit%8==0){
+        end=endbit/8;
+    }
+    else{
+        end = (int)endbit/8+1;
+    }
+    uint8_t* last=out+end;
+    uint32_t left_val = 0;
 
-    uint8_t left_val = 0;
+    while(out<=last){
 
-    for(int i = 0; i < numbers;i++){
-
-        code = left_val;
+        
         while(occupy<8){
             
             bool sign = 1;
-            if (in[i] <= 0){
+            if (in[0] <= 0){
                 sign = 0;
-                in[i]=-in[i];
+                in[0]=-in[0];
             }
 
-            uint8_t value1= ((in[i] & ((1U<<(l-1))-1)) + (sign<<(l-1)));
+            uint32_t value1= ((in[0] & ((1U<<(l-1))-1)) + (sign<<(l-1)));
             code += (value1<<occupy);
             occupy += l;
 
-            i++;
+            in++;
             
         }//end while
-        if(occupy>8){
+        while(occupy>=8){
             left_val = code >> 8;
+            //std::cout<<code<<std::endl;
             code = code & ((1U<<8) - 1);
+            occupy-=8;
+            out[0]= unsigned((uint8_t)code);
+            code = left_val;
+            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
+            out++;
         }
-        else{
-            left_val=0;
-        
-        }
-        
-        occupy = occupy % 8;
-        
-        out[0]= unsigned((uint8_t)code);
-        out++;
-        if(i==numbers){
-            if (left_val){
-                out[0]=(uint8_t)left_val;
-                out++;
-            }
-            if(left_val==0&&occupy!=0){
-                out[0]=(uint8_t)left_val;
-                out++;
-            }
-            
-        }
-        i--;
     }
+    
 
     
     return out;
 
+}
+
+
+lr caltheta(double x[], double y[], int m){
+    lr tmplr;
+    double avx= Utils::array_sum(x,m)*((double)1/m);
+    double avy= Utils::array_sum(y,m)*((double)1/m);
+    tmplr.theta1=(Utils::array_sum(Utils::array_multiplication(x,y,m),m)-(double(m)*avx*avy))/(Utils::array_sum(Utils::array_multiplication(x,x,m),m)-(double(m)*avx*avx));
+    tmplr.theta0=avy - tmplr.theta1*avx;
+    return tmplr;
 }
     
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &nvalue) {
@@ -99,10 +106,14 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     }
     int *delta = new int[length];
 
-    lr.train(indexes, keys, length, 0.01, 1500);
-    uint8_t max_error =0;
+    //lr.train(indexes, keys, length, 0.0001, 500);
+    
+    mylr = caltheta(indexes,keys,length);
+    std::cout<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
+    int max_error =0;
     for(int i=0;i<length;i++){
-        int tmp = (int) in[i] - (int)lr.predict(indexes[i]);
+        int tmp = (long long) in[i] - (long long)((float)mylr.theta0+(float)mylr.theta1*(float)i);
+        delta[i]=tmp;
         if(abs(tmp)>max_error){
             max_error = abs(tmp);
         }
@@ -114,29 +125,36 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     else{
         tmp_bit = 2;
     }
-          
+    /*
+    if(in[0]>197951000){
+    for(int i=0;i<length;i++){
+        std::cout<<i<<" "<<delta[i]<<" "<<in[i]<<std::endl;
+    }
+    }
+    */
+    std::cout<<"bit_length: "<<tmp_bit<<std::endl;
     out = write_delta(delta, out, tmp_bit, length);
-    maxerror = max_error;
-    
+    maxerror = tmp_bit;
     
     return out;
     
 }
     
 uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t &nvalue) {
-    std::cout<<"decompressing all!"<<std::endl;
+    //std::cout<<"decompressing all!"<<std::endl;
 
     int start_byte=0;
     int end_index =0;
     int start_index = 0;
     int index=0;
-    read_all_bit(in ,0,0, length, maxerror,lr.theta[1],lr.theta[0], out);
+    
+    read_all_bit_fix(in ,0,0, length, maxerror,mylr.theta1,mylr.theta0, out);
 
     return out;
 }
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t &nvalue){
 
-    uint32_t tmp = read_bit(in ,maxerror , l, lr.theta[1],lr.theta[0], 0);
+    uint32_t tmp = read_bit(in ,maxerror , l, mylr.theta1,mylr.theta0, 0);
     return tmp;
 
 }
@@ -157,7 +175,7 @@ uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t &n
 }
     
 std::string name() const {
-    return "FrameofReference"; 
+    return "piecewise_fix"; 
 }    
   
 };
