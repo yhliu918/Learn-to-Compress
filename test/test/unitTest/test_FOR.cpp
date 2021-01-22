@@ -23,7 +23,7 @@ int main() {
   using namespace Codecset;
 
   // We pick a CODEC
-  IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix");
+  IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
   
   // could use others, e.g., "simdfastpfor256", "BP32"
   ////////////
@@ -61,19 +61,18 @@ int main() {
   int block_size = data.size()/blocks;
   bool flag = true;
   std::vector<int> start_index;
-  std::vector<uint8_t> compdata(4*data.size() + 1024); 
-  uint8_t* out = compdata.data();
-  uint8_t* ind = compdata.data();
+  std::vector<uint32_t> compdata(N + 1024); 
+  uint32_t* out = compdata.data();
+  uint32_t* ind = compdata.data();
   
   for(int i=0;i<blocks;i++){
-
-    out = codec.encodeArray8(data.data()+(i*block_size),block_size, out ,N);
+    out = codec.encodeArray(data.data()+i*block_size,block_size, out,N);
     start_index.push_back(ind - compdata.data());
     ind = out;
     
   }
-  int totalsize = ind - compdata.data()+ blocks*(4+8+8+1);
-  double compressrate = (totalsize)*100.0  / (4*N*1.0);
+  int totalsize = ind - compdata.data()+ blocks*(4);
+  double compressrate = (totalsize)*100.0  / (N*1.0);
   std::cout << "total compression rate:" << std::setprecision(4)<< compressrate << std::endl;
     
   std::vector<uint32_t> recover(data.size());
@@ -81,12 +80,12 @@ int main() {
   std::cout<<"decompress all!"<<std::endl;
   for(int i=0;i<blocks;i++){
       double start = getNow();
-      codec.decodeArray8(compdata.data()+start_index[i], block_size, recover.data()+i*block_size, i);
+      codec.decodeArray(compdata.data()+start_index[i], block_size, recover.data()+i*block_size, i);
       double end = getNow();
       totaltime += (end - start);
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
-          std::cout<<"block: "<<i<<"num: "<<j<< "true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
+          std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
           std::cout<<"something wrong! decompress failed"<<std::endl;
           flag = false;
           break;
@@ -97,18 +96,16 @@ int main() {
           break;
        }
   }
-std::cout << "all decoding time per int: " << std::setprecision(8)
-     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
-std::cout << "all decoding speed: " << std::setprecision(10)
-     << data.size()/(totaltime*1000) <<  std::endl;
 
-   
+
+
   std::cout<<"random access decompress!"<<std::endl; 
   std::vector<uint32_t> buffer(data.size());
   double randomaccesstime =0.0;
   for(int i=0;i<N;i++){    
+
       double start = getNow();
-      uint32_t tmpvalue = codec.randomdecodeArray8(compdata.data()+start_index[i/block_size], i%block_size, buffer.data(), i/block_size);
+      uint32_t tmpvalue = codec.randomdecodeArray(compdata.data()+start_index[i/block_size], i%block_size, buffer.data(), i/block_size);
       double end = getNow();
       randomaccesstime+=(end-start);
 
@@ -128,6 +125,14 @@ std::cout << "all decoding speed: " << std::setprecision(10)
   }
 
 
+
+std::cout<<"decompress all!"<<std::endl;
+std::cout << "all decoding time per int: " << std::setprecision(8)
+     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
+std::cout << "all decoding speed: " << std::setprecision(10)
+     << data.size()/(totaltime*1000) <<  std::endl;
+    
+std::cout<<"random access decompress!"<<std::endl;
 std::cout << "random decoding time per int: " << std::setprecision(8)
      << randomaccesstime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "random decoding speed: " << std::setprecision(10)

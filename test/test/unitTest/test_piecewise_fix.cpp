@@ -97,10 +97,7 @@ int main() {
           break;
        }
   }
-std::cout << "all decoding time per int: " << std::setprecision(8)
-     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
-std::cout << "all decoding speed: " << std::setprecision(10)
-     << data.size()/(totaltime*1000) <<  std::endl;
+
 
    
   std::cout<<"random access decompress!"<<std::endl; 
@@ -128,6 +125,14 @@ std::cout << "all decoding speed: " << std::setprecision(10)
   }
 
 
+
+std::cout<<"decompress all!"<<std::endl;
+std::cout << "all decoding time per int: " << std::setprecision(8)
+     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
+std::cout << "all decoding speed: " << std::setprecision(10)
+     << data.size()/(totaltime*1000) <<  std::endl;
+    
+std::cout<<"random access decompress!"<<std::endl;
 std::cout << "random decoding time per int: " << std::setprecision(8)
      << randomaccesstime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "random decoding speed: " << std::setprecision(10)
