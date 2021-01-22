@@ -27,7 +27,7 @@ public:
 
 
   
-uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *out, size_t &nvalue) {
+uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *out, size_t nvalue) {
     out[0] = length;
     ++out;
     if(length == 0) return out;
@@ -66,7 +66,7 @@ uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *out, size_t &
     
 }
 uint32_t *decodeArray( uint32_t *in, const size_t length,
-                                      uint32_t *out, size_t &nvalue) {
+                                      uint32_t *out,  size_t nvalue) {
     nvalue = in[0];
     ++in;
     if(nvalue == 0) return in;
@@ -94,10 +94,10 @@ uint32_t *decodeArray( uint32_t *in, const size_t length,
     for(uint32_t k=nvalue/8*8; k<nvalue; ++k,in++,out++) {
         out[0] = in [0];
     }
-    return in;
+    return out;
 }
 uint32_t randomdecodeArray( uint32_t *in, const size_t l,
-                                      uint32_t *out, size_t &nvalue){
+                                      uint32_t *out,  size_t nvalue){
     nvalue = in[0];
     ++in;
     if(nvalue == 0) return in[0];
@@ -138,19 +138,22 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
 }
     
 uint8_t* encodeArray8( uint32_t *in, const size_t length, uint8_t *out,
-                   size_t &nvalue) {
+                    size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return out;
 }
 uint32_t *decodeArray8( uint8_t *in, const size_t length,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out,  size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return out;
 }
-uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t &nvalue){
+uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t nvalue){
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return 1;
-}  
+} 
+uint32_t get_block_nums(){
+      return 1;
+}
 std::string name() const {
     return "FrameofReference"; 
 }    

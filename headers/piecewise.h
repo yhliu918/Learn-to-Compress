@@ -11,6 +11,7 @@
 #include "codecs.h"
 #include "time.h"
 #include "bit_opt.h"
+#include "caltime.h"
 #define INF 0x7f7fffff
 
 namespace Codecset {
@@ -49,7 +50,7 @@ public:
    
   std::vector<uint32_t> segment_index;
   std::vector<Segment> q;
-  int maxerror =31;
+  int maxerror =63;
 
 void setMaxError(int error){
     maxerror = error;
@@ -172,7 +173,7 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
 
 }
 
-uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &nvalue) {
+uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nvalue) {
     uint8_t* start=out;
     std::vector<uint32_t> indexes;
     for(uint32_t i = 0; i < nvalue; i++){
@@ -307,7 +308,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     newseg.max_error = tmp_bit;
     newseg.start_byte = start_byte;
     newseg.start_key = in[origin_index];
-    std::cout<<"bit_length: "<<tmp_bit<<std::endl;
+    //std::cout<<"bit_length: "<<tmp_bit<<std::endl;
     out = write_delta(delta ,out, tmp_bit, (end_index - origin_index + 1));
     start_byte= out - start;
     q.push_back(newseg);
@@ -318,8 +319,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     
 }
     
-uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t &nvalue) {
-    std::cout<<"decompressing all!"<<std::endl;
+uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
 
     int start_byte=0;
     int end_index =0;
@@ -337,6 +337,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         else{
             end_index = nvalue-1;
         }
+        //std::cout<<"start byte: "<<start_byte<<" start_index: "<<start_index<<" end index: "<<end_index<<" start_key: "<<tmpseg.start_key<<std::endl;
         read_all_bit(in ,start_byte,start_index, (end_index-start_index+1),tmpseg.max_error,tmpseg.slope,tmpseg.start_key, out);
         
       
@@ -344,29 +345,38 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
 
     return out;
 }
-uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t &nvalue){
-      
+uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
+    
+    //double start =getNow();
     Segment tmpseg = q[lower_bound(l,segment_index)];
+    //double end = getNow();
+    //double start2 = getNow();
     uint32_t tmp = read_bit(in ,tmpseg.max_error , l-tmpseg.start_index, tmpseg.slope,tmpseg.start_key, tmpseg.start_byte);
+    //double end2 = getNow();
+    //std::cout<<"find lower bound time: "<<(end-start)<<" read bit time: "<<(end2-start2)<<" rate is: "<<(end-start)/(end2-start2)<<std::endl;
+    
+    
     return tmp;
 
 }
 
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
-                   size_t &nvalue) {
+                   size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return out;
 }
 uint32_t *decodeArray( uint32_t *in, const size_t length,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return out;
 }
-uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t &nvalue){
+uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nvalue){
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return 1;
 }
-    
+uint32_t get_block_nums(){
+     return q.size();
+ }    
 std::string name() const {
     return "FrameofReference"; 
 }    

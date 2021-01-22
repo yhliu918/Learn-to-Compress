@@ -41,15 +41,15 @@ void read_all_bit(uint8_t *in ,int start_byte,int start_index, int numbers,int l
       }
       while(left>=l){
         int tmp=decode&((1U<<l)-1);
-        int tmpval = tmp&((1U<<(l-1))-1);
+        long long tmpval = tmp&((1U<<(l-1))-1);
         if(!(tmp>>(l-1))){
           tmpval=-tmpval;
         }
         decode = (decode>>l);
         /*
-        if(start_index ==0){
+        if(start_key==3875996905){
         std::cout<<"slope: "<<slope<<" start key: "<<start_key<< " predict: "<<(long long)start_key +(long long) ((float)writeind * slope)<<" delta: "<<tmpval<<std::endl;
-        }
+       }
         */
         tmpval+= (start_key +(long long) ((float)writeind*slope));
         
@@ -145,10 +145,36 @@ uint32_t read_bit(uint8_t *in ,int l ,int to_find, float slope,uint32_t start_ke
     bool sign = (decode & (1U<<(l-1)));
     int value = (decode & ((1U<<(l-1))-1));
     if (!sign){value = -value;}
+    //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< start_key +(long long) ((float)(to_find)*slope)<<std::endl;
     uint32_t out = value + start_key +(long long) ((float)(to_find)*slope);
     return out;      
 }
 
+uint32_t read_bit_fix(uint8_t *in ,int l ,int to_find, float slope,float start_key,int start) {
+    int start_byte = start+to_find*l/8;
+    int start_bit = to_find*l%8;
+    int occupy=start_bit;
+    int decode =0;
+    uint8_t val1 = in[start_byte];
+
+    if (8-occupy>=l){
+        decode =((val1>>occupy)&((1U<<l) - 1));
+    }
+    else{
+        start_byte++;
+        uint8_t val2 = in[start_byte];
+        //std::cout<<start_byte<<","<<unsigned(val2)<<std::endl;
+        decode = ((val1>>occupy)+ ((val2 & ((1U<<(l-8+occupy))-1))<<(8-occupy)));
+
+    }
+
+    bool sign = (decode & (1U<<(l-1)));
+    int value = (decode & ((1U<<(l-1))-1));
+    if (!sign){value = -value;}
+    //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+    uint32_t out = value + (long long) (start_key +((float)to_find*slope));
+    return out;   
+}
 #if defined(__cplusplus)
 }
 #endif

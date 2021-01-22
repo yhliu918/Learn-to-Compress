@@ -34,9 +34,9 @@ public:
    * for *in and nvalue for *out).
    */
   virtual uint32_t * encodeArray( uint32_t *in, const size_t length,
-                           uint32_t *out, size_t &nvalue) = 0;
+                           uint32_t *out, size_t nvalue) = 0;
   virtual uint8_t * encodeArray8( uint32_t *in, const size_t length,
-                           uint8_t *out, size_t &nvalue) = 0;
+                           uint8_t *out,  size_t nvalue) = 0;
   /**
    * Usage is similar to decodeArray except that it returns a pointer
    * incremented from in. In theory it should be in+length. If the
@@ -52,14 +52,16 @@ public:
    * overrun).
    */
   virtual  uint32_t *decodeArray( uint32_t *in, const size_t length,
-                                      uint32_t *out, size_t &nvalue) = 0;
+                                      uint32_t *out, size_t nvalue) = 0;
   virtual  uint32_t randomdecodeArray( uint32_t *in, const size_t l,
-                                      uint32_t *out, size_t &nvalue) = 0;    
+                                      uint32_t *out, size_t nvalue) = 0;    
   virtual  uint32_t *decodeArray8( uint8_t *in, const size_t length,
-                                      uint32_t *out, size_t &nvalue) = 0;
+                                      uint32_t *out, size_t nvalue) = 0;
   virtual  uint32_t randomdecodeArray8( uint8_t *in, const size_t l,
-                                      uint32_t *out, size_t &nvalue) = 0;  
+                                      uint32_t *out, size_t nvalue) = 0;  
+  virtual  uint32_t get_block_nums() = 0;  
   virtual ~IntegerCODEC() {}
+    
 
 
   virtual std::string name() const = 0;
@@ -71,40 +73,43 @@ public:
 class JustCopy : public IntegerCODEC {
 public:
   uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
-                   size_t &nvalue) {
+                   size_t nvalue) {
     memcpy(out, in, sizeof(uint32_t) * length);
     nvalue = length;
     return out;
   }
   uint8_t* encodeArray8( uint32_t *in, const size_t length, uint8_t *out,
-                   size_t &nvalue) {
+                   size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return out;
   }
   // like encodeArray, but we don't actually copy
   void fakeencodeArray( uint32_t * /*in*/, const size_t length,
-                       size_t &nvalue) {
+                       size_t nvalue) {
     nvalue = length;
   }
 
    uint32_t *decodeArray( uint32_t *in, const size_t length,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t nvalue) {
     memcpy(out, in, sizeof(uint32_t) * length);
     nvalue = length;
     return in + length;
   }
   uint32_t *decodeArray8( uint8_t *in, const size_t length,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return out;
   }
-  uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t &nvalue){
+  uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nvalue){
       std::cout<<"not implement yet!"<<std::endl;
       return 1;
   }
-  uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t &nvalue){
+  uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t nvalue){
     std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
     return 1;
+  }
+  uint32_t get_block_nums(){
+      return 1;
   }
   std::string name() const { return "JustCopy"; }
 };

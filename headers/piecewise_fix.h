@@ -10,6 +10,7 @@
 #include "common.h"
 #include "codecs.h"
 #include "bit_opt.h"
+#include "lr.h"
 #include "Utils.h"
 #define INF 0x7f7fffff
 
@@ -17,10 +18,7 @@ namespace Codecset {
 
 
 
-struct lr{
-    double theta0;
-    double theta1;
-};
+
     
 class piecewise_fix : public IntegerCODEC {
 public:
@@ -30,9 +28,11 @@ public:
   using IntegerCODEC::encodeArray8;
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
-  lr mylr;
-  uint8_t maxerror = 0;
+  std::vector<lr> lrvec;
+  std::vector<uint8_t> maxerror;
 
+
+  
 
 
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
@@ -96,7 +96,7 @@ lr caltheta(double x[], double y[], int m){
     return tmplr;
 }
     
-uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &nvalue) {
+uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nvalue) {
     double *indexes = new double[length];
     double *keys = new double[length];
 
@@ -108,8 +108,11 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
 
     //lr.train(indexes, keys, length, 0.0001, 500);
     
-    mylr = caltheta(indexes,keys,length);
+    lr mylr = caltheta(indexes,keys,length);
+    lrvec.push_back(mylr);
     std::cout<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
+    free(indexes);
+    free(keys);
     int max_error =0;
     for(int i=0;i<length;i++){
         int tmp = (long long) in[i] - (long long)((float)mylr.theta0+(float)mylr.theta1*(float)i);
@@ -134,46 +137,57 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t &n
     */
     std::cout<<"bit_length: "<<tmp_bit<<std::endl;
     out = write_delta(delta, out, tmp_bit, length);
-    maxerror = tmp_bit;
+    maxerror.push_back(tmp_bit);
+    
+    free(delta);
     
     return out;
     
 }
     
-uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t &nvalue) {
+uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
     //std::cout<<"decompressing all!"<<std::endl;
-
+    lr mylr= lrvec[nvalue];
     int start_byte=0;
     int end_index =0;
     int start_index = 0;
     int index=0;
     
-    read_all_bit_fix(in ,0,0, length, maxerror,mylr.theta1,mylr.theta0, out);
+    read_all_bit_fix(in ,0,0, length, maxerror[nvalue],mylr.theta1,mylr.theta0, out);
+    
 
     return out;
 }
-uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t &nvalue){
-
-    uint32_t tmp = read_bit(in ,maxerror , l, mylr.theta1,mylr.theta0, 0);
+uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
+    //double start =getNow();
+    lr mylr= lrvec[nvalue];
+    //double end = getNow();
+    //double start2 = getNow();
+    uint32_t tmp = read_bit_fix(in ,maxerror[nvalue] , l, mylr.theta1,mylr.theta0, 0);
+    //double end2 = getNow();
+    //std::cout<<"find lower bound time: "<<(end-start)<<" read bit time: "<<(end2-start2)<<" rate is: "<<(end-start)/(end2-start2)<<std::endl;
+    
     return tmp;
 
 }
 
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
-                   size_t &nvalue) {
+                   size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return out;
 }
 uint32_t *decodeArray( uint32_t *in, const size_t length,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return out;
 }
-uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t &nvalue){
+uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nvalue){
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return 1;
 }
-    
+uint32_t get_block_nums(){
+      return 1;
+}    
 std::string name() const {
     return "piecewise_fix"; 
 }    
