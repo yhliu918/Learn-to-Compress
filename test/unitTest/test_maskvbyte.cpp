@@ -34,7 +34,7 @@ int main() {
   // (Note: You don't need to use a vector.)
   //
 
-  size_t N = 200000000;
+  int N = 200000000;
   int blocks =1;
   std::vector<uint32_t> data(N+1024);
   FILE *fpRead=fopen("../data/books_200M_uint32.txt","r");
@@ -59,7 +59,7 @@ int main() {
   int block_size = data.size()/blocks;
   double compressrate=0;
   double totaltime =0.0;
-  bool flag = true;
+
   for(int i=0;i<blocks;i++){
     std::vector<uint8_t> compdata(8*data.size()/blocks ); 
     std::vector<uint32_t> buffer(data.size()/blocks +1024);

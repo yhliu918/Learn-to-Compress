@@ -38,7 +38,7 @@ int main() {
 
   int N = 200000000;
   std::vector<uint32_t> data(N);
-  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../data/normal_200M_uint32.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;

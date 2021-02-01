@@ -36,18 +36,17 @@ int main() {
   // (Note: You don't need to use a vector.)
   //
 
-  size_t N = 200000000;
-  int blocks =100000;
+  int N = 200000000;
   std::vector<uint32_t> data(N);
-  FILE *fpRead=fopen("../data/linear_200M_uint32.txt","r");
-  
-  for(int i=0;i<N;i++)
-	{
-	  fscanf(fpRead,"%u",&data[i]);
-	}
-  fclose(fpRead);
-  std::cout << "[standard benchmark]" << std::endl;
-
+  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  if(!srcFile) { 
+      std::cout << "error opening source file." << std::endl;
+      return 0;
+  }
+  for(int i=0;i<N;i++){
+      srcFile >> data[i];
+  }
+  srcFile.close();
 
   if (data.size() == 0) {
     std::cout << "Empty vector" << std::endl;
@@ -56,7 +55,8 @@ int main() {
   std::cout << "vector size = " << data.size() << std::endl;
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
        << std::endl;
-  
+
+  int blocks=100000;
 
   int block_size = data.size()/blocks;
   bool flag = true;
@@ -98,6 +98,10 @@ int main() {
   }
 
 
+std::cout << "all decoding time per int: " << std::setprecision(8)
+     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
+std::cout << "all decoding speed: " << std::setprecision(10)
+     << data.size()/(totaltime*1000) <<  std::endl;
 
   std::cout<<"random access decompress!"<<std::endl; 
   std::vector<uint32_t> buffer(data.size());
@@ -126,13 +130,6 @@ int main() {
 
 
 
-std::cout<<"decompress all!"<<std::endl;
-std::cout << "all decoding time per int: " << std::setprecision(8)
-     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
-std::cout << "all decoding speed: " << std::setprecision(10)
-     << data.size()/(totaltime*1000) <<  std::endl;
-    
-std::cout<<"random access decompress!"<<std::endl;
 std::cout << "random decoding time per int: " << std::setprecision(8)
      << randomaccesstime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "random decoding speed: " << std::setprecision(10)

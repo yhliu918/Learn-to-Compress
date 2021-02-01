@@ -24,30 +24,19 @@ int main() {
 
   // We pick a CODEC
   IntegerCODEC &codec = *CODECFactory::getFromName("piecewise");
-  
-  // could use others, e.g., "simdfastpfor256", "BP32"
-  ////////////
-  //
-  // create a container with some integers in it
-  //
-  // for this example, we will not assume that the
-  // integers are in sorted order
-  //
-  // (Note: You don't need to use a vector.)
-  //
+    
 
-  size_t N = 200000000;
-  int blocks =1;
+  int N = 200000000;
   std::vector<uint32_t> data(N);
-  FILE *fpRead=fopen("../data/books_200M_uint32.txt","r");
-  
-  for(int i=0;i<N;i++)
-	{
-	  fscanf(fpRead,"%u",&data[i]);
-	}
-  fclose(fpRead);
-  std::cout << "[standard benchmark]" << std::endl;
-
+  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  if(!srcFile) { 
+      std::cout << "error opening source file." << std::endl;
+      return 0;
+  }
+  for(int i=0;i<N;i++){
+      srcFile >> data[i];
+  }
+  srcFile.close();
 
   if (data.size() == 0) {
     std::cout << "Empty vector" << std::endl;
@@ -56,8 +45,9 @@ int main() {
   std::cout << "vector size = " << data.size() << std::endl;
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
        << std::endl;
-  
-
+ 
+    
+  int blocks =1;
   int block_size = data.size()/blocks;
   bool flag = true;
   std::vector<int> start_index;
@@ -71,6 +61,7 @@ int main() {
     ind = out;
     
   }
+  std::cout << "total blocks num:" <<codec.get_block_nums() << std::endl;
   int totalsize = ind - compdata.data()+ blocks*codec.get_block_nums()*(4+4+1+4+4+4);
 
   double compressrate = (totalsize)*100.0  / (4*N*1.0);

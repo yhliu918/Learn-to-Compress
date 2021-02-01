@@ -121,7 +121,7 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
         return in[0]+m;
     }
     
-    uint32_t bit_left = number_left*b - number_occupy*32;
+    long long bit_left = number_left*b - number_occupy*32;
     //std::cout<<"number_left: "<<number_left<<" number_occupy: "<<number_occupy<<" bit_left: "<<bit_left<<std::endl;
     
     if(32-bit_left>=b){

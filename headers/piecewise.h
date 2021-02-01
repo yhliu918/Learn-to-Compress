@@ -10,26 +10,14 @@
 #include "common.h"
 #include "codecs.h"
 #include "time.h"
-#include "bit_opt.h"
+#include "bit_read.h"
+#include "bit_write.h"
 #include "caltime.h"
 #define INF 0x7f7fffff
 
 namespace Codecset {
 
-uint32_t lower_bound( uint32_t v,std::vector<uint32_t> segindex)
-{
-    uint32_t m;
-    uint32_t x=0;
-    uint32_t y=segindex.size()-1;
-    while(x <= y)
-    {
-    
-        m = x+(y-x)/2;
-        if(v<segindex[m]) y = m-1;
-        else x = m+1;
-    }
-    return y;
-}
+
 
 struct Segment{
     uint32_t start_index;
@@ -50,7 +38,7 @@ public:
    
   std::vector<uint32_t> segment_index;
   std::vector<Segment> q;
-  int maxerror =63;
+  int maxerror =(1U<<6)-1;
 
 void setMaxError(int error){
     maxerror = error;
@@ -62,6 +50,21 @@ float epsilon = 0.;
 bool gt(float a, float b){
 // greater than
     return (a > b + epsilon);
+}
+uint32_t lower_bound( uint32_t v,uint32_t len)
+{
+    uint32_t m;
+    uint32_t x=0;
+    uint32_t y=len-1;
+    while(x <= y)
+    {
+    
+        m = x+(y-x)/2;
+        if(v<segment_index[m]) y = m-1;
+        else x = m+1;
+    }
+    return y;
+   
 }
 /*
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
@@ -120,58 +123,6 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
 
 }
 */
-uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
-    int code =0;
-    int occupy = 0;
-    int endbit = (l*numbers);
-    int end=0;
-    uint8_t* start=out;
-    if(endbit%8==0){
-        end=endbit/8;
-    }
-    else{
-        end = (int)endbit/8+1;
-    }
-
-    uint8_t* last=out+end;
-    uint32_t left_val = 0;
-
-    while(out<=last){
-
-        
-        while(occupy<8){
-            
-            bool sign = 1;
-            if (in[0] <= 0){
-                sign = 0;
-                in[0]=-in[0];
-            }
-            
-            uint32_t value1= ((in[0] & ((1U<<(l-1))-1)) + (sign<<(l-1)));
-            //std::cout<<"add: "<<in[0]<<" value1 "<<value1<<std::endl;
-            code += (value1<<occupy);
-            occupy += l;
-
-            in++;
-            
-        }//end while
-        while(occupy>=8){
-            left_val = code >> 8;
-            //std::cout<<code<<std::endl;
-            code = code & ((1U<<8) - 1);
-            occupy-=8;
-            out[0]= unsigned((uint8_t)code);
-            code = left_val;
-            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
-            out++;
-        }
-    }
-    
-
-    
-    return out;
-
-}
 
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nvalue) {
     uint8_t* start=out;
@@ -186,7 +137,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nv
     int end_index = indexes[0];
     int start_byte = 0;
     int total_index =0;
-    for (int i = 1; i < nvalue; i++){
+    for (int i = 1; i < (long long)nvalue; i++){
         long long key = in[i];
         int id = indexes[i];
         float tmp_point_slope = ((key - origin_key)+0.0) / ((id - origin_index)+0.0);
@@ -258,7 +209,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nv
             }
             */
             out = write_delta(delta, out, tmp_bit, (end_index - origin_index + 1));
-            
+            //std::cout<<"I'm  here"<<std::endl;
             start_byte= out - start;
             
             q.push_back(newseg);
@@ -325,12 +276,12 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
     int end_index =0;
     int start_index = 0;
     int index=0;
-    while(index<q.size()){
+    while(index<(int)q.size()){
         Segment tmpseg = q[index];
         index++;
         start_byte = tmpseg.start_byte;
         start_index = tmpseg.start_index;
-        if(index<q.size()){
+        if(index<(int)q.size()){
             Segment tmpseg2 = q[index];
             end_index = tmpseg2.start_index-1;  
         }
@@ -346,14 +297,13 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
     return out;
 }
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
-    
-    //double start =getNow();
-    Segment tmpseg = q[lower_bound(l,segment_index)];
-    //double end = getNow();
+    uint32_t length=segment_index.size();
+    Segment tmpseg = q[lower_bound(l,length)];
+
     //double start2 = getNow();
     uint32_t tmp = read_bit(in ,tmpseg.max_error , l-tmpseg.start_index, tmpseg.slope,tmpseg.start_key, tmpseg.start_byte);
     //double end2 = getNow();
-    //std::cout<<"find lower bound time: "<<(end-start)<<" read bit time: "<<(end2-start2)<<" rate is: "<<(end-start)/(end2-start2)<<std::endl;
+    //std::cout<<"find lower bound time: "<<(end-start)*1000000000<<" read bit time: "<<(end2-start2)*1000000000<<" rate is: "<<(end-start)*1000000000/(end2-start2)*1000000000<<std::endl;
     
     
     return tmp;
