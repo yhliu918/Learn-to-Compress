@@ -33,6 +33,8 @@ public:
    * You are responsible for allocating the memory (length
    * for *in and nvalue for *out).
    */
+
+  virtual void init(int blocks, int blocksize, int extra)=0;
   virtual uint32_t * encodeArray( uint32_t *in, const size_t length,
                            uint32_t *out, size_t nvalue) = 0;
   virtual uint8_t * encodeArray8( uint32_t *in, const size_t length,
@@ -60,6 +62,7 @@ public:
   virtual  uint32_t randomdecodeArray8( uint8_t *in, const size_t l,
                                       uint32_t *out, size_t nvalue) = 0;  
   virtual  uint32_t get_block_nums() = 0;  
+  virtual  void destroy() = 0;  
   virtual ~IntegerCODEC() {}
     
 
@@ -72,6 +75,15 @@ public:
  */
 class JustCopy : public IntegerCODEC {
 public:
+    
+
+  int block_num;
+  int block_size;
+  
+void init(int blocks, int blocksize,int extra){
+      block_num=blocks;
+      block_size=blocksize;
+}
   uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
                    size_t nvalue) {
     memcpy(out, in, sizeof(uint32_t) * length);
@@ -111,6 +123,7 @@ public:
   uint32_t get_block_nums(){
       return 1;
   }
+  void destroy(){}
   std::string name() const { return "JustCopy"; }
 };
 

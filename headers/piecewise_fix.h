@@ -28,20 +28,25 @@ public:
   using IntegerCODEC::encodeArray8;
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
-  std::vector<lr> lrvec;
-  std::vector<uint8_t> maxerror;
+  using IntegerCODEC::init;
 
 
+  int block_num;
+  int block_size;
   
+void init(int blocks, int blocksize,int extra){
+      block_num=blocks;
+      block_size=blocksize;
+      
+}
 
 
 
-
-    
-uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nvalue) {
+// bit + theta0 + theta1 + delta   
+uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
     double *indexes = new double[length];
     double *keys = new double[length];
-
+    uint8_t *out = res;
     for(uint32_t i = 0; i < length; i++){
         indexes[i] = (double) i;
         keys[i] = (double) in[i];
@@ -52,7 +57,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nv
     
     lr mylr;
     mylr.caltheta(indexes,keys,length);
-    lrvec.push_back(mylr);
     
     //std::cout<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
     
@@ -81,13 +85,22 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nv
     }
     */
     //std::cout<<"bit_length: "<<tmp_bit<<std::endl;
+    out[0]=(uint8_t)tmp_bit;
+    out++;
+    double theta0 = mylr.theta0;
+    double theta1 = mylr.theta1;
+    memcpy(out,&theta0,sizeof(theta0));
+    out+=sizeof(theta0);
+    memcpy(out,&theta1,sizeof(theta1));
+    out+=sizeof(theta1);
+    
     if(tmp_bit>=31){
      out = write_delta_default(in,out,32,length);
     }
     else{
     out = write_delta(delta, out, tmp_bit, length);
     }
-    maxerror.push_back(tmp_bit);
+    
     
     free(delta);
     
@@ -97,32 +110,44 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *out, size_t nv
     
 uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
     //std::cout<<"decompressing all!"<<std::endl;
-    lr mylr= lrvec[nvalue];
-    if(maxerror[nvalue]>=31){
-        read_all_default(in ,0,0, length, maxerror[nvalue],mylr.theta1,mylr.theta0, out);
+    double theta0;
+    double theta1;
+    uint8_t maxerror;
+    uint8_t * tmpin=in;
+    memcpy(&maxerror,tmpin,1);
+    tmpin++;
+    memcpy(&theta0,tmpin,8);
+    tmpin+=8;
+    memcpy(&theta1,tmpin,8);
+    tmpin+=8;
+    if(maxerror>=31){
+        read_all_default(tmpin ,0,0, length, maxerror,theta1,theta0, out);
     }
     else{
-        read_all_bit_fix(in ,0,0, length, maxerror[nvalue],mylr.theta1,mylr.theta0, out);
+        read_all_bit_fix(tmpin ,0,0, length, maxerror,theta1,theta0, out);
     }
 
     return out;
 }
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
-    //double start =getNow();
-    lr mylr= lrvec[nvalue];
-    //double end = getNow();
-    
-    //double start2 = getNow();
-    
+    double theta0;
+    double theta1;
+    uint8_t maxerror;
+    uint8_t * tmpin=in;
+    memcpy(&maxerror,tmpin,1);
+    tmpin++;
+    memcpy(&theta0,tmpin,8);
+    tmpin+=8;
+    memcpy(&theta1,tmpin,8);
+    tmpin+=8;
     uint32_t tmp=0;
-    if(maxerror[nvalue]>=31){
-       tmp = read_bit_default(in ,maxerror[nvalue] , l, mylr.theta1,mylr.theta0, 0);
+    if(maxerror>=31){
+       tmp = read_bit_default(tmpin ,maxerror, l, theta1,theta0, 0);
      }
     else{
-       tmp = read_bit_fix(in ,maxerror[nvalue] , l, mylr.theta1,mylr.theta0, 0);
+       tmp = read_bit_fix(tmpin ,maxerror, l, theta1,theta0, 0);
     }
-    //double end2 = getNow();
-    //std::cout<<"find lower bound time: "<<(end-start)*1000000000<<" read bit time: "<<(end2-start2)*1000000000<<" rate is: "<<(end-start)/(end2-start2)<<std::endl;
+
     return tmp;
     
    
@@ -149,7 +174,7 @@ uint32_t get_block_nums(){
 std::string name() const {
     return "piecewise_fix"; 
 }    
-  
+ void destroy(){} 
 };
 
 

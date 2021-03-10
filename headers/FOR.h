@@ -24,12 +24,21 @@ public:
   using IntegerCODEC::encodeArray8;
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
+  using IntegerCODEC::init;
 
-
+  int block_num;
+  int block_size;
   
-uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *out, size_t nvalue) {
+void init(int blocks, int blocksize,int extra){
+      block_num=blocks;
+      block_size=blocksize;
+}
+  
+uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *res, size_t nvalue) {
+    uint32_t * out = res;
     out[0] = length;
     ++out;
+
     if(length == 0) return out;
     uint32_t m = in[0];
     uint32_t M = in[0];
@@ -109,12 +118,12 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
 #ifdef _OPENMP
     #pragma omp parallel for
 #endif
-
-    //std::cout<<" min: "<<m<<" max: "<<M<<"bit: "<<b<<std::endl;
-
+    
     uint32_t recover=0;
     in = in + ((int)l/32)*b;
-    uint32_t number_left = l - ((int)l/32)*32;
+    int number_left = l - ((int)l/32)*32;
+    //std::cout<<"nvalue "<<nvalue<<" number_left "<<number_left<<" nvalue - l "<<nvalue - l<<std::endl;
+
     uint32_t number_occupy = (number_left*b)/32;
     in+= number_occupy;
     if(b==32){
@@ -122,8 +131,12 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
     }
     
     long long bit_left = number_left*b - number_occupy*32;
-    //std::cout<<"number_left: "<<number_left<<" number_occupy: "<<number_occupy<<" bit_left: "<<bit_left<<std::endl;
-    
+    /*
+    if(m==71936201){
+        std::cout<<"ind "<<l<<" min: "<<m<<" max: "<<M<<"bit: "<<b<<std::endl;
+        std::cout<<"number_left: "<<number_left<<" number_occupy: "<<number_occupy<<" bit_left: "<<bit_left<<std::endl;
+    }
+    */
     if(32-bit_left>=b){
         recover = (in[0]>>bit_left) & ((1U<<b)-1) ;
         recover += m ;
@@ -154,6 +167,7 @@ uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t nv
 uint32_t get_block_nums(){
       return 1;
 }
+void destroy(){}
 std::string name() const {
     return "FrameofReference"; 
 }    

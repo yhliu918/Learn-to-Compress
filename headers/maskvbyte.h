@@ -24,7 +24,15 @@ public:
   using IntegerCODEC::encodeArray8;
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
+  using IntegerCODEC::init;
 
+  int block_num;
+  int block_size;
+  
+void init(int blocks, int blocksize,int extra){
+      block_num=blocks;
+      block_size=blocksize;
+}
 
   
 uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *out, size_t nvalue) {
@@ -66,7 +74,7 @@ uint32_t get_block_nums(){
 std::string name() const {
     return "MaskVByte"; 
 }    
-  
+ void destroy(){} 
 };
 
 

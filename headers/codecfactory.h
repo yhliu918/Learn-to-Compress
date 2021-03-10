@@ -15,6 +15,7 @@
 #include "piecewise.h"
 #include "piecewise_fix.h"
 #include "piecewise_ransac.h"
+#include "piecewise_double.h"
 #include "maskvbyte.h"
 
 
@@ -73,6 +74,7 @@ static inline CodecMap initializefactory() {
   map["FOR"]= new Codecset::FOR();
   
   map["piecewise"]= new piecewise();
+  map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_ransac"]= new piecewise_ransac();
   //map["BP32"] = new CompositeCodec<BP32, VariableByte>;

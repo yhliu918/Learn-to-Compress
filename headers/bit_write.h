@@ -25,11 +25,11 @@ extern "C" {
 //given a bit number l(how does it save),should return a vector of numbers
     
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
-    int code =0;
+    uint64_t code =0;
     int occupy = 0;
     int endbit = (l*numbers);
     int end=0;
-
+    int* tmpin =in;
     if(endbit%8==0){
         end=endbit/8;
     }
@@ -37,7 +37,7 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
         end = (int)endbit/8+1;
     }
     uint8_t* last=out+end;
-    uint32_t left_val = 0;
+    uint64_t left_val = 0;
 
     while(out<=last){
 
@@ -45,16 +45,17 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
         while(occupy<8){
             
             bool sign = 1;
-            if (in[0] <= 0){
+            int tmpnum = tmpin[0];
+            if (tmpnum <= 0){
                 sign = 0;
-                in[0]=-in[0];
+                tmpnum=-tmpnum;
             }
 
-            uint32_t value1= ((in[0] & ((1L<<(l-1))-1)) + (sign<<(l-1)));
+            uint64_t value1= ((tmpnum & ((1L<<(l-1))-1)) + (sign<<(l-1)));
             code += (value1<<occupy);
             occupy += l;
 
-            in++;
+            tmpin++;
             
         }//end while
         while(occupy>=8){

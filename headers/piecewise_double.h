@@ -4,8 +4,8 @@
  *
  * (c) Daniel Lemire, http://lemire.me/en/
  */
-#ifndef PIECEWISE_H_
-#define PIECEWISE_H_
+#ifndef PIECEWISE_DOUBLE_H_
+#define PIECEWISE_DOUBLE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -20,7 +20,7 @@ namespace Codecset {
 
 
     
-class piecewise : public IntegerCODEC {
+class piecewise_double : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
   using IntegerCODEC::decodeArray;
@@ -72,8 +72,8 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     for(uint32_t i = 0; i < nvalue; i++){
         indexes.push_back(i);
     }   
-    float high_slope = (float)INF;
-    float low_slope = 0.;
+    double high_slope = (double)INF;
+    double low_slope = -0.001;
     long long origin_key = in[0];
     int origin_index = indexes[0];
     int end_index = indexes[0];
@@ -81,17 +81,16 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     for (int i = 1; i < (long long)nvalue; i++){
         long long key = in[i];
         int id = indexes[i];
-        float tmp_point_slope = ((key - origin_key)+0.0) / ((id - origin_index)+0.0);
-        
+        double tmp_point_slope = ((key - origin_key)+0.0) / ((id - origin_index)+0.0);
         if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope){
         //if (gt(tmp_point_slope, low_slope) && gt(high_slope, tmp_point_slope)){
-            float tmp_high_slope = ((key + maxerror - origin_key)+0.0) / ((id - origin_index)+0.0);
-            float tmp_low_slope = ((key - maxerror - origin_key)+0.0) /((id - origin_index)+0.0);
+            double tmp_high_slope = ((key + maxerror - origin_key)+0.0) / ((id - origin_index)+0.0);
+            double tmp_low_slope = ((key - maxerror - origin_key)+0.0) /((id - origin_index)+0.0);
             if (tmp_low_slope<0.0){
                 //std::cout<<"zero!"<<std::endl;
                 tmp_low_slope=0.0;
             }
-            //std::cout<<tmp_high_slope<<","<<tmp_low_slope<<std::endl;
+            
             
            if(tmp_high_slope<=high_slope){
            //if(gt(high_slope, tmp_high_slope)){
@@ -106,7 +105,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         }
         else{
             
-            float slope = (high_slope + low_slope) / 2.;
+            double slope = (high_slope + low_slope) / 2.;
             int max_error = 0;
 
             if (end_index == origin_index){
@@ -117,7 +116,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             
             
             for (int j = origin_index; j <= end_index; j++ ){
-                long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
+                long long  predict = (long long)in[origin_index] + (long long)(slope*(double)(j-origin_index));
                 long long truth = (long long)in[j];
                 int tmp = abs(predict-truth);
                  
@@ -143,8 +142,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             delta_write=write_delta(delta, delta_write, tmp_bit, (end_index - origin_index + 1));
             int delta_size = delta_write - delta_pos;
            */
-            
-            
+
             uint8_t * descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)+30);
             uint8_t *out = descriptor;
             
@@ -202,7 +200,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             
             
             //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
-            high_slope = (float)INF;
+            high_slope = (double)INF;
             low_slope = 0.0;
             origin_index = id;
             origin_key = key;
@@ -213,7 +211,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 
     }
     
-    float slope = (high_slope + low_slope) / 2.;
+    double slope = (high_slope + low_slope) / 2.;
     if (end_index == origin_index){
         slope = 1.;
     }
@@ -222,7 +220,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     int * delta = static_cast<int *>(malloc(seg_len * sizeof(int)));
     int max_error = 0;
     for (int j = origin_index; j <= end_index; j++ ){
-        long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
+        long long  predict = (long long)in[origin_index] + (long long)(slope*(double)(j-origin_index));
         long long truth = (long long)in[j];
         int tmp = abs(predict-truth);     
         delta[j-origin_index] = (int) truth-predict;
@@ -278,33 +276,33 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
     for(int i=0;i<(int)block_start_vec.size();i++){
         uint8_t * this_block = block_start_vec[i];
         uint8_t * tmpin=this_block;
-        uint32_t theta0;
-        float theta1;
+        uint32_t * theta0;
+        double * theta1;
         uint8_t maxerror;
-        uint32_t start_ind;
-        uint32_t numbers;
+        uint32_t * start_ind;
+        uint32_t * numbers;
         
-        memcpy(&start_ind,tmpin,4);
+        start_ind = reinterpret_cast<uint32_t*>(tmpin);
         tmpin+=4;
-        memcpy(&maxerror,tmpin,1);
+        maxerror = tmpin[0];
         tmpin++;
-        memcpy(&theta0,tmpin,4);
+        theta0 = reinterpret_cast<uint32_t*>(tmpin);
         tmpin+=4;
-        memcpy(&theta1,tmpin,sizeof(float));
-        tmpin+=sizeof(float);
-        memcpy(&numbers,tmpin,4);
+        theta1 = reinterpret_cast<double*>(tmpin);
+        tmpin+=sizeof(double);
+        numbers = reinterpret_cast<uint32_t*>(tmpin);
         tmpin +=4;
-        if(start_ind ==232){
+        /*
+        if(start_ind <=134956){
         std::cout<<"start_ind "<<start_ind<<" maxerror "<<unsigned(maxerror)<<" theta0 "<<theta0<<" theta1 "<<theta1<<" numbers "<<numbers<<std::endl;
         }
-        if(numbers ==1){
-            tmpout[0]=theta0;
+        */
+        if(numbers[0] ==1){
+            tmpout[0]=theta0[0];
             tmpout++;
-            
-    
         }
         else{
-            tmpout=read_all_bit(tmpin ,0,start_ind,numbers,maxerror,theta1,theta0, tmpout);
+            tmpout=read_all_bit_double(tmpin ,0,start_ind[0],numbers[0],maxerror,theta1[0],theta0[0], tmpout);
         }
     }
     
@@ -320,24 +318,24 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     uint8_t * this_block = block_start_vec[lower_bound(l,length)];
 
     uint8_t * tmpin = this_block;
-    uint32_t theta0;
-    float theta1;
+    uint32_t * theta0;
+    double * theta1;
     uint8_t maxerror;
-    uint32_t start_ind;
-    uint32_t numbers;
+    uint32_t * start_ind;
+    uint32_t * numbers;
         
-    memcpy(&start_ind,tmpin,4);
+    start_ind = reinterpret_cast<uint32_t*>(tmpin);
     tmpin+=4;
-    memcpy(&maxerror,tmpin,1);
+    maxerror = tmpin[0];
     tmpin++;
-    memcpy(&theta0,tmpin,4);
+    theta0 = reinterpret_cast<uint32_t*>(tmpin);
     tmpin+=4;
-    memcpy(&theta1,tmpin,4);
-    tmpin+=4;
-    memcpy(&numbers,tmpin,4);
+    theta1 = reinterpret_cast<double*>(tmpin);
+    tmpin+=sizeof(double);
+    numbers = reinterpret_cast<uint32_t*>(tmpin);
     tmpin +=4;
     
-    uint32_t tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
+    uint32_t tmp = read_bit_double(tmpin ,maxerror , l-start_ind[0],theta1[0],theta0[0],0);
     
     return tmp;
 
@@ -368,7 +366,7 @@ for(int i=0;i<(int)block_start_vec.size();i++){
     
 }
 std::string name() const {
-    return "piecewise"; 
+    return "piecewise_double"; 
 }    
   
 };

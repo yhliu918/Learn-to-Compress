@@ -26,27 +26,24 @@ int main() {
   IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
   
   // could use others, e.g., "simdfastpfor256", "BP32"
-  ////////////
-  //
-  // create a container with some integers in it
-  //
-  // for this example, we will not assume that the
-  // integers are in sorted order
-  //
-  // (Note: You don't need to use a vector.)
-  //
 
-  int N = 200000000;
-  std::vector<uint32_t> data(N);
+
+  std::vector<uint32_t> data;
   std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;
   }
-  for(int i=0;i<N;i++){
-      srcFile >> data[i];
+  while(1){
+      
+      uint32_t next ;
+      srcFile >> next;
+      if(srcFile.eof()){break;}
+      data.push_back(next);
+
   }
   srcFile.close();
+  int N = data.size();
 
   if (data.size() == 0) {
     std::cout << "Empty vector" << std::endl;
@@ -57,32 +54,31 @@ int main() {
        << std::endl;
 
   int blocks=100000;
-
+  int delta =0;
   int block_size = data.size()/blocks;
   bool flag = true;
-  std::vector<int> start_index;
-  std::vector<uint32_t> compdata(N + 1024); 
-  uint32_t* out = compdata.data();
-  uint32_t* ind = compdata.data();
-  
+  codec.init(blocks,block_size,delta);
+  std::vector<uint32_t*> block_start_vec;
+  int totalsize=0;
   for(int i=0;i<blocks;i++){
-    out = codec.encodeArray(data.data()+i*block_size,block_size, out,N);
-    start_index.push_back(ind - compdata.data());
-    ind = out;
-    
+    uint32_t * descriptor = (uint32_t*)malloc(block_size * sizeof(uint64_t)+1024);
+    uint32_t * res = descriptor;
+    res = codec.encodeArray(data.data()+i*block_size,block_size, descriptor,N);
+    descriptor = (uint32_t*)realloc(descriptor, (res-descriptor)*sizeof(uint32_t));
+    block_start_vec.push_back(descriptor);
+    totalsize += (res-descriptor);
   }
-  int totalsize = ind - compdata.data()+ blocks*(4);
+
   double compressrate = (totalsize)*100.0  / (N*1.0);
   std::cout << "total compression rate:" << std::setprecision(4)<< compressrate << std::endl;
     
   std::vector<uint32_t> recover(data.size());
   double totaltime =0.0;
   std::cout<<"decompress all!"<<std::endl;
+  double start = getNow();
   for(int i=0;i<blocks;i++){
-      double start = getNow();
-      codec.decodeArray(compdata.data()+start_index[i], block_size, recover.data()+i*block_size, i);
-      double end = getNow();
-      totaltime += (end - start);
+      codec.decodeArray(block_start_vec[i], block_size, recover.data()+i*block_size, i);
+      /*
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -95,8 +91,10 @@ int main() {
        if(!flag){
           break;
        }
+       */
   }
-
+double end = getNow();
+totaltime += (end - start);
 
 std::cout << "all decoding time per int: " << std::setprecision(8)
      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
@@ -106,15 +104,14 @@ std::cout << "all decoding speed: " << std::setprecision(10)
   std::cout<<"random access decompress!"<<std::endl; 
   std::vector<uint32_t> buffer(data.size());
   double randomaccesstime =0.0;
+  start = getNow();
   for(int i=0;i<N;i++){    
 
-      double start = getNow();
-      uint32_t tmpvalue = codec.randomdecodeArray(compdata.data()+start_index[i/block_size], i%block_size, buffer.data(), i/block_size);
-      double end = getNow();
-      randomaccesstime+=(end-start);
+      uint32_t tmpvalue = codec.randomdecodeArray(block_start_vec[i/block_size], i%block_size, buffer.data(), i/block_size);
+      
 
       //std::cout<<"processing...  "<<j<<" / "<<N<<std::endl;
-
+       /*
       if(data[i]!=tmpvalue){
         
         std::cout<<"num: "<<i<< "true is: "<<data[i]<<" predict is: "<<tmpvalue<<std::endl;
@@ -125,9 +122,10 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     if(!flag){
         break;
     }
-      
+     */ 
   }
-
+end = getNow();
+randomaccesstime+=(end-start);
 
 
 std::cout << "random decoding time per int: " << std::setprecision(8)
@@ -137,11 +135,7 @@ std::cout << "random decoding speed: " << std::setprecision(10)
 
 
 
-  
-  //********************************************************************************
-  // If you need to use differential coding, you can use
-  // calls like these to get the deltas and recover the original
-  // data from the deltas:
+
 
   
 }

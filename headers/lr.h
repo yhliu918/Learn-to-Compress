@@ -13,7 +13,7 @@
 struct lr{//theta0+theta1*x
     double theta0;
     double theta1;
-    double delta;
+    int delta;
     
 void caltheta(double x[], double y[], int m){
     double avx= Utils::array_sum(x,m)*((double)1/m);
@@ -24,7 +24,7 @@ void caltheta(double x[], double y[], int m){
 }
 bool agree(double x, double y){
     double tmp = abs((x*theta1+theta0)-y);
-    if(tmp<=delta*delta){
+    if(tmp<=(double)delta*delta){
         return true;
     }
     else{
