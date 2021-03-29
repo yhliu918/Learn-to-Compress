@@ -82,8 +82,10 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         long long key = in[i];
         int id = indexes[i];
         float tmp_point_slope = ((key - origin_key)+0.0) / ((id - origin_index)+0.0);
+
         
-        if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope){
+        
+        if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope &&(id -origin_index)<=1000000 ){
         //if (gt(tmp_point_slope, low_slope) && gt(high_slope, tmp_point_slope)){
             float tmp_high_slope = ((key + maxerror - origin_key)+0.0) / ((id - origin_index)+0.0);
             float tmp_low_slope = ((key - maxerror - origin_key)+0.0) /((id - origin_index)+0.0);
@@ -199,8 +201,9 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             segment_index.push_back(origin_index);
             
             total_byte +=(out - descriptor);
+            //std::cout<<"total_byte"<<total_byte<<std::endl;
             
-            
+            //std::cout<<"tmp_bit"<<unsigned(tmp_bit)<<" numbers "<<numbers<<" slope "<<slope<<std::endl;
             //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
             high_slope = (float)INF;
             low_slope = 0.0;
@@ -230,9 +233,10 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         total_index++;
         if (tmp > max_error){
             max_error = tmp;   
+            
         }
     }
-
+    
     uint8_t tmp_bit = 0;
     if(max_error > 0.01){
         tmp_bit = ceil(log2(max_error))+2;
@@ -259,6 +263,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     out+=sizeof(slope);
     memcpy(out,&numbers,sizeof(numbers));
     out+=sizeof(numbers);
+    
     out=write_delta(delta, out, tmp_bit, numbers);
     free(delta);
 
@@ -266,6 +271,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     block_start_vec.push_back(descriptor);
     segment_index.push_back(start_ind);
     total_byte +=(out - descriptor);
+
 
 
     return res;
@@ -294,9 +300,11 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         tmpin+=sizeof(float);
         memcpy(&numbers,tmpin,4);
         tmpin +=4;
+        /*
         if(start_ind ==232){
         std::cout<<"start_ind "<<start_ind<<" maxerror "<<unsigned(maxerror)<<" theta0 "<<theta0<<" theta1 "<<theta1<<" numbers "<<numbers<<std::endl;
         }
+        */
         if(numbers ==1){
             tmpout[0]=theta0;
             tmpout++;
@@ -336,7 +344,7 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     tmpin+=4;
     memcpy(&numbers,tmpin,4);
     tmpin +=4;
-    
+    //std::cout<< "indexing "<<l<<std::endl;
     uint32_t tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
     
     return tmp;

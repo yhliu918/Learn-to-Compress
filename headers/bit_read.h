@@ -55,7 +55,7 @@ uint32_t read_bit_default(uint8_t *in ,int l ,int to_find, double slope,double s
     return code;   
 }
     
-uint32_t* read_all_bit_double(uint8_t *in ,int start_byte,int start_index, int numbers,int l,double slope,uint32_t start_key, uint32_t *out) {
+uint32_t* read_all_bit_double(uint8_t *in ,int start_byte,int start_index, int numbers,int l,double slope,double start_key, uint32_t *out) {
 
     int left = 0;
     uint64_t decode = 0;
@@ -79,7 +79,12 @@ uint32_t* read_all_bit_double(uint8_t *in ,int start_byte,int start_index, int n
           tmpval=-tmpval;
         }
         decode = (decode>>l);
-        tmpval+= ((long long)start_key +(long long) ((double)writeind*(double)slope));
+        /*
+        if(start_index==0 && writeind<=1315){
+        std::cout<<"writeind "<<writeind<<" theta0 "<<start_key<<" theta1 "<<slope<<" delta "<<tmpval<<" predict "<<(long long)(start_key + ((double)writeind*slope))<<std::endl;
+        }
+        */
+        tmpval+= (long long)(start_key + ((double)writeind*slope));
 
         out[writeind]=tmpval;
         writeind++;
@@ -152,7 +157,6 @@ void read_all_bit_fix(uint8_t *in ,int start_byte,int start_index, int numbers,i
         break;
       }
       while(left>=l){
-        
         uint64_t tmp=decode&((1L<<l)-1);
         long long tmpval = tmp &((1L<<(l-1))-1);
           
@@ -164,6 +168,58 @@ void read_all_bit_fix(uint8_t *in ,int start_byte,int start_index, int numbers,i
         decode = (decode>>l); 
         
         tmpval+= (long long) (start_key +((double)writeind*slope));
+
+        out[writeind]=tmpval;
+
+        writeind++;
+        left-=l;
+        if(left==0){decode=0;}
+        //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      }
+      decode+=((long long)in[start]<<left);
+      
+      //std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
+      //std::cout<<"decode"<<decode<<std::endl;
+      
+      start++;
+      left+=8;
+      
+    }
+      
+}
+
+void read_all_bit_nonlinear(uint8_t *in ,int start_byte,int start_index, int numbers,int l,double alpha,double theta1,double theta2, uint32_t *out) {
+    int left = 0;
+    uint64_t decode = 0;
+    int start = start_byte;
+    int end = 0;
+    int total_bit = l*numbers;
+    int writeind = 0;
+    end = start +(int)(total_bit/8);
+    if(total_bit%8!=0){
+      end++;
+    }
+
+    while(start<=end){
+      if(writeind>= numbers){
+        break;
+      }
+      while(left>=l){
+        
+        uint64_t tmp=decode&((1L<<l)-1);
+        long long tmpval = tmp &((1L<<(l-1))-1);
+          
+        //std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
+        if(!(((tmp>>(l-1)) &1))){
+          tmpval=-tmpval;
+        }
+        //std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval: "<<tmpval<<" l: "<<l<<std::endl;
+        decode = (decode>>l); 
+        double logx =0.0;
+        if(writeind>0.01){
+            logx = log2(writeind);
+        }
+        tmpval+= (long long) (alpha+theta1*(double)writeind+theta2*(double)writeind*(double)writeind);
         
         out[writeind+start_index]=tmpval;
 
@@ -184,6 +240,59 @@ void read_all_bit_fix(uint8_t *in ,int start_byte,int start_index, int numbers,i
       
 }
 
+    
+void read_all_bit_spline(uint8_t *in ,int start_byte,int start_index, int numbers,int l,double alpha,double theta1,double theta2,double theta3, uint32_t *out) {
+    int left = 0;
+    uint64_t decode = 0;
+    int start = start_byte;
+    int end = 0;
+    int total_bit = l*numbers;
+    int writeind = 0;
+    end = start +(int)(total_bit/8);
+    if(total_bit%8!=0){
+      end++;
+    }
+
+    while(start<=end){
+      if(writeind>= numbers){
+        break;
+      }
+      while(left>=l){
+        
+        uint64_t tmp=decode&((1L<<l)-1);
+        long long tmpval = tmp &((1L<<(l-1))-1);
+          
+        //std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
+        if(!(((tmp>>(l-1)) &1))){
+          tmpval=-tmpval;
+        }
+        //std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval: "<<tmpval<<" l: "<<l<<std::endl;
+        decode = (decode>>l); 
+        double logx =0.0;
+        if(writeind>0.01){
+            logx = log2(writeind);
+        }
+        tmpval+= (long long) (alpha+theta1*(double)writeind+theta2*(double)writeind*(double)writeind+theta3*(double)writeind*(double)writeind*(double)writeind);
+        
+        out[writeind+start_index]=tmpval;
+
+        writeind++;
+        left-=l;
+        if(left==0){decode=0;}
+        //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      }
+      decode+=((long long)in[start]<<left);
+      
+      //std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
+      //std::cout<<"decode"<<decode<<std::endl;
+      
+      start++;
+      left+=8;
+      
+    }
+      
+}
+    
 void read_all_bit_ransac(uint8_t *in ,int start_byte,int start_index, int numbers,int l,double slope,double start_key, uint32_t *out,uint8_t* outlier_pos,int outlier_num, uint8_t* bitmap_pos) {
     int temp = ceil((double)numbers/64.);
     uint64_t * bitmap = new uint64_t[temp];
@@ -248,7 +357,7 @@ void read_all_bit_ransac(uint8_t *in ,int start_byte,int start_index, int number
 }       
 
     
-uint32_t read_bit_double(uint8_t *in ,int l ,int to_find, double slope,uint32_t start_key,int start) {
+uint32_t read_bit_double(uint8_t *in ,int l ,int to_find, double slope,double start_key,int start) {
     int start_byte = start+to_find*l/8;
     int start_bit = to_find*l%8;
     int occupy = start_bit;
@@ -268,8 +377,8 @@ uint32_t read_bit_double(uint8_t *in ,int l ,int to_find, double slope,uint32_t 
     bool sign = (decode & (1L<<(l-1)));
     int value = (decode & ((1L<<(l-1))-1));
     if (!sign){value = -value;}
-    //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< start_key +(long long) ((float)(to_find)*slope)<<std::endl;
-    uint32_t out = value + start_key +(long long) ((double)(to_find)*slope);
+
+    uint32_t out = value  +(long long) (start_key+(double)(to_find)*slope);
     return out;      
 }
     
@@ -277,12 +386,13 @@ uint32_t read_bit(uint8_t *in ,int l ,int to_find, float slope,uint32_t start_ke
     int start_byte = start+to_find*l/8;
     int start_bit = to_find*l%8;
     int occupy = start_bit;
-    int decode =0;
+    uint32_t decode =0;
     int total = 0;
     
     while(total<l){
         uint8_t val = in[start_byte];
         decode +=( (val>>occupy)<<total);
+        //std::cout<<"l "<<to_find<<" val "<<val<<" decode "<<decode<<" occupy "<<occupy<<" total "<<total<<std::endl;
         total += (8-occupy);
         occupy=0;
         start_byte++;
@@ -323,6 +433,64 @@ uint32_t read_bit_fix(uint8_t *in ,int l ,int to_find, double slope,double start
     return out;   
 }
 
+uint32_t read_bit_nonlinear(uint8_t *in ,int l ,int to_find, double alpha,double theta0,double theta1,int start) {
+    int start_byte = start+to_find*l/8;
+    int start_bit = to_find*l%8;
+    int occupy=start_bit;
+    int decode =0;
+    int total = 0;
+    
+    while(total<l){
+        uint8_t val = in[start_byte];
+        decode +=( (val>>occupy)<<total);
+        total += (8-occupy);
+        occupy=0;
+        start_byte++;
+        
+     }
+    
+    decode = decode &((1L<<l)-1);
+    bool sign = (decode & (1L<<(l-1)));
+    int value = (decode & ((1L<<(l-1))-1));
+    if (!sign){value = -value;}
+    //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+    double logx =0.0;
+    if(to_find>0.01){
+        logx = log2(to_find);
+    }
+    uint32_t out = value + (long long) (alpha +((double)to_find*theta0)+(double)to_find*(double)to_find*theta1);
+    return out;   
+}
+
+uint32_t read_bit_spline(uint8_t *in ,int l ,int to_find, double alpha,double theta0,double theta1,double theta2,int start) {
+    int start_byte = start+to_find*l/8;
+    int start_bit = to_find*l%8;
+    int occupy=start_bit;
+    int decode =0;
+    int total = 0;
+    
+    while(total<l){
+        uint8_t val = in[start_byte];
+        decode +=( (val>>occupy)<<total);
+        total += (8-occupy);
+        occupy=0;
+        start_byte++;
+        
+     }
+    
+    decode = decode &((1L<<l)-1);
+    bool sign = (decode & (1L<<(l-1)));
+    int value = (decode & ((1L<<(l-1))-1));
+    if (!sign){value = -value;}
+    //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+    double logx =0.0;
+    if(to_find>0.01){
+        logx = log2(to_find);
+    }
+    uint32_t out = value + (long long) (alpha +((double)to_find*theta0)+(double)to_find*(double)to_find*theta1+(double)to_find*(double)to_find*(double)to_find*theta2);
+    return out;   
+}
+    
 uint32_t read_bit_ransac(uint8_t *in ,int l ,int to_find, double slope,double start_key,int start, int rank) {
     int start_byte = start+to_find*l/8;
     int start_bit = to_find*l%8;

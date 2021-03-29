@@ -29,7 +29,7 @@ int main() {
 
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../data/fb/fb-289000.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;
@@ -53,23 +53,23 @@ int main() {
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
        << std::endl;
 
-  int blocks=100000;
+  int blocks=1000;
   int delta =0;
   int block_size = data.size()/blocks;
   bool flag = true;
   codec.init(blocks,block_size,delta);
-  std::vector<uint32_t*> block_start_vec;
+  std::vector<uint8_t*> block_start_vec;
   int totalsize=0;
   for(int i=0;i<blocks;i++){
-    uint32_t * descriptor = (uint32_t*)malloc(block_size * sizeof(uint64_t)+1024);
-    uint32_t * res = descriptor;
-    res = codec.encodeArray(data.data()+i*block_size,block_size, descriptor,N);
-    descriptor = (uint32_t*)realloc(descriptor, (res-descriptor)*sizeof(uint32_t));
+    uint8_t * descriptor = (uint8_t*)malloc(block_size * sizeof(uint64_t)+1024);
+    uint8_t * res = descriptor;
+    res = codec.encodeArray8(data.data()+i*block_size,block_size, descriptor,N);
+    descriptor = (uint8_t*)realloc(descriptor, (res-descriptor)*sizeof(uint8_t));
     block_start_vec.push_back(descriptor);
     totalsize += (res-descriptor);
   }
 
-  double compressrate = (totalsize)*100.0  / (N*1.0);
+  double compressrate = (totalsize)*100.0  / (4*N*1.0);
   std::cout << "total compression rate:" << std::setprecision(4)<< compressrate << std::endl;
     
   std::vector<uint32_t> recover(data.size());
@@ -77,7 +77,7 @@ int main() {
   std::cout<<"decompress all!"<<std::endl;
   double start = getNow();
   for(int i=0;i<blocks;i++){
-      codec.decodeArray(block_start_vec[i], block_size, recover.data()+i*block_size, i);
+      codec.decodeArray8(block_start_vec[i], block_size, recover.data()+i*block_size, i);
       /*
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
@@ -107,7 +107,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
   start = getNow();
   for(int i=0;i<N;i++){    
 
-      uint32_t tmpvalue = codec.randomdecodeArray(block_start_vec[i/block_size], i%block_size, buffer.data(), i/block_size);
+      uint32_t tmpvalue = codec.randomdecodeArray8(block_start_vec[i/block_size], i%block_size, buffer.data(), i/block_size);
       
 
       //std::cout<<"processing...  "<<j<<" / "<<N<<std::endl;
@@ -122,7 +122,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     if(!flag){
         break;
     }
-     */ 
+     */
   }
 end = getNow();
 randomaccesstime+=(end-start);

@@ -123,23 +123,97 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
     in = in + ((int)l/32)*b;
     int number_left = l - ((int)l/32)*32;
     //std::cout<<"nvalue "<<nvalue<<" number_left "<<number_left<<" nvalue - l "<<nvalue - l<<std::endl;
+    //std::cout<<"to_find "<<l<<" block_size "<<block_size<<" bit "<<b<<std::endl;
+    
+    
+    if(((int)l/32) == ((int)block_size/32)){
 
+        /*
+        if( number_left>=16  ){
+            number_left -= 16;
+            in = in +(int)ceil((double)b*16./32.);
+            if(number_left>=8){
+                number_left -= 8;
+                in = in +(int)ceil((double)b*8./32.);
+            }
+            else{
+                unpack8[b](m,in,out);
+                return out[number_left];
+            }
+        
+        }
+        else if(number_left>=8){
+            number_left -= 8;
+            in = in +(int)ceil((double)b*8./32.);
+            return in[number_left];
+            
+    
+        }
+    
+        if(number_left>0){
+            return in[number_left];
+        }
+        */
+        uint32_t *res = new uint32_t[32];
+        uint32_t *tmpres =res;
+        for(uint32_t k=block_size/32*32; k+16<=block_size; k+=16,res+=16) {
+            in = unpack16[b](m,in,res);
+        }
+        for(uint32_t k=block_size/16*16; k+8<=block_size; k+=8,res+=8) {
+            in = unpack8[b](m,in,res);
+        }
+    // we could pack the rest, but we don't  bother
+        for(uint32_t k=block_size/8*8; k<block_size; ++k,in++,res++) {
+            res[0] = in [0];
+        }
+        recover = tmpres[number_left];
+        free(tmpres);
+        return recover;
+    }
+    else{
+        uint32_t number_occupy = (number_left*b)/32;
+        in+= number_occupy;
+        
+        if(b==32){ 
+            return in[0]+m;
+        }
+    
+
+        long long bit_left = number_left*b - number_occupy*32;
+
+        if(32-bit_left>=b){
+            recover = (in[0]>>bit_left) & ((1U<<b)-1) ;
+            recover += m ;
+        
+            return recover;
+        }
+        else{
+            recover = (( in[1]&(((1U<<(b+bit_left-32))-1)) )<<(32-bit_left)) + (in[0]>>bit_left);
+            recover +=m;
+            return recover;
+        }
+    
+    
+    }
+
+ /*
     uint32_t number_occupy = (number_left*b)/32;
     in+= number_occupy;
-    if(b==32){
+    if(b==32){ 
         return in[0]+m;
     }
     
+
     long long bit_left = number_left*b - number_occupy*32;
-    /*
-    if(m==71936201){
-        std::cout<<"ind "<<l<<" min: "<<m<<" max: "<<M<<"bit: "<<b<<std::endl;
-        std::cout<<"number_left: "<<number_left<<" number_occupy: "<<number_occupy<<" bit_left: "<<bit_left<<std::endl;
-    }
-    */
+    
+    //std::cout<<"ind "<<l<<" min: "<<m<<" max: "<<M<<"bit: "<<b<<std::endl;
+    //std::cout<<"number_left: "<<number_left<<" number_occupy: "<<number_occupy<<" bit_left: "<<bit_left<<std::endl;
+    //std::cout<<"to the end of this seg "<<block_size - l-1<<std::endl;
+
     if(32-bit_left>=b){
         recover = (in[0]>>bit_left) & ((1U<<b)-1) ;
         recover += m ;
+        
         return recover;
     }
     else{
@@ -147,22 +221,30 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
         recover +=m;
         return recover;
     }
-
+*/
 }
     
-uint8_t* encodeArray8( uint32_t *in, const size_t length, uint8_t *out,
+uint8_t* encodeArray8( uint32_t *in, const size_t length, uint8_t *res,
                     size_t nvalue) {
-    std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
-    return out;
+    uint32_t * out=reinterpret_cast<uint32_t*>(res);
+    uint32_t * mark_out = out;
+    out = encodeArray(in,length,out,nvalue);
+    
+    res = reinterpret_cast<uint8_t*>(mark_out);
+    uint8_t *tmp_res = reinterpret_cast<uint8_t*>(out);
+    return tmp_res;
 }
 uint32_t *decodeArray8( uint8_t *in, const size_t length,
                               uint32_t *out,  size_t nvalue) {
-    std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
-    return out;
+    uint32_t * tmpin = reinterpret_cast<uint32_t*>(in);
+    return decodeArray(tmpin,length,out,nvalue);
+
 }
 uint32_t randomdecodeArray8(uint8_t *in, const size_t l,uint32_t *out, size_t nvalue){
-    std::cout<<"Haven't implement. Please try uint32_t one..."<<std::endl;
-    return 1;
+    uint32_t * tmpin = reinterpret_cast<uint32_t*>(in);
+    uint32_t tmp = randomdecodeArray(tmpin,l,out,nvalue);
+    //std::cout<<tmp<<std::endl;
+    return tmp;
 } 
 uint32_t get_block_nums(){
       return 1;

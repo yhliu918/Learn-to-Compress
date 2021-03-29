@@ -124,6 +124,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         read_all_default(tmpin ,0,0, length, maxerror,theta1,theta0, out);
     }
     else{
+        
         read_all_bit_fix(tmpin ,0,0, length, maxerror,theta1,theta0, out);
     }
 

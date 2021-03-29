@@ -16,6 +16,10 @@
 #include "piecewise_fix.h"
 #include "piecewise_ransac.h"
 #include "piecewise_double.h"
+#include "rle.h"
+#include "nonlinear_fix.h"
+#include "spline_fix.h"
+#include "piecewise_fanout.h"
 #include "maskvbyte.h"
 
 
@@ -72,11 +76,14 @@ static inline CodecMap initializefactory() {
   CodecMap map;
 
   map["FOR"]= new Codecset::FOR();
-  
+  map["rle"]= new rle();
   map["piecewise"]= new piecewise();
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
+  map["nonlinear_fix"]= new nonlinear_fix();
+  map["spline_fix"]= new spline_fix();
   map["piecewise_ransac"]= new piecewise_ransac();
+  map["piecewise_fanout"]= new piecewise_fanout();
   //map["BP32"] = new CompositeCodec<BP32, VariableByte>;
   map["MaskVByte"] = new Codecset::MaskVByte();
   map["copy"] = new Codecset::JustCopy();
