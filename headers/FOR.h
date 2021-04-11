@@ -76,6 +76,7 @@ uint32_t * encodeArray(uint32_t *in, const size_t length,uint32_t *res, size_t n
 }
 uint32_t *decodeArray( uint32_t *in, const size_t length,
                                       uint32_t *out,  size_t nvalue) {
+    uint32_t*res = out;
     nvalue = in[0];
     ++in;
     if(nvalue == 0) return in;
@@ -83,27 +84,36 @@ uint32_t *decodeArray( uint32_t *in, const size_t length,
     ++in;
     uint32_t M = in[0];
     ++in;
+    
     int b = bits(static_cast<uint32_t>(M-m));
+    
 #ifdef _OPENMP
     #pragma omp parallel for
 #endif
-    for(uint32_t k = 0; k<nvalue/32; ++k) {
-        unpack32[b](m,in+b*k,out+32*k);
+    if(b ==0){
+        for(int i=0;i<nvalue;i++){
+            out[i]=m;
+        }
+        return out;
     }
-    out = out + nvalue/32*32;
+    for(uint32_t k = 0; k<nvalue/32; ++k) {
+        unpack32[b](m,in+b*k,res+32*k);
+        
+    }
+    res = res + nvalue/32*32;
     in = in + nvalue/32*b;
 
-    for(uint32_t k=nvalue/32*32; k+16<=nvalue; k+=16,out+=16) {
-        in = unpack16[b](m,in,out);
+    for(uint32_t k=nvalue/32*32; k+16<=nvalue; k+=16,res+=16) {
+        in = unpack16[b](m,in,res);
     }
-    for(uint32_t k=nvalue/16*16; k+8<=nvalue; k+=8,out+=8) {
-        in = unpack8[b](m,in,out);
+    for(uint32_t k=nvalue/16*16; k+8<=nvalue; k+=8,res+=8) {
+        in = unpack8[b](m,in,res);
     }
     // we could pack the rest, but we don't  bother
-    for(uint32_t k=nvalue/8*8; k<nvalue; ++k,in++,out++) {
-        out[0] = in [0];
+    for(uint32_t k=nvalue/8*8; k<nvalue; ++k,in++,res++) {
+        res[0] = in [0];
     }
-    return out;
+    return res;
 }
 uint32_t randomdecodeArray( uint32_t *in, const size_t l,
                                       uint32_t *out,  size_t nvalue){
@@ -115,6 +125,9 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
     uint32_t M = in[0];
     ++in;
     int b = bits(static_cast<uint32_t>(M-m));
+    if(b==0){
+        return m;
+    }
 #ifdef _OPENMP
     #pragma omp parallel for
 #endif

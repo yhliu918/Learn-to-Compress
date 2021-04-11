@@ -24,7 +24,7 @@ int main() {
 
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/linear_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
   //std::ofstream outfile("out.txt", std::ios::app);
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
@@ -49,7 +49,7 @@ int main() {
        << std::endl;
  
     
-  int blocks =1000;
+  int blocks =100000;
   int block_size = data.size()/blocks;
   int delta =0;
     
