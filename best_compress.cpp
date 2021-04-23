@@ -103,7 +103,10 @@ int main() {
       std::cout<<"block "<<i<<" method "<<codec_name[method_vec[i]]<<std::endl;
   }
   */
-  int times[codec_name.size()]={0};
+  int *times= new int[codec_name.size()];
+  for(int i=0;i<codec_name.size();i++){
+      times[i]=0;
+  }
   for(int i=0;i<blocks;i++){
       times[method_vec[i]]++;
   }

@@ -114,6 +114,23 @@ void caltheta(double x[], double y[], int m){
     alpha = result [0][0];
     theta1 = result [1][0];
     theta2 = result [2][0];
+    for(int i=0;i<m;i++){
+        free(matrix[i]);
+        free(tmpy[i]);
+    }
+    
+    for(int i=0;i<3;i++){
+        free(ATA_reverse2[i]);
+        free(ATA[i]);
+        free(AT[i]);
+        free(ATA_reverseAT[i]);
+    }
+    free(matrix);
+    free(tmpy);
+    free(ATA_reverse2);
+    free(ATA);
+    free(AT);
+    free(ATA_reverseAT);
     //std::cout<<"alpha: "<<alpha<<" theta1: "<<theta1<<" theta2: "<<theta2<<std::endl;
     
 }

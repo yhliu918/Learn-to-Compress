@@ -100,7 +100,7 @@ std::cout << "all decoding time per int: " << std::setprecision(8)
      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "all decoding speed: " << std::setprecision(10)
      << data.size()/(totaltime*1000) <<  std::endl;
-/*
+
   std::cout<<"random access decompress!"<<std::endl; 
   std::vector<uint32_t> buffer(data.size());
   double randomaccesstime =0.0;
@@ -130,7 +130,7 @@ std::cout << "random decoding time per int: " << std::setprecision(8)
      << randomaccesstime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "random decoding speed: " << std::setprecision(10)
      << data.size()/(randomaccesstime*1000) <<  std::endl;
- */   
+   
    for(int i=0;i<(int)block_start_vec.size();i++){
        free(block_start_vec[i]);
    }

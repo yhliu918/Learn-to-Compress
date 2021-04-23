@@ -13,7 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <cassert> // for assert()
-#include "Node.h"
+#include "MLPNode.h"
 #include "MLPUtils.h"
 
 class Layer {
@@ -63,14 +63,14 @@ public:
     return m_num_nodes;
   };
 
-  const std::vector<Node> & GetNodes() const {
+  const std::vector<MLPNode> & GetNodes() const {
     return m_nodes;
   }
 
   /**
    * Return the internal list of nodes, but modifiable.
    */
-  std::vector<Node> & GetNodesChangeable() {
+  std::vector<MLPNode> & GetNodesChangeable() {
     return m_nodes;
   }
 
@@ -129,7 +129,7 @@ public:
       {
           // traverse the list of nodes
           size_t node_i = 0;
-          for( Node & node : m_nodes )
+          for( MLPNode & node : m_nodes )
           {
               node.SetWeights( weights[node_i] );
               node_i++;
@@ -181,7 +181,7 @@ public:
 protected:
   size_t m_num_inputs_per_node{ 0 };
   size_t m_num_nodes{ 0 };
-  std::vector<Node> m_nodes;
+  std::vector<MLPNode> m_nodes;
 
   std::string m_activation_function_str;
   std::function<double(double)>  m_activation_function;

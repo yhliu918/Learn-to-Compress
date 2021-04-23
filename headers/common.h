@@ -26,6 +26,7 @@
 #endif
 #include <sys/types.h>
 #include <time.h>
+#include <Eigen/Dense>
 
 // C++ headers (sorted)
 #include <algorithm>

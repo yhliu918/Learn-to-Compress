@@ -14,7 +14,16 @@
 #include "../headers/caltime.h"
 #include "../headers/lr.h"
 #include "../headers/create_feature.h"
+#include "headers/microunit.h"
+#include "headers/easylogging++.h"
+#include "headers/MLP.h"
 
+INITIALIZE_EASYLOGGINGPP
+
+const int input_size = 6;
+const int number_classes = 4;
+
+const std::string mlp_weights = "classifier.mlp";
 
 
 int main() {
@@ -22,9 +31,10 @@ int main() {
 
   // We pick a CODEC
 
+  
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/ssq/Learn-to-Compress/data/books_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../data/normal_200M_uint32.txt",std::ios::in); 
   //std::ofstream outfile("out.txt", std::ios::app);
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
@@ -48,11 +58,13 @@ int main() {
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
        << std::endl;
  
+  // prepare classifier
+  MLP my_mlp(mlp_weights);
     
   int blocks =100000;
   int block_size = data.size()/blocks;
   int delta =0;
-    
+  
   std::vector<IntegerCODEC*> codec_fac;
   std::vector<std::string> codec_name={"piecewise_fix","nonlinear_fix","FOR","rle"};
   for(int i=0;i<(int)codec_name.size();i++){
@@ -66,38 +78,49 @@ int main() {
   int totalsize = 0;
   //outfile<< "len" <<"    "<<"avg"<<"    "<<"min"<<"    "<<"max"<<"    "<<"num_distinct"<<"    "<<"rl"<<"    label"<<std::endl;
   double start = getNow();
+  double totaltime_realcom=0;
   for(int i=0;i<blocks;i++){
-    int min_size = block_size * 8;
-    int method =0;
-    uint8_t * tmp_des = (uint8_t*)malloc(block_size * sizeof(uint64_t)*2);
-    //seg_feature seg;
-    //seg.cal_feature(data.data()+(i*block_size),block_size);
+
+    seg_feature seg;
+    seg.cal_feature(data.data()+(i*block_size),block_size);
+    std::vector<TrainingSample> training_set;
+    std::vector<double> training_set_input;
+    std::vector<double> training_set_output;
+    training_set_input.push_back(seg.len);
+    training_set_input.push_back(seg.avg);
+    training_set_input.push_back(seg.max);
+    training_set_input.push_back(seg.min);
+    training_set_input.push_back(seg.num_distinct);
+    training_set_input.push_back(seg.rl);
+    training_set.emplace_back(std::move(training_set_input),std::move(training_set_output));
+    for (auto & training_sample_with_bias : training_set) {
+        training_sample_with_bias.AddBiasValue(1);
+     }
     
-    for(int j=0;j<(int)codec_name.size();j++){
-      
-      uint8_t * descriptor = (uint8_t*)malloc(block_size * sizeof(uint64_t)*2);
-      uint8_t * res = descriptor;
-      res = codec_fac[j]->encodeArray8(data.data()+(i*block_size),block_size ,descriptor,i);
-      int tmp_size = (res-descriptor);
-      if(tmp_size<min_size){
-              min_size = tmp_size;
-              method = j;
-              memcpy(tmp_des,descriptor,tmp_size);
-              tmp_des = (uint8_t*)realloc(tmp_des, tmp_size);
-              free(descriptor);
-      }
-      
-    }
+    std::vector<double> guess;
+    my_mlp.GetOutput(training_set[0].input_vector(), &guess);
+    size_t class_id;
+    my_mlp.GetOutputClass(guess, &class_id);
+    
+   
+    double start2 = getNow();
+    uint8_t * descriptor = (uint8_t*)malloc(block_size * sizeof(uint64_t)*2);
+    uint8_t * res = descriptor;
+    res = codec_fac[class_id]->encodeArray8(data.data()+(i*block_size),block_size ,descriptor,i);
+    int tmp_size = (res-descriptor);
+    double end2 = getNow();
+    totaltime_realcom +=(end2-start2);
    //seg.write_feature(outfile,method);
-   method_vec.push_back(method);
-   block_start_vec.push_back(tmp_des);
-   totalsize +=min_size;   
+    method_vec.push_back(class_id);
+    block_start_vec.push_back(descriptor);
+    totalsize +=tmp_size;   
  
   }
   //outfile.close();
    double end = getNow();
    double totaltime = end -start;
    std::cout << "compress speed: " << std::setprecision(10) << data.size()/(totaltime*1000) <<  std::endl;
+   std::cout << "real compress speed: " << std::setprecision(10) << data.size()/(totaltime_realcom*1000) <<  std::endl;
   /*
   for(int i=0;i<blocks;i++){
       std::cout<<"block "<<i<<" method "<<codec_name[method_vec[i]]<<std::endl;
@@ -124,7 +147,7 @@ int main() {
   for(int i=0;i<blocks;i++){
       //std::cout<<"block "<<(int)i<<" method "<<codec_name[method_vec[(int)i]]<<std::endl;
       codec_fac[method_vec[i]]->decodeArray8(block_start_vec[i], block_size, recover.data()+i*block_size, i);
-      
+      /*
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -137,7 +160,7 @@ int main() {
        if(!flag){
           break;
        }
-       
+       */
 
   }
    end = getNow();
@@ -155,10 +178,11 @@ std::cout << "all decoding speed: " << std::setprecision(10)
    uint32_t mark=0;
     
   for(int i=0;i<N;i++){ 
-      //std::cout<<"block "<<(int)i/block_size<<" method "<<codec_name[method_vec[(int)i/block_size]]<<std::endl;
+  
       uint32_t tmpvalue = codec_fac[method_vec[(int)i/block_size]]->randomdecodeArray8(block_start_vec[(int)i/block_size], i%block_size, buffer.data(), i/block_size);
        mark+=tmpvalue;
       
+      /*
        if(data[i]!=tmpvalue){
         std::cout<<"num: "<<i<< "true is: "<<data[i]<<" predict is: "<<tmpvalue<<std::endl;
         flag = false;
@@ -168,7 +192,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     if(!flag){
         break;
     }
-  
+      */
     }
        end = getNow();
       randomaccesstime+=(end-start);
