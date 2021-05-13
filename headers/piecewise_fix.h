@@ -40,21 +40,54 @@ void init(int blocks, int blocksize,int extra){
       
 }
 
-
+int random(int m){
+        return rand()%m;
+}
 
 // bit + theta0 + theta1 + delta   
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
     double *indexes = new double[length];
     double *keys = new double[length];
+    //double *keys_sample = new double [length];
+    //double *indexes_sample = new double[length];
     uint8_t *out = res;
     for(uint32_t i = 0; i < length; i++){
         indexes[i] = (double) i;
         keys[i] = (double) in[i];
     }
     int *delta = new int[length];
+    /*
+    keys_smooth[0]=keys[0];
+    for(uint32_t i = 1; i < length-1; i++){
+        double tmpsum =0;
+        for(int j=-1;j<=1;j++){
+            if(i+j<0){
+                tmpsum+=keys[0];
+            }
+            else if(i+j>=length){
+                tmpsum+=keys[length-1];
+            }
+            else{
+                tmpsum+=keys[i+j];
+            }
+        }
+        keys_smooth[i]=(double)tmpsum/3.;
+    }
+    keys_smooth[length-1]=keys[length-1];
+    */
+    /*
+    int sample_length=0;
+    for(int i=0;i<length;i++){
+        if(random(3)==0){
+            indexes_sample[sample_length]=i;
+            keys_sample[sample_length]=keys[i];
+            sample_length++;
+        }
 
+    }
+    */
     //lr.train(indexes, keys, length, 0.0001, 500);
-    
+
     lr mylr;
     mylr.caltheta(indexes,keys,length);
     
@@ -70,13 +103,9 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             max_error = abs(tmp);
         }
     }
-    int tmp_bit = 0;
-    if(max_error > 0.01){
-        tmp_bit = ceil(log2(max_error))+2;
-    }
-    else{
-        tmp_bit = 2;
-    }
+
+    int tmp_bit = bits(max_error)+1;
+
     /*
     if(in[0]==0){
     for(int i=0;i<length;i++){

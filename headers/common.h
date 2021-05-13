@@ -56,6 +56,7 @@
 #include <cstddef>
 #include <getopt.h>
 #include <assert.h>
+#include <snappy.h>
 
 
 #ifdef _MSC_VER

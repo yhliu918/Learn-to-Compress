@@ -14,7 +14,7 @@
 #define USE_O_DIRECT
 #endif
 
-namespace FastPForLib {
+namespace Codecset {
 
 //#define STATS
 // taken from stackoverflow

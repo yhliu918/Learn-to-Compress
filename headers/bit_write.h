@@ -40,7 +40,6 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     uint64_t left_val = 0;
 
     while(out<=last){
-
         
         while(occupy<8){
             

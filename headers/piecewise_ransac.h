@@ -132,14 +132,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
         }
      */
     
-    int tmp_bit = 0;
-    if(max_error > 0.01){
-        tmp_bit = ceil(log2(max_error))+2;
-    }
-    else{
-        
-        tmp_bit = 2;
-    }
+    int tmp_bit = bits(max_error)+1;
     
     out[0]=(uint8_t)tmp_bit;
     out++;

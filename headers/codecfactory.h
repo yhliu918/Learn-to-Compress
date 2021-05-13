@@ -12,16 +12,22 @@
 #include "codecs.h"
 #include "util.h"
 #include "FOR.h"
+#include "combinedcodec.h"
 #include "piecewise.h"
 #include "piecewise_fix.h"
 #include "piecewise_ransac.h"
 #include "piecewise_double.h"
+#include "piecewise_outlier_detect.h"
+#include "piecewise_varilength.h"
 #include "rle.h"
 #include "nonlinear_fix.h"
 #include "spline_fix.h"
 #include "piecewise_fanout.h"
 #include "maskvbyte.h"
-
+#include "variablebyte.h"
+#include "snappy.h"
+#include "delta_my.h"
+#include "delta.h"
 
 
 namespace Codecset {
@@ -77,16 +83,26 @@ static inline CodecMap initializefactory() {
 
   map["FOR"]= new Codecset::FOR();
   map["rle"]= new rle();
+  map["delta_my"] = new delta_my();
+  map["delta"] = new delta();
   map["piecewise"]= new piecewise();
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
   map["nonlinear_fix"]= new nonlinear_fix();
-  map["spline_fix"]= new spline_fix();
+  //map["spline_fix"]= new spline_fix();
   map["piecewise_ransac"]= new piecewise_ransac();
+  map["piecewise_outlier_detect"] = new piecewise_outlier_detect();
   map["piecewise_fanout"]= new piecewise_fanout();
+  map["piecewise_varilength"] = new piecewise_varilength();
+  map["piecewise_for"] = new Codecset::CombinedCodec<piecewise_fix, FOR>();
+  map["piecewise_delta"] = new Codecset::CombinedCodec< piecewise_fix,delta_my>();
+  map["delta_for"] = new Codecset::CombinedCodec<delta, FOR>();
   //map["BP32"] = new CompositeCodec<BP32, VariableByte>;
+  map["VariableByte"] = new Codecset::VariableByte();
   map["MaskVByte"] = new Codecset::MaskVByte();
+  //map["snappy"] = new Codecset::JustSnappy();
   map["copy"] = new Codecset::JustCopy();
+
   return map;
 }
 
