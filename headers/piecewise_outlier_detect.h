@@ -86,7 +86,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
     int max_bit =0;
     for(int i=0;i<32;i++){
         quantile_sum+=counter[i];
-        std::cout<<quantile_sum<<std::endl;
+        
         compress_len = quantile_sum * i + (block_size-quantile_sum)*32;
         if(quantile_sum==block_size){
             compress_len = quantile_sum * i -temp*12*8-12*8;

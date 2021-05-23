@@ -93,6 +93,7 @@ namespace Codecset
             code += (in[2]<<16);
             code += (in[3]<<24);
             in+=4;
+            int *delta = new int[length];
             if(maxerror==0){
                 for(int i=0;i<length;i++){
                     out[i] = code;
@@ -106,12 +107,12 @@ namespace Codecset
             }
             else{
         
-                read_all_bit_only(in ,length-1, maxerror, &out[1]);
+                read_all_bit_only(in ,length-1, maxerror, &delta[1]);
             }
             int delta_up_till_now=0;
             out[0]=code;
             for(int i=1;i<length;i++){
-                delta_up_till_now+=out[i];
+                delta_up_till_now+=delta[i];
                 out[i] = code+delta_up_till_now;
 
             }

@@ -188,14 +188,13 @@ void read_all_bit_fix(uint8_t *in ,int start_byte,int start_index, int numbers,i
       
 }
 
-void read_all_bit_only(uint8_t *in , int numbers,int l, uint32_t *out) {
+void read_all_bit_only(uint8_t *in , int numbers,int l, int *out) {
     int left = 0;
     uint64_t decode = 0;
     int start = 0;
-    int end = 0;
     int total_bit = l*numbers;
     int writeind = 0;
-    end = start +(int)(total_bit/8);
+    int end = (int)(total_bit/8);
     if(total_bit%8!=0){
       end++;
     }
@@ -207,15 +206,11 @@ void read_all_bit_only(uint8_t *in , int numbers,int l, uint32_t *out) {
       while(left>=l){
         uint64_t tmp=decode&((1L<<l)-1);
         long long tmpval = tmp &((1L<<(l-1))-1);
-          
-        //std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
+        
         if(!(((tmp>>(l-1)) &1))){
           tmpval=-tmpval;
         }
-        //std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval: "<<tmpval<<" l: "<<l<<std::endl;
         decode = (decode>>l); 
-        
-        
         out[writeind]=tmpval;
 
         writeind++;
@@ -224,9 +219,6 @@ void read_all_bit_only(uint8_t *in , int numbers,int l, uint32_t *out) {
         //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
       }
       decode+=((long long)in[start]<<left);
-      
-      //std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
-      //std::cout<<"decode"<<decode<<std::endl;
       
       start++;
       left+=8;

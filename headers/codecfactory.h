@@ -28,6 +28,7 @@
 #include "snappy.h"
 #include "delta_my.h"
 #include "delta.h"
+#include "piecewise_fix_delta.h"
 
 
 namespace Codecset {
@@ -94,6 +95,7 @@ static inline CodecMap initializefactory() {
   map["piecewise_outlier_detect"] = new piecewise_outlier_detect();
   map["piecewise_fanout"]= new piecewise_fanout();
   map["piecewise_varilength"] = new piecewise_varilength();
+  map["piecewise_fix_delta"] = new piecewise_fix_delta();
   map["piecewise_for"] = new Codecset::CombinedCodec<piecewise_fix, FOR>();
   map["piecewise_delta"] = new Codecset::CombinedCodec< piecewise_fix,delta_my>();
   map["delta_for"] = new Codecset::CombinedCodec<delta, FOR>();
