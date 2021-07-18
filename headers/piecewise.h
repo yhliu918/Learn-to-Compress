@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef PIECEWISE_H_
 #define PIECEWISE_H_
 
@@ -19,7 +14,36 @@ namespace Codecset {
 
 
 
-    
+
+
+
+double cal_score_tmp(uint32_t* a, int N){
+  int * b = (int*)malloc(N * sizeof(int));
+  uint32_t amax = a[N-1];
+  uint32_t amin = a[N-1];
+  for(int i=0;i<N-1;i++){
+    if(amax<a[i]){
+      amax = a[i];
+    }
+    if(amin>a[i]){
+      amin = a[i];
+    }
+    b[i] = a[i+1]-a[i];
+  }
+  int best_delta = (amax-amin)/(N-1);
+  long long sum =0;
+  for(int i=0;i<N-1;i++){
+    sum += abs(abs(b[i]) - best_delta);
+  }
+  if(amax -amin == 0){
+    return 1;
+  }
+  double score = (double)sum / ((amax-amin));
+  score/=(double)1;
+  free(b);
+  //std::cout<<"score "<<score<<std::endl;
+  return 1-score;
+} 
 class piecewise : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
@@ -131,17 +155,11 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
                     
                 }
             }
-
+            std::cout<<cal_score_tmp(in+origin_index,(end_index - origin_index + 1))<<std::endl;
             int tmp_bit = bits(max_error)+1;
-            /*
-            uint8_t * delta_pos = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
-            uint8_t* delta_write =delta_pos;
-            delta_write=write_delta(delta, delta_write, tmp_bit, (end_index - origin_index + 1));
-            int delta_size = delta_write - delta_pos;
-           */
-            
             
             uint8_t * descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)+30);
+
             uint8_t *out = descriptor;
             
             memcpy(out,&origin_index,sizeof(origin_index));
@@ -165,30 +183,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             out=write_delta(delta, out, tmp_bit, numbers);
             free(delta);
             
-            
-            //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
-            /*
-            if(origin_index==66979987){
-                uint8_t * tmpin=descriptor;
-                uint32_t theta0_rec;
-                float theta1_rec;
-                uint8_t maxerror_rec;
-                uint32_t start_ind_rec;
-                uint32_t numbers_rec;
-        
-                memcpy(&start_ind_rec,tmpin,4);
-                tmpin+=4;
-                memcpy(&maxerror_rec,tmpin,1);
-                tmpin++;
-                memcpy(&theta0_rec,tmpin,4);
-                tmpin+=4;
-                memcpy(&theta1_rec,tmpin,sizeof(float));
-                tmpin+=sizeof(float);
-                memcpy(&numbers_rec,tmpin,4);
-                tmpin +=4;
-                 std::cout<<" slope_rec "<<theta1_rec<<" theta0_rec "<<theta0_rec<<"start_ind_rec"<<start_ind_rec<<"maxerror_rec"<<unsigned(maxerror_rec) <<std::endl;
-             }
-            */
            
             descriptor=(uint8_t*)realloc(descriptor, (out-descriptor));
             block_start_vec.push_back(descriptor);
@@ -344,7 +338,10 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     return tmp;
 
 }
-
+uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+    
+    return 0;
+}
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
                    size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;

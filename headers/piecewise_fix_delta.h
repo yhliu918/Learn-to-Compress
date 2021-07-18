@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef PIECEWISEFIX_DELTA_H_
 #define PIECEWISEFIX_DELTA_H_
 
@@ -50,7 +45,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         keys[i] = (double) in[i];
     }
     int *delta = new int[length];
-    memset(delta,0,sizeof(delta));
     
     lr mylr;
     mylr.caltheta(indexes,keys,length);
@@ -65,7 +59,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     }
     
     int *delta2 = new int[length];
-    memset(delta2,0,sizeof(delta2));
     uint32_t max_error =abs(delta[0]); //delta[0], delta[1]-delta[0],....
     delta2[0]=delta[0];
     for(int i=1;i<(long long) length;i++){
@@ -121,7 +114,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
     memcpy(&theta1,tmpin,8);
     tmpin+=8;
     if(maxerror==0){
-        for(int i=0;i<length;i++){
+        for(uint32_t i=0;i<length;i++){
             out[i] = (long long) (theta0 +((double)i*theta1));
         }
         return out;

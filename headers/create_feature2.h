@@ -11,6 +11,7 @@ struct seg_feature{
     double quarter;
     double half;
     double threequarter;
+    double outlie;
     int rl;//avg run length
     
     void cal_feature(uint32_t arr[], int length){
@@ -23,6 +24,7 @@ struct seg_feature{
         else{
             logdelta=2;
         }
+        int count =0;
         uint32_t last = arr[0];
         int num_distinct = 1;
         for(int i=0;i<length;i++){
@@ -45,12 +47,12 @@ struct seg_feature{
         }
         int len = length;
         rl = len/num_distinct;
-        
+        outlie=quarter+half+threequarter;
 
     }
     
     void write_feature(std::ofstream &ff,int method){
-        ff<<logdelta<<"    "<<quarter<<"    "<<half<<"    "<<threequarter<<"    "<<rl<<"    "<<method<<std::endl;
+        ff<<logdelta<<"    "<<quarter<<"    "<<half<<"    "<<threequarter<<"    "<<outlie<<"    "<<rl<<"    "<<method<<std::endl;
         
     }
 };

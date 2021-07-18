@@ -10,7 +10,7 @@ project(example)
 set(PROJECT_URL "https://github.com/jxxiaoshaoye/Learn-to-Compress")
 set(PROJECT_DESCRIPTION "C++ library to compress with learned methods")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11 -O3 -Wall -ansi  -DNDEBUG=1  -ggdb1 -Iinclude -I /usr/local/include/Eigen")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11 -O3 -Wall -ansi  -DNDEBUG=1  -ggdb1 -Iinclude -lsnappy -I /usr/include/Eigen")
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 if(COMPILER_SUPPORTS_CXX11)
@@ -30,13 +30,12 @@ aux_source_directory(. SRC_LIST)
 add_library(lib ${SRC_LIST})
 ##set_target_properties(lib PROPERTIES COMPILE_FLAGS ${CMAKE_CXX_FLAGS_DEBUG})
 #  .so/.a
-## link_directories(.)
 
 # .h document
 include_directories(${HEADER_DIR})
 
 # make executable doc
-add_executable(${PROJECT_NAME}  classifier_CART.cpp)
+add_executable(${PROJECT_NAME}  example.cpp)
 target_link_libraries( ${PROJECT_NAME} docs )
 
 

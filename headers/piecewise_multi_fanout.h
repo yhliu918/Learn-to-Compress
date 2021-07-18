@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_FANOUT_H_
-#define PIECEWISE_FANOUT_H_
+#ifndef PIECEWISE_MULTI_FANOUT_H_
+#define PIECEWISE_MULTI_FANOUT_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -13,14 +13,10 @@
 
 namespace Codecset {
 
-bool greater( const seg &v1, const seg &v2)
-{
-    return v1.start < v2.start;
-}
 
 
     
-class piecewise_fanout : public IntegerCODEC {
+class piecewise_multi_fanout : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
   using IntegerCODEC::decodeArray;
@@ -35,6 +31,7 @@ public:
   uint32_t total_byte =0;
   int block_num;
   int block_size;
+  int seg_num;
 
 //start_index + bit + theta0 + theta1 + numbers + delta
 void init( int blocks,  int blocksize,int delta){
@@ -51,7 +48,6 @@ uint32_t lower_bound( uint32_t v,uint32_t len)
     uint32_t y=len-1;
     while(x <= y)
     {
-    
         m = x+(y-x)/2;
         if(v<segment_index[m]) y = m-1;
         else x = m+1;
@@ -74,43 +70,60 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
   seg initseg;
   initseg.start = 0;
   initseg.end = block_size-1;
-  initseg.caltheta(indexes,keys,block_size);
-  initseg.calbit(indexes,keys,block_size);
+  initseg.caltheta(indexes,keys,block_size); //calculate theta0 and theta1
+  initseg.calbit(indexes,keys,block_size); //calculate delta, totalbyte and tmpbit
   q.push(initseg);
     
   while(!q.empty()){
       seg tmpseg = q.front();
       
-      int mid = ( tmpseg.start + tmpseg.end )/2;
-      seg subseg1;
-      subseg1.start = tmpseg.start;
-      subseg1.end = mid;
-      subseg1.caltheta(indexes+(subseg1.start),keys+(subseg1.start),(subseg1.end-subseg1.start+1));
-      subseg1.calbit(indexes+(subseg1.start),keys+(subseg1.start),(subseg1.end-subseg1.start+1));
-      
-      seg subseg2;
-      subseg2.start = mid+1;
-      subseg2.end = tmpseg.end;
-      subseg2.caltheta(indexes+(subseg2.start),keys+(subseg2.start),(subseg2.end-subseg2.start+1));
-      subseg2.calbit(indexes+(subseg2.start),keys+(subseg2.start),(subseg2.end-subseg2.start+1));
-      q.pop();
-      if(tmpseg.totalbyte > subseg1.totalbyte+subseg2.totalbyte){
-          q.push(subseg1);
-          q.push(subseg2);
+      seg optseg1, optseg2;
+      optseg1.delta = optseg2.delta = NULL;
+      int min_byte = tmpseg.totalbyte;
+      for(int i = 1; i < seg_num; ++i) {
+          seg tmp_seg1, tmp_seg2;
+          tmp_seg1.start = tmpseg.start;
+          tmp_seg1.end = tmpseg.start + i * (tmpseg.end - tmpseg.start) / seg_num; //divide at 1/n , 2/n , ...respectively
+          tmp_seg2.start = tmp_seg1.end + 1;
+          tmp_seg2.end = tmpseg.end;
+          tmp_seg1.caltheta(indexes+(tmp_seg1.start),keys+(tmp_seg1.start),(tmp_seg1.end-tmp_seg1.start+1));
+          tmp_seg1.calbit(indexes+(tmp_seg1.start),keys+(tmp_seg1.start),(tmp_seg1.end-tmp_seg1.start+1));
+          tmp_seg2.caltheta(indexes+(tmp_seg2.start),keys+(tmp_seg2.start),(tmp_seg2.end-tmp_seg2.start+1));
+          tmp_seg2.calbit(indexes+(tmp_seg2.start),keys+(tmp_seg2.start),(tmp_seg2.end-tmp_seg2.start+1));
+          if(min_byte <= tmp_seg1.totalbyte+tmp_seg2.totalbyte) {
+              free(tmp_seg1.delta);
+              free(tmp_seg2.delta);
+          }
+          else {
+              if(optseg1.delta) free(optseg1.delta);
+              if(optseg2.delta) free(optseg2.delta);
+              optseg1 = tmp_seg1;
+              optseg2 = tmp_seg2;
+              min_byte = tmp_seg1.totalbyte+tmp_seg2.totalbyte;
+          }
+          //std::cout << "flag " << std::endl;
       }
-      else{
+
+      q.pop();
+      
+      if(min_byte == tmpseg.totalbyte){
           v.push_back(tmpseg);
       }
-      
+      else{
+          q.push(optseg1);
+          q.push(optseg2);
+          free(tmpseg.delta);
+      }  
   }
   free(indexes);
   free(keys);
   std::sort(v.begin(),v.end(),greater);
+
   for(int i=0;i<(int)v.size();i++){
       v[i].start += nvalue * block_size;
       v[i].end += nvalue * block_size;
+      
       int numbers = v[i].end - v[i].start+1;
-      std::cout<<cal_score_tmp(in+v[i].start-nvalue * block_size, numbers)<<std::endl;
       
       uint8_t * descriptor = (uint8_t*)malloc(numbers * sizeof(uint64_t)+30);
       uint8_t *out = descriptor;
@@ -141,14 +154,12 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
       total_byte += (out-descriptor);
       segment_index.push_back(v[i].start);
       block_start_vec.push_back(descriptor);
-  }
-  
-    
-    return res;
-    
+  }  
+  //std::cout << "encode successfully" << std::endl;
+    return res;   
 }
     
-uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
+uint32_t *decodeArray8(uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
 //start_index + bit + theta0 + theta1 + numbers + delta   
     uint32_t * tmpout = out;
     for(int i=0;i<(int)block_start_vec.size();i++){
@@ -181,11 +192,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
                 tmpout = read_all_bit_double(tmpin ,0,start_ind,numbers,maxerror,theta1,theta0, tmpout);
             }
 
-    }
-    
-        
-      
-    
+    }   
 
     return out;
 }
@@ -212,24 +219,17 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     memcpy(&numbers,tmpin,4);
     tmpin +=4;
 
-    //std::cout<<theta0<<" , "<<theta1<<std::endl;
-
-    //std::cout<< "indexing "<<l<<std::endl;
     uint32_t tmp;
     if(maxerror>=32){
          tmp = read_bit_default(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
     }
-    else{
-         
+    else{        
          tmp = read_bit_double(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
     }
     return tmp;
 
 }
-uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
-    
-    return 0;
-}
+
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
                    size_t nvalue) {
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
@@ -257,12 +257,10 @@ for(int i=0;i<(int)block_start_vec.size();i++){
     
 }
 std::string name() const {
-    return "piecewise_fanout"; 
+    return "piecewise_multi_fanout"; 
 }    
   
 };
-
-
 
 } // namespace FastPFor
 

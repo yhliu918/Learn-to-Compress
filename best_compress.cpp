@@ -1,14 +1,4 @@
-//
-// A simple example to get you started with the library.
-// You can compile and run this example like so:
-//
-//   make example
-//   ./example
-//
-//  Warning: If your compiler does not fully support C++11, some of
-//  this example may require changes.
-//
-
+// exhaustive hunt for codec selection
 #include "../headers/common.h"
 #include "../headers/codecfactory.h"
 #include "../headers/caltime.h"
@@ -24,7 +14,7 @@ int main() {
 
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../data/standard/books_200M_uint32.txt",std::ios::in); 
   //std::ofstream outfile("out.txt", std::ios::app);
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
@@ -104,13 +94,13 @@ int main() {
   }
   */
   int *times= new int[codec_name.size()];
-  for(int i=0;i<codec_name.size();i++){
+  for(int i=0;i<(int)codec_name.size();i++){
       times[i]=0;
   }
   for(int i=0;i<blocks;i++){
       times[method_vec[i]]++;
   }
-  for(int i=0;i<codec_name.size();i++){
+  for(int i=0;i<(int)codec_name.size();i++){
       std::cout<< "method "<<codec_name[i]<<" percentage "<<(double)times[i]/(double)blocks<<std::endl;
   }
   double compressrate = (totalsize)*100.0  / (4*N*1.0);
@@ -127,6 +117,7 @@ int main() {
       
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
+          std::cout<<"method "<<method_vec[i]<<std::endl;
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
           std::cout<<"something wrong! decompress failed"<<std::endl;
           flag = false;

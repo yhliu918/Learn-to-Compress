@@ -41,7 +41,7 @@ namespace Codecset
             uint8_t * tmp_out = out;
             uint32_t compress_f1_size = 0;
             uint8_t *descriptor_tmp = (uint8_t *)malloc(block_size * sizeof(uint64_t) * 2);
-            memset(descriptor_tmp,0,sizeof(descriptor_tmp));
+            //memset(descriptor_tmp,0,sizeof(descriptor_tmp));
             uint8_t *res = descriptor_tmp;
             res = codec1.encodeArray8(in , block_size, descriptor_tmp, nvalue);
             compress_f1_size = res-descriptor_tmp;

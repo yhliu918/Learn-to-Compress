@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef SPLINE_FIX_H_
 #define SPLINE_FIX_H_
 
@@ -64,13 +59,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     free(keys);
     int max_error =0;
     for(int i=0;i<(long long)length;i++){
-        double logx = 0;
-        if(i>0.01){
-            logx = log2(i);
-        }
-        else{
-            logx =0.0;
-        }
         int tmp = (long long) in[i] - (long long)(mylr.alpha+mylr.theta1*(double)i+mylr.theta2*(double)i*(double)i+mylr.theta3*(double)i*(double)i*(double)i);
         delta[i]=tmp;
         if(abs(tmp)>max_error){

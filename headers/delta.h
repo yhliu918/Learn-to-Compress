@@ -86,7 +86,7 @@ namespace Codecset
             ++in;
             if (b == 0)
             {
-                for (int i = 1; i < length; ++i)
+                for (uint32_t i = 1; i < length; ++i)
                 {
                     out[i] = out[0];
                 }
@@ -94,7 +94,7 @@ namespace Codecset
             }
             int lbit = 32;
             int mask = (1 << b) - 1;
-            for (int i = 1; i < length; ++i)
+            for (uint32_t i = 1; i < length; ++i)
             {
                 if (b <= lbit)
                 {
@@ -126,7 +126,7 @@ namespace Codecset
             if (b == 0 || l == 0)
                 return M;
             uint32_t recover = M;
-            for (int i = 1; i <= l; ++i)
+            for (uint32_t i = 1; i <= l; ++i)
             {
                 int dis = (b * (i-1)) / 32;
                 uint32_t *tmp_des = in + dis;

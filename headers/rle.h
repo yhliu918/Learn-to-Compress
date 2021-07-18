@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef RLE_H_
 #define RLE_H_
 
@@ -58,7 +53,9 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
     
     uint32_t * tmpin = reinterpret_cast<uint32_t*>(in);
-    uint32_t tmp = randomdecodeArray(tmpin,l,out,nvalue);
+
+    uint32_t tmp = 0;
+    tmp = randomdecodeArray(tmpin,l,out,nvalue);
     
     return tmp;
 
@@ -105,14 +102,14 @@ uint32_t *decodeArray( uint32_t *in, const size_t length,
     uint32_t * out =res;
     uint32_t total_pair=tmpin[0];
     tmpin++;
-    for(int i=0;i<total_pair;i++){
+    for(uint32_t i=0;i<total_pair;i++){
         uint32_t key = tmpin[0];
         
         tmpin++;
         uint32_t count = tmpin[0];
         tmpin++;
         
-        for(int j =0;j<count;j++){
+        for(uint32_t j =0;j<count;j++){
             out[0]=key;
             out++;
         }
@@ -128,11 +125,11 @@ uint32_t *decodeArray( uint32_t *in, const size_t length,
 }
 uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nvalue){
     uint32_t * tmpin =in;
-    uint32_t tmp;
+    uint32_t tmp = 0;
     uint32_t total_pair=tmpin[0];
     tmpin++;
     uint32_t totalcount =0;
-    for(int i=0;i<total_pair;i++){
+    for(uint32_t i=0;i<total_pair;i++){
         uint32_t key = tmpin[0];
         tmpin++;
         uint32_t count = tmpin[0];
@@ -145,6 +142,9 @@ uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nv
         
     }    
     return tmp;
+}
+uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+    return 0;
 }
 uint32_t get_block_nums(){
       return 1;

@@ -51,7 +51,7 @@ void split_to_folds(const MatrixXd& df, int n_fold, vector<vector<int>>& folds)
 	size_t fold_size = df.rows() / n_fold;
 
 	for (int i = 0; i < n_fold; i++)
-		for (int j = 0; j < fold_size; j++)
+		for (uint32_t j = 0; j < fold_size; j++)
 			folds[i].push_back(unique_random(unique, (int)df.rows()));
 }
 
@@ -63,7 +63,7 @@ int unique_random(const vector<int>& unique, int range)
 	{
 		num = rand() % range;
 		isOverlap = false;
-		for (int i = 0; i < unique.size(); i++)
+		for (int i = 0; i < (int)unique.size(); i++)
 			if (unique[i] == num)
 			{
 				isOverlap = true;
@@ -79,7 +79,7 @@ MatrixXd train_feature(const MatrixXd& df, const vector<vector<int>>& folds, int
 	MatrixXd feature(size, df.cols());
 
 	int i = 0;
-	for (int j = 0; j < folds.size(); j++)
+	for (int j = 0; j < (int)folds.size(); j++)
 	{
 		if (j == except)
 			continue;
@@ -99,7 +99,7 @@ VectorXd train_label(const VectorXd& labels, const vector<vector<int>>& folds, i
 	VectorXd train_labels(size, 1);
 
 	int i = 0;
-	for (int j = 0; j < folds.size(); j++)
+	for (int j = 0; j < (int)folds.size(); j++)
 	{
 		if (j == except)
 			continue;

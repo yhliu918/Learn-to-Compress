@@ -327,7 +327,7 @@ void dt::print_implementation(Node* node, int64_t width)
 	if (node->left == nullptr && node->right == nullptr)
 	{
 		cout << setw(width + 4) << " " << "Predict : {";
-		for (int i = 0; i < node->labels.size(); i++)
+		for (int i = 0; i < (int)node->labels.size(); i++)
 			cout << "'" << i << "' : " << node->labels[i] << ", ";
 		cout << "}" << endl;
 	}

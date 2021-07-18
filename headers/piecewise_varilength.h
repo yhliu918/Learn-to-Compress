@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef PIECEWISE_VARILENGTH_H_
 #define PIECEWISE_VARILENGTH_H_
 
@@ -50,7 +45,6 @@ int cal_log(int x){
 uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nvalue) {
     double *indexes = new double[length];
     double *keys = new double[length];
-    uint8_t *out = res;
     for(uint32_t i = 0; i < length; i++){
         indexes[i] = (double) i;
         keys[i] = (double) in[i];
@@ -85,7 +79,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
     vari_length+=  (cal_log(max_bit)-1)* block_size;
 
     int quantile_sum=0;
-    int threshold =0;
+    //int threshold =0;
     int compress_len =0;
     int compress_min= block_size*32;
     max_bit =0;
@@ -98,7 +92,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
         }
         if(compress_len<compress_min){
             compress_min = compress_len;
-            threshold=i;
+            //threshold=i;
         }
         if(quantile_sum==block_size){
             break ;
@@ -286,6 +280,9 @@ uint32_t *decodeArray( uint32_t *in, const size_t length,
 uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nvalue){
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return 1;
+}
+uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+    return 0;
 }
 uint32_t get_block_nums(){
 

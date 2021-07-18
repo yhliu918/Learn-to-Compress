@@ -1,9 +1,10 @@
-// selecting codec by predict
+// searching for hyper-parameter like block number
 
 #include "../headers/common.h"
 #include "../headers/codecfactory.h"
 #include "../headers/caltime.h"
 #include "../headers/lr.h"
+#include "../headers/search_hyper.h"
 #include "../headers/create_feature.h"
 #include "headers/microunit.h"
 #include "headers/easylogging++.h"
@@ -15,59 +16,80 @@ using namespace Eigen;
 
 INITIALIZE_EASYLOGGINGPP
 
-const int input_size = 5;
-const int number_classes = 4;
+using namespace Codecset;
+int main()
+{
+    std::vector<std::string> codec_name = {"piecewise_fix","nonlinear_fix","FOR","rle"};
+    std::vector<uint32_t> data;
+    std::ifstream srcFile("../data/wf/newman.txt", std::ios::in);
+    if (!srcFile)
+    {
+        std::cout << "error opening source file." << std::endl;
+        return 0;
+    }
+    while (1)
+    {
 
-const std::string weights = "../model_5dim.txt";
+        uint32_t next;
+        srcFile >> next;
+        if (srcFile.eof())
+        {
+            break;
+        }
+        data.push_back(next);
+    }
+    srcFile.close();
+    int N = data.size();
 
-
-int main() {
-  using namespace Codecset;
-
-  // We pick a CODEC
-
-
-	std::ifstream infile(weights, std::ios::in);
-  if(!infile) { 
-      std::cout << "error opening source file." << std::endl;
-      return 0;
-  }
-  std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/fb/fb-289000.txt",std::ios::in); 
-  //std::ofstream outfile("out.txt", std::ios::app);
-  if(!srcFile) { 
-      std::cout << "error opening source file." << std::endl;
-      return 0;
-  }
-  while(1){
-      
-      uint32_t next ;
-      srcFile >> next;
-      if(srcFile.eof()){break;}
-      data.push_back(next);
-
-  }
-  srcFile.close();
-  int N = data.size();
-  if (data.size() == 0) {
-    std::cout << "Empty vector" << std::endl;
-    return 0;
-  }
-  std::cout << "vector size = " << data.size() << std::endl;
-  std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-       << std::endl;
- 
-  // prepare classifier
-  DecisionTree model;
-  model.rebuild(infile,number_classes);
-	
+    if (data.size() == 0)
+    {
+        std::cout << "Empty vector" << std::endl;
+        return 0;
+    }
+    std::cout << "vector size = " << data.size() << std::endl;
+    std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
+              << std::endl;
+    int bsize[5] = {100, 200, 1000, 2000, 10000};
+    int vote[5] ={0};
+    int sample_time =1;
+    double sample_rate = 0.001;
+    int delta=0;
+    double start = getNow();
+    for(int i=0;i<(int)codec_name.size();i++){
+        codec_vote tmp = pick_block_size(bsize,5,sample_time,sample_rate,N,data.data(),codec_name[i]);
+        vote[tmp.select]+= 1.0/tmp.compression_rate;
+    }
+    int pos =0;
+    int max_vote=0;
+    for(int i=0;i<5;i++){
+        if(vote[i]>max_vote){
+            max_vote=vote[i];
+            pos =i;
+        }
+    }
+    int block_size = bsize[pos];
     
-  int blocks =1000;
-  int block_size = data.size()/blocks;
-  int delta =0;
-  
+    double end = getNow();
+    double search_time = end - start;
+
+    
+    int blocks = data.size() / block_size;
+    if (blocks * block_size < N)
+    {
+        blocks++;
+    } //handle with the last block, maybe < block_size
+    std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
+    const int input_size = 5;
+    const int number_classes = 4;
+
+    const std::string weights = "../model_5dim.txt";
+    std::ifstream infile(weights, std::ios::in);
+    // prepare classifier
+    DecisionTree model;
+    model.rebuild(infile,number_classes);
+
+//************************************ predict cocec ************************
   std::vector<IntegerCODEC*> codec_fac;
-  std::vector<std::string> codec_name={"piecewise_fix","nonlinear_fix","FOR","rle"};
   for(int i=0;i<(int)codec_name.size();i++){
       IntegerCODEC &codec = *CODECFactory::getFromName(codec_name[i]);
       codec.init(blocks,block_size,delta);
@@ -77,8 +99,8 @@ int main() {
   std::vector<uint8_t*> block_start_vec;
   std::vector<int> method_vec;
   int totalsize = 0;
-  //outfile<< "len" <<"    "<<"avg"<<"    "<<"min"<<"    "<<"max"<<"    "<<"num_distinct"<<"    "<<"rl"<<"    label"<<std::endl;
-  double start = getNow();
+  
+   start = getNow();
   double totaltime_realcom=0;
   for(int i=0;i<blocks;i++){
 
@@ -86,12 +108,10 @@ int main() {
     seg.cal_feature(data.data()+(i*block_size),block_size);
     
     Eigen::MatrixXd tmp_feature = Eigen::MatrixXd::Zero(1 , input_size);
-    //std::cout<<seg.logdelta<<" "<<seg.quarter<<" "<<seg.half<<" "<<seg.threequarter<<" "<<seg.rl<<std::endl;
     tmp_feature<<seg.logdelta,seg.quarter,seg.half,seg.threequarter,seg.rl;
-    VectorXd pred(tmp_feature.rows());
+    Eigen::VectorXd pred(tmp_feature.rows());
     pred = model.predict( tmp_feature);
     size_t class_id=pred[0];
-    //std::cout<<"class is "<<class_id<<std::endl;
     
    
     double start2 = getNow();
@@ -101,15 +121,15 @@ int main() {
     int tmp_size = (res-descriptor);
     double end2 = getNow();
     totaltime_realcom +=(end2-start2);
-   //seg.write_feature(outfile,method);
+   
     method_vec.push_back(class_id);
     block_start_vec.push_back(descriptor);
     totalsize +=tmp_size;   
  
   }
-  //outfile.close();
-   double end = getNow();
+    end = getNow();
    double totaltime = end -start;
+   std::cout << "search time / compress time: " << std::setprecision(10) << search_time/totaltime<<  std::endl;
    std::cout << "compress speed: " << std::setprecision(10) << data.size()/(totaltime*1000) <<  std::endl;
    std::cout << "real compress speed: " << std::setprecision(10) << data.size()/(totaltime_realcom*1000) <<  std::endl;
   /*
@@ -130,6 +150,7 @@ int main() {
   double compressrate = (totalsize)*100.0  / (4*N*1.0);
   std::cout << "total compression rate:" << std::setprecision(4)<< compressrate << std::endl;
 
+  bool flag = true;
   std::vector<uint32_t> recover(data.size());
   totaltime =0.0;
   std::cout<<"decompress all!"<<std::endl;
@@ -137,7 +158,7 @@ int main() {
   for(int i=0;i<blocks;i++){
       //std::cout<<"block "<<(int)i<<" method "<<codec_name[method_vec[(int)i]]<<std::endl;
       codec_fac[method_vec[i]]->decodeArray8(block_start_vec[i], block_size, recover.data()+i*block_size, i);
-      /*
+      
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -150,7 +171,7 @@ int main() {
        if(!flag){
           break;
        }
-       */
+       
 
   }
    end = getNow();
@@ -172,7 +193,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
       uint32_t tmpvalue = codec_fac[method_vec[(int)i/block_size]]->randomdecodeArray8(block_start_vec[(int)i/block_size], i%block_size, buffer.data(), i/block_size);
        mark+=tmpvalue;
       
-      /*
+      
        if(data[i]!=tmpvalue){
         std::cout<<"num: "<<i<< "true is: "<<data[i]<<" predict is: "<<tmpvalue<<std::endl;
         flag = false;
@@ -182,7 +203,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     if(!flag){
         break;
     }
-      */
+      
     }
        end = getNow();
       randomaccesstime+=(end-start);
@@ -195,8 +216,4 @@ std::cout << "random decoding speed: " << std::setprecision(10)
    for(int i=0;i<(int)block_start_vec.size();i++){
        free(block_start_vec[i]);
    }
-
-
-
-  
 }

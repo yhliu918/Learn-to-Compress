@@ -55,7 +55,7 @@ namespace Codecset
             uint8_t *out = res;
             int *delta = new int[length];
             int max_delta=0;
-            for(int i=0;i<length-1;i++){
+            for(uint32_t i=0;i<length-1;i++){
                 delta[i] = in[i+1]-in[i];
                 if(abs(delta[i])>max_delta){
                     max_delta =  abs(delta[i]);
@@ -95,7 +95,7 @@ namespace Codecset
             in+=4;
             int *delta = new int[length];
             if(maxerror==0){
-                for(int i=0;i<length;i++){
+                for(uint32_t i=0;i<length;i++){
                     out[i] = code;
                 }
                 return out;
@@ -111,7 +111,7 @@ namespace Codecset
             }
             int delta_up_till_now=0;
             out[0]=code;
-            for(int i=1;i<length;i++){
+            for(uint32_t i=1;i<length;i++){
                 delta_up_till_now+=delta[i];
                 out[i] = code+delta_up_till_now;
 
@@ -121,7 +121,12 @@ namespace Codecset
         }
         uint32_t randomdecodeArray8(uint8_t *in, const size_t l, uint32_t *out, size_t nvalue)
         {
-            std::cout<<"This method doesn't support random access."<<std::endl;
+            out = decodeArray8(in, block_size, out,nvalue);
+
+            return out[l];
+        }
+        uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+    
             return 0;
         }
         uint32_t get_block_nums()

@@ -40,10 +40,7 @@ public:
 
     std::pair<std::function<double(double)>,
       std::function<double(double)> > *pair;
-    bool ret_val = utils::ActivationFunctionsManager::Singleton().
-      GetActivationFunctionPair(activation_function,
-                                &pair);
-    assert(ret_val);
+
     m_activation_function = (*pair).first;
     m_deriv_activation_function = (*pair).second;
     m_activation_function_str = activation_function;
@@ -164,10 +161,7 @@ public:
 
     std::pair<std::function<double(double)>,
       std::function<double(double)> > *pair;
-    bool ret_val = utils::ActivationFunctionsManager::Singleton().
-      GetActivationFunctionPair(m_activation_function_str,
-                                &pair);
-    assert(ret_val);
+
     m_activation_function = (*pair).first;
     m_deriv_activation_function = (*pair).second;
     

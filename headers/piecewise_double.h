@@ -1,9 +1,4 @@
-/**
- * This code is released under the
- * Apache License Version 2.0 http://www.apache.org/licenses/.
- *
- * (c) Daniel Lemire, http://lemire.me/en/
- */
+
 #ifndef PIECEWISE_DOUBLE_H_
 #define PIECEWISE_DOUBLE_H_
 
@@ -316,7 +311,7 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     double * theta1;
     uint8_t maxerror;
     uint32_t * start_ind;
-    uint32_t * numbers;
+    //uint32_t * numbers;
         
     start_ind = reinterpret_cast<uint32_t*>(tmpin);
     tmpin+=4;
@@ -326,7 +321,7 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     tmpin+=4;
     theta1 = reinterpret_cast<double*>(tmpin);
     tmpin+=sizeof(double);
-    numbers = reinterpret_cast<uint32_t*>(tmpin);
+    //numbers = reinterpret_cast<uint32_t*>(tmpin);
     tmpin +=4;
     
     uint32_t tmp = read_bit_double(tmpin ,maxerror , l-start_ind[0],theta1[0],theta0[0],0);
