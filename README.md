@@ -1,10 +1,17 @@
 # Learn-to-Compress
-To have a quick start, you can run to download and generate data needed
+To install dependent packages, run the following script if you have root access:
+```
+./scripts/setup_dependencies.sh
+```
+
+To have a quick start, you can run following commands to download and generate data needed.
 ```
 mkdir data && cd data
-wget -O - https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/JGVF9A/5YTV8K | zstd -d > data/books_uint32_200M
-python gen_norm.py
-
+wget -O ori_file https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/JGVF9A/5YTV8K
+zstd -d ori_file -o books_200M_uint32
+rm ori_file
+cd ../
+python ./scripts/gen_norm.py
 ```
 Then, you can run the command (Need -std=c++11 supported)
 ```
