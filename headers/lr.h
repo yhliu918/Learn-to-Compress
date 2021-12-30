@@ -1,7 +1,7 @@
 
 #ifndef LR_H_
 #define LR_H_
-
+#include "bignumber.h"
 #include "common.h"
 #include "Utils.h"
 #include<math.h>

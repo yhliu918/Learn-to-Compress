@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <boost/multiprecision/gmp.hpp>
+typedef boost::multiprecision::mpf_float long_float;
+typedef boost::multiprecision::mpz_int long_int;
 #ifndef _WIN32
 #include <sys/mman.h>
 #include <sys/resource.h>

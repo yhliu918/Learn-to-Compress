@@ -49,8 +49,8 @@ struct seg_feature{
 
     }
     
-    void write_feature(std::ofstream &ff,int method){
-        ff<<logdelta<<"    "<<quarter<<"    "<<half<<"    "<<threequarter<<"    "<<rl<<"    "<<method<<std::endl;
+    void write_feature(std::ofstream &ff,int method, double percent, double compressrate){
+        ff<<logdelta<<"    "<<quarter<<"    "<<half<<"    "<<threequarter<<"    "<<rl<<"    "<<method<<"    "<<percent<<"    "<<compressrate<<std::endl;
         
     }
 };

@@ -26,7 +26,7 @@ int main() {
   IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fanout");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/books_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("/root/Learn-to-Compress/data/wf/wiki.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;
@@ -50,8 +50,11 @@ int main() {
        << std::endl;
  
     
-  int blocks = 100000;
-  int block_size = data.size()/blocks;
+  int block_size = 6300;
+  int blocks = data.size()/block_size;
+  if(block_size*blocks<N){
+    blocks++;
+  }
   codec.init(blocks,block_size,0);
   int totalsize = 0;
   uint8_t * res = NULL;
@@ -65,12 +68,12 @@ int main() {
   
   
   bool flag =true;
-  std::vector<uint32_t> recover(data.size());
+  uint32_t * recover = new uint32_t[data.size()];
   double totaltime =0.0;
   std::cout<<"decompress all!"<<std::endl;
    double start = getNow();
    
-    codec.decodeArray8(res, block_size, recover.data(), N);
+    codec.decodeArray8(res, block_size, recover, N);
       
       for(int j=0;j<N;j++){
         if(data[j]!=recover[j]){
@@ -92,7 +95,7 @@ std::cout << "all decoding time per int: " << std::setprecision(8)
      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "all decoding speed: " << std::setprecision(10)
      << data.size()/(totaltime*1000) <<  std::endl;
-  recover.clear();
+
     
 
   std::cout<<"random access decompress!"<<std::endl; 

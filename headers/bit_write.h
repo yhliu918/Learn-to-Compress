@@ -23,7 +23,63 @@
 extern "C" {
 #endif
 //given a bit number l(how does it save),should return a vector of numbers
-    
+uint8_t *write_delta_s(int *in, uint8_t *out, uint8_t l, int numbers, int size)
+{
+    uint64_t code = 0;
+    int occupy = 0;
+    int endbit = (l * numbers);
+    int end = 0;
+    int *tmpin = in;
+    if (endbit % 8 == 0)
+    {
+        end = endbit / 8;
+    }
+    else
+    {
+        end = (int)endbit / 8 + 1;
+    }
+    uint8_t *last = out + end;
+    uint64_t left_val = 0;
+
+    while (out <= last)
+    {
+        while (occupy < 8)
+        {
+            if (tmpin >= in + size)
+            {
+                occupy = 8;
+                break;
+            }
+
+            bool sign = 1;
+            int tmpnum = tmpin[0];
+            if (tmpnum <= 0)
+            {
+                sign = 0;
+                tmpnum = -tmpnum;
+            }
+
+            uint64_t value1 = ((tmpnum & ((1L << (l - 1)) - 1)) + (sign << (l - 1)));
+            code += (value1 << occupy);
+            occupy += l;
+
+            tmpin++;
+        } //end while
+        while (occupy >= 8)
+        {
+            left_val = code >> 8;
+            //std::cout<<code<<std::endl;
+            code = code & ((1L << 8) - 1);
+            occupy -= 8;
+            out[0] = unsigned((uint8_t)code);
+            code = left_val;
+            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
+            out++;
+        }
+    }
+    return out;
+}
+
 uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     uint64_t code =0;
     int occupy = 0;
@@ -40,9 +96,9 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
     uint64_t left_val = 0;
 
     while(out<=last){
-        
+
         while(occupy<8){
-            
+
             bool sign = 1;
             int tmpnum = tmpin[0];
             if (tmpnum <= 0){
@@ -55,7 +111,7 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
             occupy += l;
 
             tmpin++;
-            
+
         }//end while
         while(occupy>=8){
             left_val = code >> 8;
@@ -68,9 +124,9 @@ uint8_t* write_delta(int *in,uint8_t* out, uint8_t l, int numbers){
             out++;
         }
     }
-    
 
-    
+
+
     return out;
 
 }
@@ -91,9 +147,9 @@ uint32_t* write_delta32(int *in,uint32_t* out, uint8_t l, int numbers){
     uint64_t left_val = 0;
 
     while(out<=last){
-        
+
         while(occupy<32){
-            
+
             bool sign = 1;
             int tmpnum = tmpin[0];
             if (tmpnum <= 0){
@@ -106,7 +162,7 @@ uint32_t* write_delta32(int *in,uint32_t* out, uint8_t l, int numbers){
             occupy += l;
 
             tmpin++;
-            
+
         }//end while
         while(occupy>=32){
             left_val = code >> 32;
@@ -119,9 +175,9 @@ uint32_t* write_delta32(int *in,uint32_t* out, uint8_t l, int numbers){
             out++;
         }
     }
-    
 
-    
+
+
     return out;
 
 }
@@ -140,17 +196,71 @@ uint8_t* write_delta_default(uint32_t *in,uint8_t* out, uint8_t l, int numbers){
         out++;
     }
 
-    
+
     return out;
 
 }
+
+uint8_t *write_string_delta_string(long_int *in, uint8_t *out, uint32_t l, int numbers)
+{
+    long_int code = 0;
+    int occupy = 0;
+    uint64_t endbit = (l * numbers);
+    int end = 0;
+    long_int *tmpin = in;
+    if (endbit % 8 == 0)
+    {
+        end = endbit / 8;
+    }
+    else
+    {
+        end = (int)endbit / 8 + 1;
+    }
+    uint8_t *last = out + end;
+    long_int left_val = 0;
+
+    while (out <= last)
+    {
+        while (occupy < 8)
+        {
+            if (tmpin >= in + numbers)
+            {
+                occupy = 8;
+                break;
+            }
+
+            bool sign = 1;
+            long_int tmpnum = tmpin[0];
+            if (tmpnum <= 0)
+            {
+                sign = 0;
+                tmpnum = -tmpnum;
+            }
+            long_int value1 = ((tmpnum & (((long_int)1 << (l - 1)) - 1)) + (sign << (l - 1)));
+            code += (value1 << occupy);
+            occupy += l;
+
+            tmpin++;
+        } //end while
+        while (occupy >= 8)
+        {
+            left_val = code >> 8;
+            //std::cout<<code<<std::endl;
+            code = code & (((long_int)1 << 8) - 1);
+            uint8_t tmp_char = code.convert_to<uint8_t>();
+            occupy -= 8;
+            out[0] = tmp_char;
+            code = left_val;
+            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
+            out++;
+        }
+    }
+    return out;
+}
+
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif 
-
-
-
-
+#endif

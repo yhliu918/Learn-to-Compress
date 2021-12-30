@@ -43,7 +43,7 @@ double cal_score_tmp(uint32_t* a, int N){
   free(b);
   //std::cout<<"score "<<score<<std::endl;
   return 1-score;
-} 
+}
 class piecewise : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
@@ -53,7 +53,7 @@ public:
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
   using IntegerCODEC::init;
-   
+
   std::vector<uint8_t*> block_start_vec;
   std::vector<uint32_t> segment_index;
   uint32_t total_byte =0;
@@ -66,8 +66,8 @@ void init( int blocks,  int blocksize,int delta){
       block_num=blocks;
       block_size=blocksize;
       maxerror = delta;
-    
-}   
+
+}
 
 float epsilon = 0.;
 bool gt(float a, float b){
@@ -81,13 +81,13 @@ uint32_t lower_bound( uint32_t v,uint32_t len)
     uint32_t y=len-1;
     while(x <= y)
     {
-    
+
         m = x+(y-x)/2;
         if(v<segment_index[m]) y = m-1;
         else x = m+1;
     }
     return y;
-   
+
 }
 
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
@@ -95,7 +95,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     std::vector<uint32_t> indexes;
     for(uint32_t i = 0; i < nvalue; i++){
         indexes.push_back(i);
-    }   
+    }
     float high_slope = (float)INF;
     float low_slope = 0.;
     long long origin_key = in[0];
@@ -107,8 +107,8 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         int id = indexes[i];
         float tmp_point_slope = ((key - origin_key)+0.0) / ((id - origin_index)+0.0);
 
-        
-        
+
+
         if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope &&(id -origin_index)<=1000000 ){
         //if (gt(tmp_point_slope, low_slope) && gt(high_slope, tmp_point_slope)){
             float tmp_high_slope = ((key + maxerror - origin_key)+0.0) / ((id - origin_index)+0.0);
@@ -118,7 +118,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
                 tmp_low_slope=0.0;
             }
             //std::cout<<tmp_high_slope<<","<<tmp_low_slope<<std::endl;
-            
+
            if(tmp_high_slope<=high_slope){
            //if(gt(high_slope, tmp_high_slope)){
                 high_slope = tmp_high_slope;
@@ -128,10 +128,10 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
                 low_slope = tmp_low_slope;
             }
             end_index = id;
-            
+
         }
         else{
-            
+
             float slope = (high_slope + low_slope) / 2.;
             int max_error = 0;
 
@@ -140,34 +140,34 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             }
             int seg_len = end_index - origin_index + 1;
             int * delta = static_cast<int *>(malloc(seg_len * sizeof(int)));
-            
-            
+
+
             for (int j = origin_index; j <= end_index; j++ ){
                 long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
                 long long truth = (long long)in[j];
                 int tmp = abs(predict-truth);
-                 
+
                 delta[j-origin_index] = (int) truth-predict;
                 total_index++;
 
                 if (tmp > max_error){
                     max_error = tmp;
-                    
+
                 }
             }
-            std::cout<<cal_score_tmp(in+origin_index,(end_index - origin_index + 1))<<std::endl;
+            //std::cout<<cal_score_tmp(in+origin_index,(end_index - origin_index + 1))<<std::endl;
             int tmp_bit = bits(max_error)+1;
-            
+
             uint8_t * descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)+30);
 
             uint8_t *out = descriptor;
-            
+
             memcpy(out,&origin_index,sizeof(origin_index));
             out+=sizeof(origin_index);
-            
+
             out[0]=(uint8_t)tmp_bit;
             out++;
-            
+
             uint32_t theta0 =  (long long)in[origin_index] ;
             uint32_t numbers = (end_index - origin_index + 1);
             memcpy(out,&theta0,sizeof(theta0));
@@ -179,52 +179,52 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             out+=sizeof(numbers);
 
             //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
-            
-            out=write_delta(delta, out, tmp_bit, numbers);
+
+            out=write_delta_s(delta, out, tmp_bit, numbers,seg_len);
             free(delta);
-            
-           
+
+
             descriptor=(uint8_t*)realloc(descriptor, (out-descriptor));
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
-            
+
             total_byte +=(out - descriptor);
             //std::cout<<"total_byte"<<total_byte<<std::endl;
-            
+
             //std::cout<<"tmp_bit"<<unsigned(tmp_bit)<<" numbers "<<numbers<<" slope "<<slope<<std::endl;
             //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
             high_slope = (float)INF;
             low_slope = 0.0;
             origin_index = id;
             origin_key = key;
-            end_index = id;   
-            
-            
+            end_index = id;
+
+
         }
 
     }
-    
+
     float slope = (high_slope + low_slope) / 2.;
     if (end_index == origin_index){
         slope = 1.;
     }
-    
+
     int seg_len = end_index - origin_index + 1;
     int * delta = static_cast<int *>(malloc(seg_len * sizeof(int)));
     int max_error = 0;
     for (int j = origin_index; j <= end_index; j++ ){
         long long  predict = (long long)in[origin_index] + (long long)(slope*(float)(j-origin_index));
         long long truth = (long long)in[j];
-        int tmp = abs(predict-truth);     
+        int tmp = abs(predict-truth);
         delta[j-origin_index] = (int) truth-predict;
 
         total_index++;
         if (tmp > max_error){
-            max_error = tmp;   
-            
+            max_error = tmp;
+
         }
     }
-    
+
     uint8_t tmp_bit = 0;
     if(max_error > 0.01){
         tmp_bit = ceil(log2(max_error))+2;
@@ -233,16 +233,16 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
         tmp_bit = 2;
     }
 
-    
+
     uint8_t * descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)+30);
     uint8_t *out = descriptor;
     uint32_t start_ind = origin_index;
     memcpy(out,&start_ind,sizeof(start_ind));
     out+=sizeof(start_ind);
-            
+
     out[0]=(uint8_t)tmp_bit;
     out++;
-            
+
     uint32_t theta0 = (long long)in[origin_index] ;
     uint32_t numbers = (end_index - origin_index + 1);
     memcpy(out,&theta0,sizeof(theta0));
@@ -251,8 +251,8 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     out+=sizeof(slope);
     memcpy(out,&numbers,sizeof(numbers));
     out+=sizeof(numbers);
-    
-    out=write_delta(delta, out, tmp_bit, numbers);
+
+    out=write_delta_s(delta, out, tmp_bit, numbers, seg_len);
     free(delta);
 
     descriptor=(uint8_t*)realloc(descriptor, (out-descriptor));
@@ -263,11 +263,11 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 
 
     return res;
-    
+
 }
-    
+
 uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
-//start_index + bit + theta0 + theta1 + numbers + delta   
+//start_index + bit + theta0 + theta1 + numbers + delta
     uint32_t * tmpout = out;
     for(int i=0;i<(int)block_start_vec.size();i++){
         uint8_t * this_block = block_start_vec[i];
@@ -277,7 +277,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         uint8_t maxerror;
         uint32_t start_ind;
         uint32_t numbers;
-        
+
         memcpy(&start_ind,tmpin,4);
         tmpin+=4;
         memcpy(&maxerror,tmpin,1);
@@ -296,17 +296,17 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         if(numbers ==1){
             tmpout[0]=theta0;
             tmpout++;
-            
-    
+
+
         }
         else{
             tmpout=read_all_bit(tmpin ,0,start_ind,numbers,maxerror,theta1,theta0, tmpout);
         }
     }
-    
-        
-      
-    
+
+
+
+
 
     return out;
 }
@@ -321,7 +321,7 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     uint8_t maxerror;
     uint32_t start_ind;
     uint32_t numbers;
-        
+
     memcpy(&start_ind,tmpin,4);
     tmpin+=4;
     memcpy(&maxerror,tmpin,1);
@@ -334,12 +334,12 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     tmpin +=4;
     //std::cout<< "indexing "<<l<<std::endl;
     uint32_t tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
-    
+
     return tmp;
 
 }
 uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
-    
+
     return 0;
 }
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
@@ -359,17 +359,17 @@ uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nv
 uint32_t get_block_nums(){
     std::cout<<"Total block num is "<<block_start_vec.size()<<std::endl;
      return total_byte;
- }    
+ }
 void destroy(){
 for(int i=0;i<(int)block_start_vec.size();i++){
        free(block_start_vec[i]);
    }
-    
+
 }
 std::string name() const {
-    return "piecewise"; 
-}    
-  
+    return "piecewise";
+}
+
 };
 
 

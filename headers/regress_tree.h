@@ -26,7 +26,7 @@ struct Node_reg
 class RegressionTree
 {
 private:
-	Node_reg* root;
+	Node_reg* root= nullptr;
 public:
 	RegressionTree();
 	~RegressionTree();
@@ -79,7 +79,8 @@ namespace rt
 
 RegressionTree::RegressionTree() : root(nullptr) {}
 
-RegressionTree::~RegressionTree() { delete root; }
+RegressionTree::~RegressionTree() { //delete root; 
+}
 
 void RegressionTree::fit(const MatrixXd& X, const VectorXd& Y)
 {

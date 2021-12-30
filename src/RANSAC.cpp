@@ -115,7 +115,7 @@ int RANSAC::compute(lr& mylr, double x[], double y[],int numbers,int num_for_est
       else
       {
         delete [] cur_inti_sub_set_indexs;
-        --iterations;  
+        //--iterations;  
       }
 
       ++iterations;

@@ -87,10 +87,12 @@ void split_line(string& line, MatrixXd& df, int row, string& label)
 void make_class_vector(const vector<string>& labelStr, VectorXd& labels)
 {
 	vector<string> labelUniq;
-	int label;
+	double label;
 	for (int i = 0; i < labels.size(); i++)
 	{
-		label = string_label_to_int(labelStr[i], labelUniq);
+		
+		label = atof(labelStr[i].c_str());
+		
 
 		if (label == -1)
 		{

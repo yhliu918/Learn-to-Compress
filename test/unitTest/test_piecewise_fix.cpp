@@ -26,7 +26,7 @@ int main() {
   IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/wf/newman.txt",std::ios::in); 
+  std::ifstream srcFile("/root/Learn-to-Compress/data/wf/wiki.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;
@@ -50,7 +50,7 @@ int main() {
        << std::endl;
  
     
-  int blocks =10000;
+  int blocks =2076;
   int block_size = data.size()/blocks;
   blocks = data.size()/block_size;
   if(blocks*block_size<N){blocks++;} //handle with the last block, maybe < block_size
@@ -82,12 +82,9 @@ int main() {
   std::cout<<"decompress all!"<<std::endl;
    double start = getNow();
   for(int i=0;i<blocks;i++){
-      int block_length = block_size;
-      if(i==blocks-1){
-        block_length = N - (blocks-1)*block_size;
-      }
-      codec.decodeArray8(block_start_vec[i], block_length, recover.data()+i*block_size, i);
-      
+
+      codec.decodeArray8(block_start_vec[i], block_size, recover.data()+i*block_size, i);
+      /*
       for(int j=0;j<block_length;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -100,7 +97,7 @@ int main() {
        if(!flag){
           break;
        }
-       
+       */
 
   }
       double end = getNow();

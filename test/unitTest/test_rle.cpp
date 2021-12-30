@@ -29,7 +29,7 @@ int main() {
 
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/wf/wiki.txt",std::ios::in); 
+  std::ifstream srcFile("/root/Learn-to-Compress/data/wf/wiki.txt",std::ios::in); 
   if(!srcFile) { 
       std::cout << "error opening source file." << std::endl;
       return 0;
@@ -53,7 +53,7 @@ int main() {
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
        << std::endl;
 
-  int blocks=100;
+  int blocks=2076;
   int delta =0;
   int block_size = data.size()/blocks;
   bool flag = true;
@@ -61,12 +61,17 @@ int main() {
   std::vector<uint8_t*> block_start_vec;
   int totalsize=0;
   for(int i=0;i<blocks;i++){
-    uint8_t * descriptor = (uint8_t*)malloc(block_size * sizeof(uint64_t)+1024);
+    int block_length = block_size;
+    if(i==blocks-1){
+      block_length = N - (blocks-1)*block_size;
+    }
+    uint8_t * descriptor = (uint8_t*)malloc(block_length * sizeof(uint64_t));
     uint8_t * res = descriptor;
-    res = codec.encodeArray8(data.data()+i*block_size,block_size, descriptor,N);
-    descriptor = (uint8_t*)realloc(descriptor, (res-descriptor)*sizeof(uint8_t));
+    res = codec.encodeArray8(data.data()+(i*block_size),block_length ,descriptor,i);
+    descriptor = (uint8_t*)realloc(descriptor, (res-descriptor));
     block_start_vec.push_back(descriptor);
     totalsize += (res-descriptor);
+ 
   }
 
   double compressrate = (totalsize)*100.0  / (4*N*1.0);
@@ -77,11 +82,15 @@ int main() {
   std::cout<<"decompress all!"<<std::endl;
   double start = getNow();
   for(int i=0;i<blocks;i++){
-      codec.decodeArray8(block_start_vec[i], block_size, recover.data()+i*block_size, i);
+    int block_length = block_size;
+    if(i==blocks-1){
+        block_length = N - (blocks-1)*block_size;
+      }
+      codec.decodeArray8(block_start_vec[i], block_length, recover.data()+i*block_size, i);
       
-      for(int j=0;j<block_size;j++){
-        if(data[j+i*block_size]!=recover[j+i*block_size]){
-          std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
+      for(int j=0;j<block_length;j++){
+        if(data[j+i*block_length]!=recover[j+i*block_length]){
+          std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_length]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
           std::cout<<"something wrong! decompress failed"<<std::endl;
           flag = false;
           break;

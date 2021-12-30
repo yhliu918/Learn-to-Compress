@@ -62,16 +62,16 @@ template <int record_bytes> struct Dataset : public DatasetBase {
     assert(sparsity <= 1.0);
 
     std::vector<Key> v(keys.size());
-    long range = v.size() / sparsity;
+    long range = v.size() / sparsity; //sparsity ++, range --
     assert(range >= v.size());
 
     std::mt19937_64 rng(seed);
-    std::uniform_int_distribution<Key> dist(1, range + 1);
+    std::uniform_int_distribution<Key> dist(1, range + 1); // a uniform distribution between 1 & rage+1
     std::set<Key> skips;
     while (skips.size() + v.size() < range)
       skips.insert(dist(rng));
-    for (Key k = 1, i = 0; k < range + 1; k++)
-      if (skips.count(k) == 0)
+    for (Key k = 1, i = 0; k < range + 1; k++) // generate what to be skiped, if not in skip, then we have this
+      if (skips.count(k) == 0) 
         v[i++] = k;
     return v;
   }

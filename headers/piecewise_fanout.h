@@ -62,9 +62,9 @@ uint32_t lower_bound( uint32_t v,uint32_t len)
 
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
 
-  double *indexes = new double[block_size];
-  double *keys = new double[block_size];
-  for(int i = 0; i < block_size; i++){
+  double *indexes = new double[length];
+  double *keys = new double[length];
+  for(int i = 0; i < length; i++){
       indexes[i] = (double) i  ;
       keys[i] = (double) in[i];
   }
@@ -73,9 +73,9 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     
   seg initseg;
   initseg.start = 0;
-  initseg.end = block_size-1;
-  initseg.caltheta(indexes,keys,block_size);
-  initseg.calbit(indexes,keys,block_size);
+  initseg.end = length-1;
+  initseg.caltheta(indexes,keys,length);
+  initseg.calbit(indexes,keys,length);
   q.push(initseg);
     
   while(!q.empty()){
@@ -110,9 +110,9 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
       v[i].start += nvalue * block_size;
       v[i].end += nvalue * block_size;
       int numbers = v[i].end - v[i].start+1;
-      std::cout<<cal_score_tmp(in+v[i].start-nvalue * block_size, numbers)<<std::endl;
+      //std::cout<<cal_score_tmp(in+v[i].start-nvalue * block_size, numbers)<<std::endl;
       
-      uint8_t * descriptor = (uint8_t*)malloc(numbers * sizeof(uint64_t)+30);
+      uint8_t * descriptor = (uint8_t*)malloc(numbers * sizeof(uint64_t)+1024);
       uint8_t *out = descriptor;
             
       memcpy(out,&(v[i].start),sizeof(v[i].start));
@@ -130,7 +130,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 
       if(v[i].tmpbit>=32){
          
-         out = write_delta_default(in+v[i].start-nvalue*block_size,out,32,numbers);
+         out = write_delta_default(in+v[i].start-nvalue*length,out,32,numbers);
       }
       else{
         out=write_delta(v[i].delta, out, v[i].tmpbit, numbers);
@@ -140,6 +140,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
       
       total_byte += (out-descriptor);
       segment_index.push_back(v[i].start);
+      descriptor = (uint8_t*)realloc(descriptor,(out-descriptor));
       block_start_vec.push_back(descriptor);
   }
   

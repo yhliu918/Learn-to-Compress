@@ -40,6 +40,8 @@ double evaluate_model(T& model, const MatrixXd& df, const VectorXd& labels, int 
 	return accuracy / n_fold;
 }
 
+
+
 void split_to_folds(const MatrixXd& df, int n_fold, vector<vector<int>>& folds)
 // folds have n_fold vectors and each vector contains the indices of rows
 {
@@ -148,4 +150,14 @@ double calc_accuracy(const VectorXd& actual, const VectorXd& predicts)
 		if (actual[i] == predicts[i])
 			correct++;
 	return correct / actual.size();
+}
+
+double calc_mse(const VectorXd& actual, const VectorXd& predicts)
+{
+	double sum = 0;
+	for (int i = 0; i < actual.size(); i++){
+		sum += std::pow(actual[i]-predicts[i],2);
+	}
+		
+	return sum / actual.size();
 }

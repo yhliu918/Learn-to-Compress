@@ -20,6 +20,8 @@
 #include "piecewise_ransac.h"
 #include "piecewise_double.h"
 #include "piecewise_outlier_detect.h"
+#include "ransac_outlier_detect.h"
+#include "ransac_fix.h"
 #include "piecewise_varilength.h"
 #include "rle.h"
 #include "nonlinear_fix.h"
@@ -96,7 +98,8 @@ static inline CodecMap initializefactory() {
   map["piecewise_fix_pack"]= new piecewise_fix_pack();
   map["nonlinear_fix"]= new nonlinear_fix();
   //map["spline_fix"]= new spline_fix();
-  
+  map["ransac_fix"]= new ransac_fix();
+  map["ransac_outlier_detect"]= new ransac_outlier_detect();
   map["piecewise_ransac"]= new piecewise_ransac();
   map["piecewise_outlier_detect"] = new piecewise_outlier_detect();
   map["piecewise_fanout"]= new piecewise_fanout();

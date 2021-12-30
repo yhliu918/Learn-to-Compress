@@ -84,7 +84,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
         
         compress_len = quantile_sum * i + (block_size-quantile_sum)*32;
         if(quantile_sum==block_size){
-            compress_len = quantile_sum * i -temp*12*8-12*8;
+            compress_len = quantile_sum * i -temp*12*8-12*8;  
             max_bit = i;
         }
         if(compress_len<compress_min){
@@ -95,8 +95,11 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
             break ;
         }
     }
+        free(indexes);
+        free(keys);
+        free(counter);
+// GONNA USE PIECEWISE, BECAUSE NOT A SINGLE OUTLIER OCCURS
 
-// GONNA USEPIECEWISE, BECAUSE NOT A SINGLE OUTLIER OCCURS
     if(threshold == max_bit){
         int tmp_bit = bits(max_error)+1;
         total_usedData+=block_size;
@@ -116,10 +119,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
         else{
             out = write_delta(delta, out, tmp_bit, length);
         }
-        free(indexes);
-        free(keys);
         free(delta);
-        free(counter);
         return out;
     }
 
@@ -140,8 +140,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
     }
     total_usedData+=usedData;
     //std::cout<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
-    free(indexes);
-    free(keys);
+
     
     
     uint64_t tmpbit=0;
@@ -239,14 +238,12 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
         out+=outlier_num * sizeof(tmpoutlier[0]);
     }
     
-
+    free(delta);
     delete[] rank_lut_;
     delete[] deltax;
     delete[] tmpoutlier;
     delete[] vote;
     delete[] writebitmap;
-    delete[] delta;
-    delete[] counter;
 
     return out;
     
@@ -313,6 +310,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         return out;
 
     }
+
 }
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
     
