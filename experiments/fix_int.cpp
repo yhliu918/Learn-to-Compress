@@ -18,6 +18,7 @@ int main()
     // std::ifstream srcFile("/home/lyh/postingList_10M.txt", std::ios::in);
     if (!srcFile)
     {
+        
         std::cout << "error opening source file." << std::endl;
         return 0;
     }
