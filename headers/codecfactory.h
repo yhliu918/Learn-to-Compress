@@ -15,6 +15,8 @@
 #include "combinedcodec.h"
 #include "piecewise.h"
 #include "piecewise_fix.h"
+#include "piecewise_fix_op.h"
+#include "piecewise_fix_int_op.h"
 #include "piecewise_fix_32.h"
 #include "piecewise_fix_pack.h"
 #include "piecewise_ransac.h"
@@ -94,6 +96,8 @@ static inline CodecMap initializefactory() {
   map["piecewise"]= new piecewise();
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
+  map["piecewise_fix_op"]= new piecewise_fix_op();
+  map["piecewise_fix_int_op"]= new piecewise_fix_int_op();
   map["piecewise_fix_32"]= new piecewise_fix_32();
   map["piecewise_fix_pack"]= new piecewise_fix_pack();
   map["nonlinear_fix"]= new nonlinear_fix();
@@ -106,7 +110,7 @@ static inline CodecMap initializefactory() {
   map["piecewise_multi_fanout"]= new piecewise_multi_fanout();
   map["piecewise_varilength"] = new piecewise_varilength();
   map["piecewise_for"] = new Codecset::CombinedCodec<piecewise_fix, FOR>();
- map["piecewise_delta"] = new Codecset::CombinedCodec< piecewise_fix,delta_my>();
+  map["piecewise_delta"] = new Codecset::CombinedCodec< piecewise_fix,delta_my>();
   map["delta_for"] = new Codecset::CombinedCodec<delta, FOR>();
   
   //map["BP32"] = new CompositeCodec<BP32, VariableByte>;

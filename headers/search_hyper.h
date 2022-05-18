@@ -1,5 +1,6 @@
 
 #include "codecfactory.h"
+#include <cassert>
 using namespace Codecset;
 
 int randomint(int m)
@@ -13,7 +14,7 @@ struct codec_vote{
 };
 codec_vote pick_block_size(int bsize [],int choice, int times, double sample_rate,int N, uint32_t * data, std::string codec_name){
     
-    int select_;
+    int select_= -1;
 
     int delta = 0;
     double mini_size = 1.0;
@@ -62,6 +63,7 @@ codec_vote pick_block_size(int bsize [],int choice, int times, double sample_rat
         }
 
     }
+    assert (select_ != -1);
     codec_vote tmp;
     tmp.select = select_;
     tmp.compression_rate = mini_size;

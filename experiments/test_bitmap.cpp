@@ -9,11 +9,17 @@ int main() {
 
   // We pick a CODEC
   //IntegerCODEC &codec = *CODECFactory::getFromName("delta_my");
-  IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix");
+  // IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix_op");
+  IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
 
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../data/standard/linear_200M_uint32.txt",std::ios::in); 
+  std::ifstream srcFile("../integer_data/books_200M_uint32.txt",std::ios::in);
+  if (!srcFile)
+    {
+        std::cout << "error opening source file." << std::endl;
+        return 0;
+    }
   while(1){
       
       uint32_t next ;
@@ -25,22 +31,24 @@ int main() {
   srcFile.close();
   int N = data.size();
 
-  std::vector<std::string> file_system = {"bitmap_random_1e-5_200M.txt", "bitmap_random_0.0001_200M.txt", "bitmap_random_0.0005_200M.txt", "bitmap_random_0.001_200M.txt", "bitmap_random_0.01_200M.txt"};
+  std::vector<std::string> file_system = {"bitmap_random_1e-05_200000000.txt", "bitmap_random_0.0001_200000000.txt", "bitmap_random_0.0005_200000000.txt", "bitmap_random_0.001_200000000.txt", "bitmap_random_0.01_200000000.txt","bitmap_random_0.1_200000000.txt"};
   for(int j=0;j<(int)file_system.size();j++){
     std::vector<bool> bitmap;
-    std::ifstream bitFile("../data/bitmap_random/"+file_system[j],std::ios::in); 
+    std::ifstream bitFile("/home/zxy/Learn-to-Compress-0510/data/bitmap_random/"+file_system[j],std::ios::in); 
     std::cout<< "../data/bitmap_random/"+file_system[j]<<std::endl;
-    while(1){
+    int k=0;
+    for(int i=0;i<N;i++){
       
         bool next ;
         bitFile >> next;
+        k++;
         if(bitFile.eof()){break;}
         bitmap.push_back(next);
 
     }
     bitFile.close();
 
-    int blocks =1000;
+    int blocks =1000000;
 
   int block_size = data.size()/blocks;
   blocks = data.size()/block_size;
@@ -58,7 +66,7 @@ int main() {
     }
     uint8_t * descriptor = (uint8_t*)malloc(block_length * sizeof(uint64_t));
     uint8_t * res = descriptor;
-    res = codec.encodeArray8(data.data()+(i*block_size),block_length ,descriptor,i);
+    res = codec.encodeArray8(data.data()+(i*block_size),block_length ,descriptor,N);
     descriptor = (uint8_t*)realloc(descriptor, (res-descriptor));
     block_start_vec.push_back(descriptor);
     totalsize += (res-descriptor);
@@ -68,6 +76,7 @@ int main() {
   double compressrate = (totalsize)*100.0  / (4*N*1.0);
   std::cout << "total compression rate:" << std::setprecision(4)<< compressrate << std::endl;
 //************************************************************
+/*
   uint32_t* buffer = NULL;
   double start = getNow();
   uint32_t tmpvalue =0;
@@ -87,25 +96,32 @@ int main() {
        free(block_start_vec[i]);
    }
   }
-  
+  */
 
   
 
-/*
+
 // PIECEWISE 
   uint32_t* buffer = NULL;
   double start = getNow();
   uint32_t tmpvalue =0;
+  int counter=0;
   for(int i=0;i<N;i++){    
     if(bitmap[i]){
-      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)i/block_size], i%block_size, buffer, i/block_size);
+      counter ++;
+      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)i/block_size], i%block_size, buffer, N);
+      // std::cout<<tmpvalue<<std::endl;
+      // if(tmpvalue!=data[i]){
+      //   std::cout<<"error"<<std::endl;
+      // }
     }
   }
   double end = getNow();
+  std::cout<<counter<<std::endl;
   std::cout << "access time per int: " << std::setprecision(8)
-     << (end - start)/data.size()  * 1000000000 << "ns" << std::endl;
+     << (end - start)/N  * 1000000000 << " ns" << std::endl;
 
-*/
+
 
 /*
 // PIECEWISE DETECT
@@ -171,7 +187,7 @@ int main() {
 
 */
 
-  /*
+/*
   // DELTA DIRECT
   std::vector<uint32_t> recover(block_size);
   double start = getNow();
@@ -189,11 +205,13 @@ int main() {
   std::cout << "access time per int: " << std::setprecision(8)
      << (end - start)/data.size()  * 1000000000 << "ns" << std::endl;
 
-   for(int i=0;i<(int)block_start_vec.size();i++){
+  
+
+*/
+for(int i=0;i<(int)block_start_vec.size();i++){
        free(block_start_vec[i]);
    }
-*/
-
 
   
+}
 }

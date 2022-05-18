@@ -143,54 +143,54 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
     //std::cout<<"to_find "<<l<<" block_size "<<block_size<<" bit "<<b<<std::endl;
     
     
-    if(((int)l/32) == ((int)nvalue/32)){
+    // if(((int)l/32) == ((int)nvalue/32)){
 
-        /*
-        if( number_left>=16  ){
-            number_left -= 16;
-            in = in +(int)ceil((double)b*16./32.);
-            if(number_left>=8){
-                number_left -= 8;
-                in = in +(int)ceil((double)b*8./32.);
-            }
-            else{
-                unpack8[b](m,in,out);
-                return out[number_left];
-            }
+    //     /*
+    //     if( number_left>=16  ){
+    //         number_left -= 16;
+    //         in = in +(int)ceil((double)b*16./32.);
+    //         if(number_left>=8){
+    //             number_left -= 8;
+    //             in = in +(int)ceil((double)b*8./32.);
+    //         }
+    //         else{
+    //             unpack8[b](m,in,out);
+    //             return out[number_left];
+    //         }
         
-        }
-        else if(number_left>=8){
-            number_left -= 8;
-            in = in +(int)ceil((double)b*8./32.);
-            return in[number_left];
+    //     }
+    //     else if(number_left>=8){
+    //         number_left -= 8;
+    //         in = in +(int)ceil((double)b*8./32.);
+    //         return in[number_left];
             
     
-        }
+    //     }
     
-        if(number_left>0){
-            return in[number_left];
-        }
-        */
-        uint32_t *res = new uint32_t[32];
-        uint32_t *tmpres =res;
-        for(uint32_t k=nvalue/32*32; k+16<=nvalue; k+=16,res+=16) {
-            in = unpack16[b](m,in,res);
-        }
-        for(uint32_t k=nvalue/16*16; k+8<=nvalue; k+=8,res+=8) {
-            in = unpack8[b](m,in,res);
-        }
-    // we could pack the rest, but we don't  bother
-        for(uint32_t k=nvalue/8*8; k<nvalue; ++k,in++,res++) {
-            res[0] = in [0];
-        }
-        recover = tmpres[number_left];
-        free(tmpres);
-        return recover;
-    }
-    else{
+    //     if(number_left>0){
+    //         return in[number_left];
+    //     }
+    //     */
+    //     uint32_t *res = new uint32_t[32];
+    //     uint32_t *tmpres =res;
+    //     for(uint32_t k=nvalue/32*32; k+16<=nvalue; k+=16,res+=16) {
+    //         in = unpack16[b](m,in,res);
+    //     }
+    //     for(uint32_t k=nvalue/16*16; k+8<=nvalue; k+=8,res+=8) {
+    //         in = unpack8[b](m,in,res);
+    //     }
+    // // we could pack the rest, but we don't  bother
+    //     for(uint32_t k=nvalue/8*8; k<nvalue; ++k,in++,res++) {
+    //         res[0] = in [0];
+    //     }
+    //     recover = tmpres[number_left];
+    //     free(tmpres);
+    //     return recover;
+    // }
+    // else{
         uint32_t number_occupy = (number_left*b)/32;
         in+= number_occupy;
-        
+
         if(b==32){ 
             return in[0]+m;
         }
@@ -211,7 +211,7 @@ uint32_t randomdecodeArray( uint32_t *in, const size_t l,
         }
     
     
-    }
+    // }
 
  /*
     uint32_t number_occupy = (number_left*b)/32;

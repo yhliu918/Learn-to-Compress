@@ -10,8 +10,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <boost/multiprecision/gmp.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/cpp_int/serialize.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 typedef boost::multiprecision::mpf_float long_float;
 typedef boost::multiprecision::mpz_int long_int;
+typedef __uint128_t uint128_t;
+typedef __int128_t int128_t;
 #ifndef _WIN32
 #include <sys/mman.h>
 #include <sys/resource.h>

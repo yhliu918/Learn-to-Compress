@@ -28,7 +28,7 @@ namespace Codecset
     }
     // bit + theta0 + theta1 + delta
     // max_string is the max string size (each string in string_vec is padding to this size, calculate by bit)
-    uint8_t *encodeArray8_string(std::vector<std::string> &string_vec, const size_t length, uint8_t *res, size_t max_string /*, long_int & theta0, long_int & theta1*/)
+    uint8_t *encodeArray8_string(std::vector<std::string> &string_vec, int start_idx, const size_t length, uint8_t *res, size_t max_string /*, long_int & theta0, long_int & theta1*/)
     {
         uint8_t *out = res;
         std::vector<long_int> ascii_vec;
@@ -36,7 +36,7 @@ namespace Codecset
 
         for (int i = 0; i < length; i++)
         {
-            ascii_vec.emplace_back(convertToASCII(string_vec[i]));
+            ascii_vec.emplace_back(convertToASCII(string_vec[i + start_idx]));
             index.emplace_back(long_int(i));
         }
 
@@ -57,6 +57,7 @@ namespace Codecset
         for (auto i = 0; i < length; i++)
         {
             long_int tmp_val = ascii_vec[i] - (theta1_int * i + theta0_int);
+            // std::cout<<"delta "<<i<<" : "<<tmp_val<<std::endl;
             delta.emplace_back(tmp_val);
             counter[cal_bits(abs(tmp_val), max_string)]++;
             if (abs(delta[i]) > max_delta)
@@ -102,12 +103,18 @@ namespace Codecset
             mpz_t z;
             mpz_init(z);
             mpz_set(z, theta0_int.backend().data());
-            mpz_export(out, NULL, -1, 1, 0, 0, z);
-            out += sizeof(long_int);
+            auto theta0_len = (mpz_sizeinbase(z, 2) + 7) / 8;
+            memcpy(out, &theta0_len, sizeof(uint32_t));
+            out += sizeof(uint32_t);
+            mpz_export(out, &theta0_len, -1, 1, 0, 0, z);
+            out += theta0_len;
 
             mpz_set(z, theta1_int.backend().data());
-            mpz_export(out, NULL, -1, 1, 0, 0, z);
-            out += sizeof(long_int);
+            auto theta1_len = (mpz_sizeinbase(z, 2) + 7) / 8;
+            memcpy(out, &theta1_len, sizeof(uint32_t));
+            out += sizeof(uint32_t);
+            mpz_export(out, &theta1_len, -1, 1, 0, 0, z);
+            out += theta1_len;
             mpz_clear(z);
 
             out = write_string_delta_string(delta.data(), out, max_bit, length);
@@ -161,7 +168,7 @@ namespace Codecset
                 {
                     tmpbit += ((1L) << (63 - i % 64));
                     deltax.emplace_back((long_int)1);
-                    tmpoutlier.emplace_back(convertToASCII(string_vec[i]));
+                    tmpoutlier.emplace_back(convertToASCII(string_vec[i + start_idx]));
                 }
 
                 if (i % 64 == 63)
@@ -189,12 +196,18 @@ namespace Codecset
             mpz_t z;
             mpz_init(z);
             mpz_set(z, theta0_int.backend().data());
-            mpz_export(out, NULL, -1, 1, 0, 0, z);
-            out += sizeof(long_int);
+            auto theta0_len = (mpz_sizeinbase(z, 2) + 7) / 8;
+            memcpy(out, &theta0_len, sizeof(uint32_t));
+            out += sizeof(uint32_t);
+            mpz_export(out, &theta0_len, -1, 1, 0, 0, z);
+            out += theta0_len;
 
             mpz_set(z, theta1_int.backend().data());
-            mpz_export(out, NULL, -1, 1, 0, 0, z);
-            out += sizeof(long_int);
+            auto theta1_len = (mpz_sizeinbase(z, 2) + 7) / 8;
+            memcpy(out, &theta1_len, sizeof(uint32_t));
+            out += sizeof(uint32_t);
+            mpz_export(out, &theta1_len, -1, 1, 0, 0, z);
+            out += theta1_len;
             mpz_clear(z);
 
             memcpy(out, &outlier_num, sizeof(outlier_num));
@@ -245,21 +258,30 @@ namespace Codecset
             int *outlier_num = 0;
             maxerror = tmpin[0] - (1L << 31);
             tmpin += sizeof(maxerror);
-            std::cout<<maxerror<<std::endl;
+            std::cout << maxerror << std::endl;
 
+            tmpin += sizeof(uint32_t);
+            uint32_t theta0_len;
+            memcpy(&theta0_len, tmpin, sizeof(uint32_t));
+            tmpin += sizeof(uint32_t);
+            // theta0 = reinterpret_cast<long_int*>(tmpin);
             mpz_t tmp;
             mpz_init(tmp);
-            mpz_import(tmp, sizeof(long_int), -1, sizeof(tmpin[0]), 0, 0, tmpin);
+            mpz_import(tmp, theta0_len, -1, 1, 0, 0, tmpin);
             long_int theta0(tmp);
-            std::cout << theta0 << std::endl;
+            // std::cout<<theta0<<std::endl;
 
-            tmpin += sizeof(long_int);
+            tmpin += theta0_len;
 
-            mpz_import(tmp, sizeof(long_int), -1, sizeof(tmpin[0]), 0, 0, tmpin);
+            uint32_t theta1_len;
+            memcpy(&theta1_len, tmpin, sizeof(uint32_t));
+            tmpin += sizeof(uint32_t);
+
+            mpz_import(tmp, theta1_len, -1, 1, 0, 0, tmpin);
             long_int theta1(tmp);
-            std::cout << theta1 << std::endl;
+            // std::cout<<theta1<<std::endl;
             mpz_clear(tmp);
-            tmpin += sizeof(long_int);
+            tmpin += theta1_len;
 
             outlier_num = reinterpret_cast<int *>(tmpin);
             tmpin += 8;
@@ -286,19 +308,28 @@ namespace Codecset
             maxerror = tmpin[0];
             tmpin += sizeof(maxerror);
 
+            tmpin += sizeof(uint32_t);
+            uint32_t theta0_len;
+            memcpy(&theta0_len, tmpin, sizeof(uint32_t));
+            tmpin += sizeof(uint32_t);
+            // theta0 = reinterpret_cast<long_int*>(tmpin);
             mpz_t tmp;
             mpz_init(tmp);
-            mpz_import(tmp, sizeof(long_int), -1, sizeof(tmpin[0]), 0, 0, tmpin);
+            mpz_import(tmp, theta0_len, -1, 1, 0, 0, tmpin);
             long_int theta0(tmp);
-            std::cout << theta0 << std::endl;
+            // std::cout<<theta0<<std::endl;
 
-            tmpin += sizeof(long_int);
+            tmpin += theta0_len;
 
-            mpz_import(tmp, sizeof(long_int), -1, sizeof(tmpin[0]), 0, 0, tmpin);
+            uint32_t theta1_len;
+            memcpy(&theta1_len, tmpin, sizeof(uint32_t));
+            tmpin += sizeof(uint32_t);
+
+            mpz_import(tmp, theta1_len, -1, 1, 0, 0, tmpin);
             long_int theta1(tmp);
-            std::cout << theta1 << std::endl;
+            // std::cout<<theta1<<std::endl;
             mpz_clear(tmp);
-            tmpin += sizeof(long_int);
+            tmpin += theta1_len;
 
             read_all_bit_fix_string(tmpin, 0, 0, length, maxerror, theta1, theta0, out);
 
