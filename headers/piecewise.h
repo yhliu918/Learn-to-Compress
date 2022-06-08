@@ -56,6 +56,7 @@ public:
 
   std::vector<uint8_t*> block_start_vec;
   std::vector<uint32_t> segment_index;
+  uint32_t counter = 0;
   uint32_t total_byte =0;
   int maxerror =(1U<<10)-1;
   int block_num;
@@ -109,7 +110,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 
 
 
-        if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope &&(id -origin_index)<=1000000 ){
+        if (tmp_point_slope >= low_slope && tmp_point_slope <= high_slope  ){
         //if (gt(tmp_point_slope, low_slope) && gt(high_slope, tmp_point_slope)){
             float tmp_high_slope = ((key + maxerror - origin_key)+0.0) / ((id - origin_index)+0.0);
             float tmp_low_slope = ((key - maxerror - origin_key)+0.0) /((id - origin_index)+0.0);
@@ -155,9 +156,11 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 
                 }
             }
+            
             //std::cout<<cal_score_tmp(in+origin_index,(end_index - origin_index + 1))<<std::endl;
             int tmp_bit = bits(max_error)+1;
 
+            // std::cout<<tmp_bit<<" ("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<in[origin_index]<<" "<<in[end_index]<<std::endl;
             uint8_t * descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)+30);
 
             uint8_t *out = descriptor;
@@ -175,15 +178,17 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             out+=sizeof(theta0);
             memcpy(out,&slope,sizeof(slope));
             out+=sizeof(slope);
-            memcpy(out,&numbers,sizeof(numbers));
-            out+=sizeof(numbers);
+            
 
             //std::cout<<"bit_length: "<<tmp_bit<<" start: "<<origin_index<<" end: "<<end_index<<" slope: "<<slope<<std::endl;
 
             out=write_delta_s(delta, out, tmp_bit, numbers,seg_len);
             free(delta);
 
-
+            if(numbers<=2){
+                counter++;
+                // std::cout<<out-descriptor<<std::endl;
+            }
             descriptor=(uint8_t*)realloc(descriptor, (out-descriptor));
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
@@ -249,8 +254,6 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     out+=sizeof(theta0);
     memcpy(out,&slope,sizeof(slope));
     out+=sizeof(slope);
-    memcpy(out,&numbers,sizeof(numbers));
-    out+=sizeof(numbers);
 
     out=write_delta_s(delta, out, tmp_bit, numbers, seg_len);
     free(delta);
@@ -260,7 +263,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     segment_index.push_back(start_ind);
     total_byte +=(out - descriptor);
 
-
+    std::cout<<"small frag number "<< counter<<std::endl;
 
     return res;
 
@@ -286,8 +289,13 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         tmpin+=4;
         memcpy(&theta1,tmpin,sizeof(float));
         tmpin+=sizeof(float);
-        memcpy(&numbers,tmpin,4);
-        tmpin +=4;
+        if(i==block_start_vec.size()-1){
+            numbers = length - segment_index[i];
+        }
+        else{
+            numbers = segment_index[i+1] - segment_index[i];
+        }
+
         /*
         if(start_ind ==232){
         std::cout<<"start_ind "<<start_ind<<" maxerror "<<unsigned(maxerror)<<" theta0 "<<theta0<<" theta1 "<<theta1<<" numbers "<<numbers<<std::endl;
@@ -302,6 +310,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         else{
             tmpout=read_all_bit(tmpin ,0,start_ind,numbers,maxerror,theta1,theta0, tmpout);
         }
+        
     }
 
 
@@ -310,6 +319,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
 
     return out;
 }
+
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
 
     uint32_t length=segment_index.size();
@@ -330,8 +340,7 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
     tmpin+=4;
     memcpy(&theta1,tmpin,4);
     tmpin+=4;
-    memcpy(&numbers,tmpin,4);
-    tmpin +=4;
+
     //std::cout<< "indexing "<<l<<std::endl;
     uint32_t tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
 
@@ -360,6 +369,7 @@ uint32_t get_block_nums(){
     std::cout<<"Total block num is "<<block_start_vec.size()<<std::endl;
      return total_byte;
  }
+
 void destroy(){
 for(int i=0;i<(int)block_start_vec.size();i++){
        free(block_start_vec[i]);

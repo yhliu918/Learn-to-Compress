@@ -15,6 +15,8 @@
 #include "combinedcodec.h"
 #include "piecewise.h"
 #include "piecewise_fix.h"
+#include "piecewise_cost.h"
+#include "piecewise_cost_lookahead.h"
 #include "piecewise_fix_op.h"
 #include "piecewise_fix_int_op.h"
 #include "piecewise_fix_32.h"
@@ -94,6 +96,8 @@ static inline CodecMap initializefactory() {
   map["delta_my"] = new delta_my();
   map["delta"] = new delta();
   map["piecewise"]= new piecewise();
+  map["piecewise_cost"]= new piecewiseCost();
+  map["piecewise_cost_ahead"]= new piecewiseCostAhead();
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_fix_op"]= new piecewise_fix_op();

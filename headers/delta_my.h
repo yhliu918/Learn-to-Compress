@@ -62,6 +62,7 @@ namespace Codecset
                 }
             }
             int tmp_bit = bits(max_delta)+1;
+            // std::cout<<tmp_bit<<std::endl;
             if(max_delta==0){
                 tmp_bit=0;
             }

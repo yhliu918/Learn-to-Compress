@@ -648,6 +648,47 @@ uint32_t read_bit_fix_T(uint8_t *in, int l, int to_find, double slope, double st
 }
 
 
+uint32_t read_bit_fix_float_T(uint8_t *in, int l, int to_find, float slope, int32_t start_key, int start)
+{
+  uint64_t find_bit = to_find * l;
+  uint64_t start_byte = find_bit / 8;
+  uint8_t start_bit = find_bit % 8;
+  uint64_t occupy = start_bit;
+  uint64_t total = 0;
+
+  // decode += (((T)(in[start_byte] >> occupy)) << total);
+  // total += (8 - occupy);
+  // start_byte++;
+
+  // while (total < l+8)
+  // {
+  //   decode += ((T)(in[start_byte]) << total);
+  //   total += 8 ;
+  //   start_byte++;
+  // }
+
+
+  
+  uint64_t decode = reinterpret_cast<uint64_t *>(in+start_byte)[0];
+  // memcpy(&decode, in+start_byte, sizeof(uint64_t));
+  decode >>=(uint8_t)start_bit;
+  decode &= ((1UL<<(uint8_t)l)-1);
+  // T one = 1;
+  // one.left_shift((uint8_t)(l+8) ,*result);
+  // decode &= (*result - 1);
+
+  bool sign = (decode >> (uint8_t)(l - 1)) & 1;
+  int64_t value = (decode & ((1UL << (uint8_t)(l - 1)) - 1));
+  if (!sign)
+  {
+    value = -value;
+  }
+  // uint32_t out = value + (long long)(start_key + (double)to_find * slope);
+  uint32_t out = value + start_key + (long long)((float)(to_find)*slope);
+  return out;
+  
+}
+
 uint32_t read_bit_fix_int_T(uint8_t *in, int l, int to_find, float slope, float start_key, int start)
 {
   uint64_t find_bit = to_find * l;
