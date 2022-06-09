@@ -26,9 +26,8 @@ namespace Codecset {
         std::vector<uint32_t> segment_index;
         uint32_t counter = 0;
         uint32_t total_byte = 0;
-        int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t) * 4;//start_index + start_key + slope
-        // int overhead = 36;//start_index + start_key + slope
-        int LookAheadLen = 20;
+        int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);//start_index + start_key + slope 
+        int LookAheadLen = 3;
         int tolerance = 0;
         int block_num;
         int block_size;
@@ -104,12 +103,12 @@ namespace Codecset {
             out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
 
 
-            // if(3530>=origin_index && 3530<=end_index){
-            //     std::cout<<"("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<in[origin_index]<<" "<<in[end_index]<<" "<<delta_final_max_bit<<" "<<(long long)theta0<<" "<<final_slope<<std::endl;
-            //     for(int j=origin_index;j<=end_index;j++){
-            //         std::cout<<delta_final[j - origin_index]<<" ";
-            //     }
-            //     std::cout<<std::endl;
+            // if(1636>=origin_index && 1636<=end_index){
+                // std::cout<<"("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<array[origin_index]<<" "<<array[end_index]<<" "<<delta_final_max_bit<<std::endl;
+                // for(int j=origin_index;j<=end_index;j++){
+                //     std::cout<<delta_final[j - origin_index]<<" ";
+                // }
+                // std::cout<<std::endl;
             // }
 
 
@@ -127,6 +126,9 @@ namespace Codecset {
         }
 
         void newsegment_2(uint32_t origin_index, uint32_t end_index) {
+            // if(origin_index==1636 || origin_index+1 == 1636){
+            //     std::cout<<"hello"<<std::endl;
+            // }
             uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
             uint8_t* out = descriptor;
             memcpy(out, &origin_index, sizeof(origin_index));
@@ -147,6 +149,9 @@ namespace Codecset {
         }
 
         void newsegment_1(uint32_t origin_index, uint32_t end_index) {
+            // if(origin_index == 1636){
+            //     std::cout<<origin_index<<std::endl;
+            // }
             uint8_t* descriptor = (uint8_t*)malloc(3 * sizeof(uint64_t));
             uint8_t* out = descriptor;
             memcpy(out, &origin_index, sizeof(origin_index));
@@ -164,9 +169,9 @@ namespace Codecset {
             total_byte += segment_size;
         }
 
-        uint32_t lookahead(uint32_t origin_index, uint32_t lookaheadlength) {
+        uint32_t lookahead(uint32_t origin_index, int* lookaheadlength ) {
             // return total byte of [origin_index, origin_index + lookaheadlength]
-            uint32_t end_index = origin_index + lookaheadlength;
+            uint32_t end_index = origin_index + LookAheadLen;
             if (block_size-1 < end_index) {
                 end_index = block_size - 1;
             }
@@ -194,20 +199,54 @@ namespace Codecset {
             else {
                 return 13;
             }
+            float mid_slope = (low_slope + high_slope) / 2.;
+            uint32_t final_max_error = 0;
+            for(uint32_t i = origin_index;i<=origin_index+2;i++){
+                long long  pred = (long long)array[origin_index] + (long long)(mid_slope * (float)(i - origin_index));
+                int tmp_error = abs(pred - array[i]);
+                if (tmp_error > final_max_error) {
+                    final_max_error = tmp_error;
+                }
+            }
+            int tmp_max_bit = bits(final_max_error) + 1;
 
-            uint32_t totalcost = 13;
+
+            int totalcost = 13;
+            int final_endidx = origin_index + 3;
             for (uint32_t i = origin_index + 3;i <= end_index;i++) {
                 float tmp_point_slope = ((array[i] - array[origin_index]) + 0.0) / (i - origin_index + 0.0);
                 if (tmp_point_slope < low_slope) {
-                    low_slope = tmp_point_slope;
+                    mid_slope = (high_slope + tmp_point_slope) / 2.;
                 }
                 else if (tmp_point_slope > high_slope) {
-                    high_slope = tmp_point_slope;
+                    mid_slope = (low_slope + tmp_point_slope) / 2.;
+                }
+                long long  pred = (long long)array[origin_index] + (long long)(mid_slope * (float)(i - origin_index));
+                int tmp_error = abs(pred - array[i]);
+                int max_bit = bits(tmp_error) + 1;
+                int cost = (i - origin_index + 1) * (max_bit - tmp_max_bit);
+                if(cost > 40){
+                    final_endidx = i-1;
+                    break;
+                }
+                else{
+                    if (tmp_point_slope < low_slope) {
+                        low_slope = tmp_point_slope;
+                    }
+                    if (tmp_point_slope > high_slope) {
+                        high_slope = tmp_point_slope;
+                    }
+                    if (max_bit > tmp_max_bit) {
+                        tmp_max_bit = max_bit;
+                    }
+                    mid_slope = (low_slope + high_slope) / 2.;
+                    final_endidx = i;
                 }
             }
-            float mid_slope = (low_slope + high_slope) / 2.;
-            uint32_t final_max_error = 0;
-            for (uint32_t i = origin_index + 1;i <= end_index;i++) {
+            mid_slope = (low_slope + high_slope) / 2.;
+            final_max_error = 0;
+            *lookaheadlength = final_endidx - origin_index+1;
+            for(uint32_t i = origin_index;i<=final_endidx;i++){
                 long long  pred = (long long)array[origin_index] + (long long)(mid_slope * (float)(i - origin_index));
                 int tmp_error = abs(pred - array[i]);
                 if (tmp_error > final_max_error) {
@@ -215,11 +254,67 @@ namespace Codecset {
                 }
             }
             int delta_final_max_bit = bits(final_max_error) + 1;
-            totalcost += ceil(delta_final_max_bit * lookaheadlength/8.);
+            totalcost += ceil(delta_final_max_bit * (*lookaheadlength)/8.);
             return totalcost;
 
 
         }
+
+        uint32_t lookahead_with_slope(uint32_t start_idx, uint32_t origin_index, int* lookaheadlength, float high_slope, float low_slope, uint32_t tmp_max_bit) {
+            // return final bit of [origin_index, origin_index + lookaheadlength]
+            
+            uint32_t end_index = start_idx + LookAheadLen;
+            if (block_size-1 < end_index) {
+                end_index = block_size - 1;
+            }
+            int totalcost = 13;
+            int final_endidx = start_idx;
+            float mid_slope = (low_slope + high_slope) / 2.;
+            for (uint32_t i = start_idx;i <= end_index;i++) {
+                float tmp_point_slope = ((array[i] - array[origin_index]) + 0.0) / (i - origin_index + 0.0);
+                if (tmp_point_slope < low_slope) {
+                    mid_slope = (high_slope + tmp_point_slope) / 2.;
+                }
+                else if (tmp_point_slope > high_slope) {
+                    mid_slope = (low_slope + tmp_point_slope) / 2.;
+                }
+                long long  pred = (long long)array[origin_index] + (long long)(mid_slope * (float)(i - origin_index));
+                int tmp_error = abs(pred - array[i]);
+                int max_bit = bits(tmp_error) + 1;
+                int cost = (i - origin_index + 1) * (max_bit - tmp_max_bit);
+                if(cost > 40){
+                    final_endidx = i-1;
+                    break;
+                }
+                else{
+                    if (tmp_point_slope < low_slope) {
+                        low_slope = tmp_point_slope;
+                    }
+                    if (tmp_point_slope > high_slope) {
+                        high_slope = tmp_point_slope;
+                    }
+                    if (max_bit > tmp_max_bit) {
+                        tmp_max_bit = max_bit;
+                    }
+                    mid_slope = (low_slope + high_slope) / 2.;
+                    final_endidx = i;
+                }
+            }
+            mid_slope = (low_slope + high_slope) / 2.;
+            int final_max_error = 0;
+            *lookaheadlength = final_endidx - start_idx+1;
+            for(uint32_t i = origin_index;i<=final_endidx;i++){
+                long long  pred = (long long)array[origin_index] + (long long)(mid_slope * (float)(i - origin_index));
+                int tmp_error = abs(pred - array[i]);
+                if (tmp_error > final_max_error) {
+                    final_max_error = tmp_error;
+                }
+            }
+            int delta_final_max_bit = bits(final_max_error) + 1;
+            return delta_final_max_bit;
+        }
+
+
 
         uint8_t* encodeArray8(uint32_t* in, const size_t length, uint8_t* res, size_t nvalue) {
             array = in;
@@ -235,9 +330,13 @@ namespace Codecset {
             int tmp_delta_bit = 0;
             int tmp_max_delta = 0;
             for (int i = 1; i < (long long)nvalue; i++) {
+
                 long long key = in[i];
                 int id = indexes[i];
                 float tmp_point_slope = ((key - origin_key) + 0.0) / ((id - origin_index) + 0.0);
+                if(id==origin_index){
+                    continue;
+                }
                 if (id == origin_index + 1) {
                     low_slope = tmp_point_slope;
                     end_index = id;
@@ -254,6 +353,7 @@ namespace Codecset {
                         high_slope = tmp_point_slope;
                     }
                     end_index = id;
+
                     float tmp_slope = (high_slope + low_slope) / 2;
                     for (int j = origin_index + 1;j < id;j++) {
                         long long pred = origin_key + (float)(id - origin_index) * tmp_slope;
@@ -263,6 +363,7 @@ namespace Codecset {
                         }
                     }
                     tmp_delta_bit = bits(tmp_max_delta) + 1;
+                    /*
                     double pre_ratio = total_byte / (double)(origin_index * sizeof(uint32_t));
                     double tmp_ratio = tmp_delta_bit / 32.0;
                     // std::cout<<"pre_ratio: "<<pre_ratio<<" tmp_ratio: "<<tmp_ratio<<std::endl;
@@ -280,7 +381,8 @@ namespace Codecset {
                         continue;
 
                     }
-
+                    */
+                    
                     continue;
                 }
 
@@ -312,28 +414,30 @@ namespace Codecset {
                     }
 
                     // Choice A: with current segment
+                    // should lookahead too
                     long long pred = origin_key + (float)(id - origin_index) * mid_slope;
                     int tmp_error = abs(pred - in[id]);
                     int delta_max_bit = bits(tmp_error) + 1;
-                    int cost = 13 + ceil(((id - origin_index + 1) * std::max(tmp_delta_bit, delta_max_bit))/8.);
-                    double currentsegmentCR = (double)(totalbytecopy + cost) / (double)((id+1) * sizeof(uint32_t));
+                    int lookahead_length_tmp = 0;
+                    uint32_t lookahead_final_bit = lookahead_with_slope(id+1, origin_index, &lookahead_length_tmp,high_slope,low_slope,std::max(tmp_delta_bit, delta_max_bit));
+
+                    uint32_t estimate_byte_current_seg = 13 + ceil(((id+lookahead_length_tmp - origin_index + 1) * lookahead_final_bit)/8.);
+                    double currentsegmentCR = (double)(totalbytecopy + estimate_byte_current_seg) / (double)((id+lookahead_length_tmp+1) * sizeof(uint32_t));
 
                     // Choice B: with new segment
-                    uint32_t lookahead_cost = lookahead(id, LookAheadLen);
+                    lookahead_length_tmp = 0;
+                    uint32_t lookahead_cost = lookahead(id, &lookahead_length_tmp);
                     int currentsegcost = 13 + ceil(((id - origin_index) * tmp_delta_bit)/8.);
-                    double newsegmentCR = (double)(totalbytecopy + currentsegcost + lookahead_cost) / (double)((id + LookAheadLen+1) * sizeof(uint32_t));
+                    double newsegmentCR = (double)(totalbytecopy + currentsegcost + lookahead_cost) / (double)((id + lookahead_length_tmp+1) * sizeof(uint32_t));
 
                     // Choice C: outlier
                     int outlier_cost = 13;
                     double outlierCR = (double)(totalbytecopy + currentsegcost + outlier_cost) / (double)((id + 2) * sizeof(uint32_t));
 
                     // choose the one with the lowest CR
-                    if (currentsegmentCR < newsegmentCR && currentsegmentCR < outlierCR) {
+                    if (currentsegmentCR <= newsegmentCR && currentsegmentCR <= outlierCR) {
                         if (tmp_point_slope < low_slope) {
                             low_slope = tmp_point_slope;
-                        }
-                        if (low_slope < 0) {
-                            low_slope = 0.0;
                         }
                         if (tmp_point_slope > high_slope) {
                             high_slope = tmp_point_slope;
@@ -367,9 +471,9 @@ namespace Codecset {
                         newsegment_2(id, id + 1);
                         high_slope = (float)INF;
                         low_slope = 0.0;
-                        origin_index = id + 1;
-                        origin_key = in[id + 1];
-                        end_index = id + 1;
+                        origin_index = id + 2;
+                        origin_key = in[id + 2];
+                        end_index = id + 2;
                         tmp_delta_bit = 0;
                         tmp_max_delta = 0;
                         continue;
