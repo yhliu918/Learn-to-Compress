@@ -27,7 +27,9 @@ namespace Codecset {
         uint32_t counter = 0;
         uint32_t total_byte = 0;
         int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
+        // int overhead = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t))*4;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*10;//start_index + start_key + slope
+        uint32_t* array;
         int tolerance = 0;
         int block_num;
         int block_size;
@@ -55,8 +57,122 @@ namespace Codecset {
 
         }
 
-        uint8_t* encodeArray8(uint32_t* in, const size_t length, uint8_t* res, size_t nvalue) {
+        void newsegment(uint32_t origin_index, uint32_t end_index) {
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
+            uint8_t* out = descriptor;
+            int length = end_index - origin_index + 1;
+            double* indexes = new double[length];
+            double* keys = new double[length];
+            for (int j = origin_index;j <= end_index;j++) {
+                indexes[j - origin_index] = j - origin_index;
+                keys[j - origin_index] = array[j];
+            }
 
+            lr mylr;
+            mylr.caltheta(indexes, keys, length);
+            float final_slope = mylr.theta1;
+            int32_t theta0 = mylr.theta0;
+
+            int final_max_error = 0;
+            int* delta_final = new int[end_index - origin_index + 1];
+
+            for (int j = origin_index;j <= end_index;j++) {
+                // long long pred = theta0 + (float)(j - origin_index) * final_slope;
+                long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
+                int tmp_error = abs(pred - array[j]);
+                delta_final[j - origin_index] = array[j] - pred;
+                if (tmp_error > final_max_error) {
+                    final_max_error = tmp_error;
+                }
+            }
+            int delta_final_max_bit = bits(final_max_error) + 1;
+            // if (end_index<2100){
+            //     std::cout<<origin_index<<" "<<end_index<<" "<<(long long)theta0<<" "<<final_slope<<std::endl;
+            // }
+
+
+            memcpy(out, &origin_index, sizeof(origin_index));
+            out += sizeof(origin_index);
+            out[0] = (uint8_t)delta_final_max_bit;
+            out++;
+
+            memcpy(out, &theta0, sizeof(theta0));
+            out += sizeof(theta0);
+
+            memcpy(out, &final_slope, sizeof(final_slope));
+            out += sizeof(final_slope);
+            out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
+
+
+            // if(1636>=origin_index && 1636<=end_index){
+                // std::cout<<"("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<array[origin_index]<<" "<<array[end_index]<<" "<<delta_final_max_bit<<std::endl;
+                // for(int j=origin_index;j<=end_index;j++){
+                //     std::cout<<delta_final[j - origin_index]<<" ";
+                // }
+                // std::cout<<std::endl;
+            // }
+
+
+            delete[] delta_final;
+
+
+            int segment_size = out - descriptor;
+            descriptor = (uint8_t*)realloc(descriptor, segment_size);
+            block_start_vec.push_back(descriptor);
+            segment_index.push_back(origin_index);
+            total_byte += segment_size;
+            // if(origin_index == 2024){
+            //     std::cout<<segment_size<<" "<<end_index<<std::endl;
+            // }
+        }
+
+        void newsegment_2(uint32_t origin_index, uint32_t end_index) {
+            // if(origin_index==1636 || origin_index+1 == 1636){
+            //     std::cout<<"hello"<<std::endl;
+            // }
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
+            uint8_t* out = descriptor;
+            memcpy(out, &origin_index, sizeof(origin_index));
+            out += sizeof(origin_index);
+            out[0] = (uint8_t)126; // this means that this segment only has two points
+            out++;
+            memcpy(out, &array[origin_index], sizeof(uint32_t));
+            out += sizeof(uint32_t);
+            memcpy(out, &(array[origin_index + 1]), sizeof(uint32_t));
+            out += sizeof(uint32_t);
+
+            int segment_size = out - descriptor;
+            descriptor = (uint8_t*)realloc(descriptor, segment_size);
+            block_start_vec.push_back(descriptor);
+            segment_index.push_back(origin_index);
+
+            total_byte += segment_size;
+        }
+
+        void newsegment_1(uint32_t origin_index, uint32_t end_index) {
+            // if(origin_index == 1636){
+            //     std::cout<<origin_index<<std::endl;
+            // }
+            uint8_t* descriptor = (uint8_t*)malloc(3 * sizeof(uint64_t));
+            uint8_t* out = descriptor;
+            memcpy(out, &origin_index, sizeof(origin_index));
+            out += sizeof(origin_index);
+            out[0] = (uint8_t)127; // this means that this segment only has one point
+            out++;
+            memcpy(out, &array[origin_index], sizeof(uint32_t));
+            out += sizeof(uint32_t);
+
+            int segment_size = out - descriptor;
+            descriptor = (uint8_t*)realloc(descriptor, segment_size);
+            block_start_vec.push_back(descriptor);
+            segment_index.push_back(origin_index);
+
+            total_byte += segment_size;
+        }
+
+
+        uint8_t* encodeArray8(uint32_t* in, const size_t length, uint8_t* res, size_t nvalue) {
+            array = in;
             std::vector<uint32_t> indexes;
             for (uint32_t i = 0; i < nvalue; i++) {
                 indexes.push_back(i);
@@ -72,29 +188,21 @@ namespace Codecset {
                 long long key = in[i];
                 int id = indexes[i];
                 float tmp_point_slope = ((key - origin_key) + 0.0) / ((id - origin_index) + 0.0);
+                if (id == nvalue - 1) {
+                        newsegment(origin_index, id);
+                        break;
+                }
+                if(id==origin_index){
+                    continue;
+                }
                 if (id == origin_index + 1) {
                     if (abs(tmp_point_slope) >= tolerance) {
-                        uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
-                        uint8_t* out = descriptor;
-                        memcpy(out, &origin_index, sizeof(origin_index));
-                        out += sizeof(origin_index);
-                        out[0] = (uint8_t)127; // this means that this segment only has one point
-                        out++;
-                        memcpy(out, &origin_key, sizeof(uint32_t));
-                        out += sizeof(uint32_t);
-
-                        int segment_size = out - descriptor;
-                        descriptor = (uint8_t*)realloc(descriptor, segment_size);
-                        block_start_vec.push_back(descriptor);
-                        segment_index.push_back(origin_index);
-
-                        total_byte += segment_size;
-
+                        newsegment_2(origin_index, origin_index+1);
                         high_slope = (float)INF;
                         low_slope = 0.0;
-                        origin_index = id;
-                        origin_key = key;
-                        end_index = id;
+                        origin_index = id+1;
+                        origin_key = in[id+1];
+                        end_index = id+1;
                         tmp_delta_bit = 0;
                         tmp_max_delta = 0;
                         continue;
@@ -107,23 +215,7 @@ namespace Codecset {
                 }
                 if (id == origin_index + 2) {
                     if (abs(tmp_point_slope) >= tolerance) {
-                        uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
-                        uint8_t* out = descriptor;
-                        memcpy(out, &origin_index, sizeof(origin_index));
-                        out += sizeof(origin_index);
-                        out[0] = (uint8_t)126; // this means that this segment only has two points
-                        out++;
-                        memcpy(out, &origin_key, sizeof(uint32_t));
-                        out += sizeof(uint32_t);
-                        memcpy(out, &(in[origin_index + 1]), sizeof(uint32_t));
-                        out += sizeof(uint32_t);
-
-                        int segment_size = out - descriptor;
-                        descriptor = (uint8_t*)realloc(descriptor, segment_size);
-                        block_start_vec.push_back(descriptor);
-                        segment_index.push_back(origin_index);
-
-                        total_byte += segment_size;
+                        newsegment_2(origin_index, origin_index+1);
 
                         high_slope = (float)INF;
                         low_slope = 0.0;
@@ -163,46 +255,6 @@ namespace Codecset {
                 int tmp_error = abs(pred - key);
                 int tmp_error_bit = bits(tmp_error) + 1;
                 if (tmp_error_bit <= tmp_delta_bit) {
-                    if (id == nvalue - 1) {
-                        uint8_t* descriptor = (uint8_t*)malloc((id - origin_index + 1) * sizeof(uint64_t));
-                        uint8_t* out = descriptor;
-                        float final_slope = (high_slope + low_slope) / 2.;
-                        uint32_t theta0 = (long long)in[origin_index];
-                        int final_max_error = 0;
-                        int* delta_final = new int[id - origin_index + 1];
-                        for (int j = origin_index;j <= id;j++) {
-                            // long long pred = theta0 + (float)(j - origin_index) * final_slope;
-                            long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
-                            int tmp_error = abs(pred - in[j]);
-                            delta_final[j - origin_index] = in[j] - pred;
-                            if (tmp_error > final_max_error) {
-                                final_max_error = tmp_error;
-                            }
-                        }
-                        int delta_final_max_bit = bits(final_max_error) + 1;
-
-                        memcpy(out, &origin_index, sizeof(origin_index));
-                        out += sizeof(origin_index);
-                        out[0] = (uint8_t)delta_final_max_bit;
-                        out++;
-
-                        memcpy(out, &theta0, sizeof(theta0));
-                        out += sizeof(theta0);
-
-                        memcpy(out, &final_slope, sizeof(final_slope));
-                        out += sizeof(final_slope);
-                        out = write_delta_T(delta_final, out, delta_final_max_bit, (id - origin_index + 1));
-
-                        delete[] delta_final;
-
-
-                        int segment_size = out - descriptor;
-                        descriptor = (uint8_t*)realloc(descriptor, segment_size);
-                        block_start_vec.push_back(descriptor);
-                        segment_index.push_back(origin_index);
-                        total_byte += segment_size;
-                    }
-
                     end_index = id;
                     if (tmp_error > tmp_max_delta) {
                         tmp_max_delta = tmp_error;
@@ -226,9 +278,9 @@ namespace Codecset {
                         if (tmp_point_slope < low_slope) {
                             low_slope = tmp_point_slope;
                         }
-                        if (low_slope < 0) {
-                            low_slope = 0.0;
-                        }
+                        // if (low_slope < 0) {
+                        //     low_slope = 0.0;
+                        // }
                         if (tmp_point_slope > high_slope) {
                             high_slope = tmp_point_slope;
                         }
@@ -242,102 +294,16 @@ namespace Codecset {
                     else {
                         // delete[] delta;
                         // write the last segment & start a new segment
-                        uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
-                        uint8_t* out = descriptor;
-
-                        int length = end_index - origin_index + 1;
-                        double *indexes = new double[length];
-                        double *keys = new double[length];
-                        for (int j = origin_index ;j <= end_index;j++) {
-                            indexes[j - origin_index] = j - origin_index;
-                            keys[j - origin_index] = in[j];
+                        newsegment(origin_index, end_index);
+                        if (id == nvalue - 1) {
+                            newsegment_1(id, id);
                         }
-
-                        lr mylr;
-                        mylr.caltheta(indexes,keys,length);
-                        float final_slope = mylr.theta1;
-                        int32_t theta0 = mylr.theta0;
-
-
-                        // float final_slope = (high_slope + low_slope) / 2.;
-                        // uint32_t theta0 = (long long)in[origin_index];
-
-                        int final_max_error = 0;
-                        int* delta_final = new int[end_index - origin_index + 1];
-                        for (int j = origin_index;j <= end_index;j++) {
-                            // long long pred = theta0 + (float)(j - origin_index) * final_slope;
-                            long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
-                            int tmp_error = abs(pred - in[j]);
-                            delta_final[j - origin_index] = in[j] - pred;
-                            if (tmp_error > final_max_error) {
-                                final_max_error = tmp_error;
-                            }
-                        }
-                        int delta_final_max_bit = bits(final_max_error) + 1;
-
-                        memcpy(out, &origin_index, sizeof(origin_index));
-                        out += sizeof(origin_index);
-                        out[0] = (uint8_t)delta_final_max_bit;
-                        out++;
-
-                        memcpy(out, &theta0, sizeof(theta0));
-                        out += sizeof(theta0);
-
-                        memcpy(out, &final_slope, sizeof(final_slope));
-                        out += sizeof(final_slope);
-
-                        // if(1929>=origin_index && 1929<=end_index){
-                        //     std::cout<<"("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<in[origin_index]<<" "<<in[end_index]<<" "<<delta_final_max_bit<<" "<<final_slope<<std::endl;
-                        //     for(int j=origin_index;j<=end_index;j++){
-                        //         std::cout<<delta_final[j - origin_index]<<" ";
-                        //     }
-                        //     std::cout<<std::endl;
-                        // }
-
-                        out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
-
-                        delete[] delta_final;
-
-
-                        int segment_size = out - descriptor;
-                        descriptor = (uint8_t*)realloc(descriptor, segment_size);
-                        block_start_vec.push_back(descriptor);
-                        segment_index.push_back(origin_index);
-
-                        total_byte += segment_size;
-
                         high_slope = (float)INF;
                         low_slope = 0.0;
                         origin_index = id;
                         origin_key = key;
                         end_index = id;
-                        if (id == nvalue - 1) {
-                            uint8_t* descriptor = (uint8_t*)malloc(3 * sizeof(uint64_t));
-                            uint8_t* out = descriptor;
-                            memcpy(out, &origin_index, sizeof(origin_index));
-                            out += sizeof(origin_index);
-                            out[0] = (uint8_t)127; // this means that this segment only has one point
-                            out++;
-                            memcpy(out, &origin_key, sizeof(uint32_t));
-                            out += sizeof(uint32_t);
 
-                            int segment_size = out - descriptor;
-                            descriptor = (uint8_t*)realloc(descriptor, segment_size);
-                            block_start_vec.push_back(descriptor);
-                            segment_index.push_back(origin_index);
-
-                            total_byte += segment_size;
-
-                            high_slope = (float)INF;
-                            low_slope = 0.0;
-                            origin_index = id;
-                            origin_key = key;
-                            end_index = id;
-                            tmp_delta_bit = 0;
-                            tmp_max_delta = 0;
-                            continue;
-
-                        }
                         tmp_delta_bit = 0;
                         tmp_max_delta = 0;
 

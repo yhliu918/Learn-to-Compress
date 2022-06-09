@@ -334,6 +334,10 @@ namespace Codecset {
                 long long key = in[i];
                 int id = indexes[i];
                 float tmp_point_slope = ((key - origin_key) + 0.0) / ((id - origin_index) + 0.0);
+                if (id == nvalue - 1) {
+                        newsegment(origin_index, id);
+                        break;
+                }
                 if(id==origin_index){
                     continue;
                 }
@@ -363,6 +367,7 @@ namespace Codecset {
                         }
                     }
                     tmp_delta_bit = bits(tmp_max_delta) + 1;
+
                     /*
                     double pre_ratio = total_byte / (double)(origin_index * sizeof(uint32_t));
                     double tmp_ratio = tmp_delta_bit / 32.0;
@@ -393,10 +398,6 @@ namespace Codecset {
                 // check whether this point is assigned to the tmp segment
                 // by calculating the increase of the error this point brings to the segment
                 if (tmp_error_bit <= tmp_delta_bit) {
-                    if (id == nvalue - 1) {
-                        newsegment(origin_index, id);
-                        break;
-                    }
                     end_index = id;
                     if (tmp_error > tmp_max_delta) {
                         tmp_max_delta = tmp_error;
@@ -439,9 +440,13 @@ namespace Codecset {
                         if (tmp_point_slope < low_slope) {
                             low_slope = tmp_point_slope;
                         }
+                        if (low_slope < 0) {
+                            low_slope = 0.0;
+                        }
                         if (tmp_point_slope > high_slope) {
                             high_slope = tmp_point_slope;
                         }
+                        
                         end_index = id;
                         if (delta_max_bit > tmp_delta_bit) {
                             tmp_delta_bit = delta_max_bit;
