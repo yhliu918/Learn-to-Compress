@@ -8,6 +8,7 @@
 #include "bit_read.h"
 #include "bit_write.h"
 #include "caltime.h"
+#include "lr.h"
 #define INF 0x7f7fffff
 
 namespace Codecset {
@@ -24,10 +25,12 @@ namespace Codecset {
 
         std::vector<uint8_t*> block_start_vec;
         std::vector<uint32_t> segment_index;
-        uint32_t counter = 0;
-        uint32_t total_byte = 0;
-        int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
-        // int overhead = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t))*4;
+        std::vector<uint32_t> segment_length;
+
+        uint64_t total_byte = 0;
+        // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
+        // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
+        int overhead = 13;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*10;//start_index + start_key + slope
         uint32_t* array;
         int tolerance = 0;
@@ -58,7 +61,7 @@ namespace Codecset {
         }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)*2);
             uint8_t* out = descriptor;
             int length = end_index - origin_index + 1;
             double* indexes = new double[length];
@@ -73,23 +76,26 @@ namespace Codecset {
             float final_slope = mylr.theta1;
             int32_t theta0 = mylr.theta0;
 
-            int final_max_error = 0;
+            uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
 
             for (int j = origin_index;j <= end_index;j++) {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
                 long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
-                int tmp_error = abs(pred - array[j]);
+                uint32_t tmp_error = abs(pred - array[j]);
                 delta_final[j - origin_index] = array[j] - pred;
                 if (tmp_error > final_max_error) {
                     final_max_error = tmp_error;
                 }
             }
-            int delta_final_max_bit = bits(final_max_error) + 1;
+            uint32_t delta_final_max_bit = bits_int_T<uint32_t>(final_max_error) + 1;
             // if (end_index<2100){
             //     std::cout<<origin_index<<" "<<end_index<<" "<<(long long)theta0<<" "<<final_slope<<std::endl;
             // }
-
+            
+            if (delta_final_max_bit>=32){
+                delta_final_max_bit = 32;
+            }
 
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
@@ -101,7 +107,12 @@ namespace Codecset {
 
             memcpy(out, &final_slope, sizeof(final_slope));
             out += sizeof(final_slope);
-            out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
+            if(delta_final_max_bit==32){
+                out = write_delta_default(array+origin_index, out,delta_final_max_bit, end_index - origin_index + 1);
+            }
+            else{
+                out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
+            }
 
 
             // if(1636>=origin_index && 1636<=end_index){
@@ -116,10 +127,11 @@ namespace Codecset {
             delete[] delta_final;
 
 
-            int segment_size = out - descriptor;
+            uint64_t segment_size = out - descriptor;
             descriptor = (uint8_t*)realloc(descriptor, segment_size);
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
+            segment_length.push_back(segment_size);
             total_byte += segment_size;
             // if(origin_index == 2024){
             //     std::cout<<segment_size<<" "<<end_index<<std::endl;
@@ -141,10 +153,11 @@ namespace Codecset {
             memcpy(out, &(array[origin_index + 1]), sizeof(uint32_t));
             out += sizeof(uint32_t);
 
-            int segment_size = out - descriptor;
+            uint64_t segment_size = out - descriptor;
             descriptor = (uint8_t*)realloc(descriptor, segment_size);
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
+            segment_length.push_back(segment_size);
 
             total_byte += segment_size;
         }
@@ -162,9 +175,10 @@ namespace Codecset {
             memcpy(out, &array[origin_index], sizeof(uint32_t));
             out += sizeof(uint32_t);
 
-            int segment_size = out - descriptor;
+            uint64_t segment_size = out - descriptor;
             descriptor = (uint8_t*)realloc(descriptor, segment_size);
             block_start_vec.push_back(descriptor);
+            segment_length.push_back(segment_size);
             segment_index.push_back(origin_index);
 
             total_byte += segment_size;
@@ -246,7 +260,7 @@ namespace Codecset {
                             tmp_max_delta = tmp_error;
                         }
                         tmp_delta_bit = bits(tmp_max_delta) + 1;
-                    }
+                    } 
                     continue;
                 }
 
@@ -278,9 +292,9 @@ namespace Codecset {
                         if (tmp_point_slope < low_slope) {
                             low_slope = tmp_point_slope;
                         }
-                        // if (low_slope < 0) {
-                        //     low_slope = 0.0;
-                        // }
+                        if (low_slope < 0) {
+                            low_slope = 0.0;
+                        }
                         if (tmp_point_slope > high_slope) {
                             high_slope = tmp_point_slope;
                         }
@@ -313,11 +327,93 @@ namespace Codecset {
                 }
 
             }
+            int iter = 0;
+            uint64_t cost_decline = total_byte;
+            while(cost_decline>0){
+                
+                iter++;
+                cost_decline = total_byte;
+                merge();
+                
+                double compressrate = (total_byte) * 100.0 / (4 * block_size * 1.0);
+                std::cout << "try "<<iter<<" segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+                cost_decline = cost_decline - total_byte;
+                double cost_decline_percent = cost_decline * 100.0 / (4 * block_size * 1.0);
+                if(cost_decline_percent<0.01){
+                    break;
+                }
+                
+            }
+            
+            // merge();
 
             return res;
 
         }
 
+        void merge(){
+            // this function is to merge blocks in block_start_vec to large blocks
+            int start_index = 0; // before the start_index is the finished blocks
+            int segment_num = 0; // the current segment index
+            int newsegment_num = 0; 
+            int total_segments = block_start_vec.size(); // the total number of segments
+            uint64_t totalbyte_after_merge = 0; 
+            segment_index.push_back(block_size);
+            std::vector<uint8_t*> new_block_start_vec;
+            std::vector<uint32_t> new_segment_index;
+            std::vector<uint32_t> new_segment_length;
+            while(segment_num < total_segments){
+                // std::cout<<"segment_num: "<<segment_num <<" / "<<total_segments<<std::endl;
+
+                if (segment_num == total_segments - 1) {
+                    // std::cout <<segment_num<<"///"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
+                    new_block_start_vec.push_back(block_start_vec[segment_num]);
+                    new_segment_index.emplace_back(segment_index[segment_num]);
+                    new_segment_length.emplace_back(segment_length[segment_num]);
+                    totalbyte_after_merge += segment_length[segment_num];
+                    start_index=block_size;
+                    segment_num++;
+                    break;
+                }
+                uint32_t init_cost = segment_length[segment_num] + segment_length[segment_num+1];
+                uint32_t merge_cost = 0;
+                newsegment(start_index, segment_index[segment_num+2]-1);
+                merge_cost = segment_length[total_segments + newsegment_num];
+                if(init_cost>merge_cost){ // merge the two segments
+                    // new_block_start_vec.emplace_back(std::unique_ptr<uint8_t>(block_start_vec[total_segments+newsegment_num]));
+                    // if(segment_num ==1243665 ){
+                    //     std::cout <<segment_num<<"//"<<total_segments<<" "<< block_start_vec[total_segments+newsegment_num] << std::endl;
+                    // }
+                    
+                    new_block_start_vec.emplace_back(block_start_vec[total_segments+newsegment_num]);
+                    new_segment_index.emplace_back(start_index);
+                    new_segment_length.emplace_back(merge_cost);
+                    totalbyte_after_merge += merge_cost;
+                    start_index=segment_index[segment_num+2];
+                    segment_num+=2;
+                    // std::cout<<segment_num<<std::endl;
+                    newsegment_num++;
+                }
+                else {
+                    // std::cout <<segment_num<<"/"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
+                    new_block_start_vec.emplace_back(block_start_vec[segment_num]);
+                    // new_block_start_vec.emplace_back(std::move(std::unique_ptr<uint8_t>(block_start_vec[segment_num])));
+                    new_segment_index.emplace_back(segment_index[segment_num]);
+                    new_segment_length.emplace_back(segment_length[segment_num]);
+                    totalbyte_after_merge += segment_length[segment_num];
+                    start_index=segment_index[segment_num+1];
+                    segment_num++;
+                    newsegment_num++;
+                }
+
+            }
+            block_start_vec.swap(new_block_start_vec);
+            segment_index.swap(new_segment_index);
+            segment_length.swap(new_segment_length);
+            total_byte = totalbyte_after_merge;
+            // std::cout<<total_byte<<std::endl;
+
+        }
 
         uint32_t* decodeArray8(uint8_t* in, const size_t length, uint32_t* out, size_t nvalue) {
             //start_index + bit + theta0 + theta1 + numbers + delta
@@ -342,6 +438,7 @@ namespace Codecset {
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
 
+
             if (maxerror == 127) {
                 memcpy(&tmp, tmpin, 4);
                 return tmp;
@@ -361,7 +458,12 @@ namespace Codecset {
             memcpy(&theta1, tmpin, 4);
             tmpin += 4;
             //std::cout<< "indexing "<<l<<std::endl;
-            tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+            if( maxerror==32){
+                tmp = read_bit_default(tmpin,maxerror, l - start_ind, theta1, theta0, maxerror);
+            } else{
+                tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+            }
+            
             // tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
             return tmp;
 
@@ -391,6 +493,7 @@ namespace Codecset {
 
         void destroy() {
             for (int i = 0;i < (int)block_start_vec.size();i++) {
+                // block_start_vec[i].reset();
                 free(block_start_vec[i]);
             }
 

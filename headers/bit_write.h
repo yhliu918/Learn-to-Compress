@@ -187,8 +187,8 @@ uint8_t * write_delta_T(int *in, uint8_t *out, uint8_t l, int numbers)
 {
     uint64_t code = 0;
     int occupy = 0;
-    uint64_t endbit = (l * numbers);
-    int end = 0;
+    uint64_t endbit = (l * (uint64_t)numbers);
+    uint32_t end = 0;
     int writeind = 0;
     int *tmpin = in;
     int readind = 0;
@@ -198,7 +198,7 @@ uint8_t * write_delta_T(int *in, uint8_t *out, uint8_t l, int numbers)
     }
     else
     {
-        end = (int)endbit / 8 + 1;
+        end = endbit / 8 + 1;
     }
     uint8_t *last = out + end;
     uint64_t left_val = 0;

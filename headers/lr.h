@@ -76,6 +76,61 @@ void caltheta(uint32_t x[], uint32_t y[], int m){
     
     
 };
+
+
+template <typename T>
+inline uint32_t bits_int_T(T v)
+{
+  uint32_t r(0);
+  int length = sizeof(T) * 8;
+  if (length > 255 && v >= ((T)1 << (uint8_t)255))
+  {
+    v >>= 255;
+    //v = v/2;
+    r += 256;
+  }
+  if (length > 127 && v >= ((T)1 << (uint8_t)127))
+  {
+    v >>= 128;
+    r += 128;
+  }
+  if (length > 63 && v >= ((T)1 << (uint8_t)63))
+  {
+    v >>= 64;
+    r += 64;
+  }
+  if (length > 31 && v >= ((T)1 << (uint8_t)31))
+  {
+    v >>= 32;
+    r += 32;
+  }
+  if (length > 15 && v >= ((T)1 << (uint8_t)15))
+  {
+    v >>= 16;
+    r += 16;
+  }
+  if (length > 7 && v >= ((T)1 << (uint8_t)7))
+  {
+    v >>= 8;
+    r += 8;
+  }
+  if (length > 3 && v >= ((T)1 << (uint8_t)3))
+  {
+    v >>= 4;
+    r += 4;
+  }
+  if (length > 1 && v >= ((T)1 << (uint8_t)1))
+  {
+    v >>= 2;
+    r += 2;
+  }
+  if (v >= (T)1)
+  {
+    r += 1;
+  }
+  
+  return r;
+}
     
 
 
