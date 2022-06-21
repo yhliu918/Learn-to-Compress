@@ -11,10 +11,10 @@ int main()
     using namespace Codecset;
 
     // We pick a CODEC
-    IntegerCODEC &codec = *CODECFactory::getFromName("delta_my");
+    IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
 
     std::vector<uint32_t> data;
-    std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/normal_200M_uint32.txt", std::ios::in);
+    std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/poisson_timestamps_20000.csv", std::ios::in);
     // std::ifstream srcFile("/home/lyh/postingList_10M.txt", std::ios::in);
     if (!srcFile)
     {
@@ -22,12 +22,13 @@ int main()
         std::cout << "error opening source file." << std::endl;
         return 0;
     }
-    while (1)
+    while (srcFile.good())
     {
 
         uint32_t next;
         srcFile >> next;
-        if (srcFile.eof())
+        // std::cout<<next<<std::endl;
+        if (!srcFile.good())
         {
             break;
         }
@@ -44,7 +45,7 @@ int main()
     std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
               << std::endl;
 
-    int blocks = 1000000;
+    int blocks = 100000;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -66,6 +67,7 @@ int main()
         }
         uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t));
         uint8_t *res = descriptor;
+        // std::cout<<data[i*block_size]<<" "<<data[i * block_size+block_size-1]<<std::endl;
         res = codec.encodeArray8(data.data() + (i * block_size), block_length, descriptor, i);
         descriptor = (uint8_t *)realloc(descriptor, (res - descriptor));
         block_start_vec.push_back(descriptor);

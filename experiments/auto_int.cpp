@@ -16,27 +16,30 @@
 
 
 
-
+int random(int m)
+{
+  return rand() % m;
+}
 
 
 int main() {
   using namespace Codecset;
 
   // We pick a CODEC
-  IntegerCODEC &codec = *CODECFactory::getFromName("piecewise");
+  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/data/poisson_20000/offset.txt",std::ios::in); 
-  if(!srcFile) { 
-      std::cout << "error opening source file." << std::endl;
-      return 0;
+  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/books_200M_uint32.txt", std::ios::in);
+  if (!srcFile) {
+    std::cout << "error opening source file." << std::endl;
+    return 0;
   }
-  while(1){
-      
-      uint32_t next ;
-      srcFile >> next;
-      if(srcFile.eof()){break;}
-      data.push_back(next);
+  while (srcFile.good()) {
+
+    uint32_t next;
+    srcFile >> next;
+    if (!srcFile.good()) { break; }
+    data.push_back(next);
 
   }
   srcFile.close();
@@ -47,34 +50,36 @@ int main() {
   }
   std::cout << "vector size = " << data.size() << std::endl;
   std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-       << std::endl;
- 
-    
-  int blocks =1;
-  int block_size = data.size()/blocks;
-  int delta =(1<<7)-1;
-  codec.init(blocks,block_size,delta);
-  int totalsize = 0;
-  uint8_t * res = NULL;
+    << std::endl;
 
-  for(int i=0;i<blocks;i++){
-    res = codec.encodeArray8(data.data()+(i*block_size),block_size ,res,N);
+
+  int blocks = 1;
+  int block_size = data.size() / blocks;
+  int delta = (1<<11);
+  // int delta = (1<<30);
+  codec.init(blocks, block_size, delta);
+  int totalsize = 0;
+  uint8_t* res = NULL;
+
+  for (int i = 0;i < blocks;i++) {
+    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, N);
   }
   totalsize = codec.get_block_nums();
-  double compressrate = (totalsize)*100.0 / (8 * N * 1.0);
-    std::cout<<"compressed size "<<totalsize<<" uncompressed size "<<8*N<<std::endl;
-    std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
-  bool flag =true;
-  uint32_t * recover = new uint32_t[data.size()];
-  
+  double compressrate = (totalsize) * 100.0 / (4 * N * 1.0);
+  std::cout << "compressed size " << totalsize << " uncompressed size " << 4 * N << std::endl;
+  std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
+  bool flag = true;
+  uint32_t* recover = new uint32_t[data.size()];
+
   //std::vector<uint32_t> recover(data.size());
-  double totaltime =0.0;
+  double totaltime = 0.0;
+  /*
   std::cout<<"decompress all!"<<std::endl;
    double start = getNow();
   for(int i=0;i<blocks;i++){
-      
+
       codec.decodeArray8(res, block_size, recover+i*block_size, i);
-      
+
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -87,7 +92,7 @@ int main() {
        if(!flag){
           break;
        }
-       
+
 
   }
       double end = getNow();
@@ -97,41 +102,44 @@ std::cout << "all decoding time per int: " << std::setprecision(8)
      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
 std::cout << "all decoding speed: " << std::setprecision(10)
      << data.size()/(totaltime*1000) <<  std::endl;
-  std::cout<<"random access decompress!"<<std::endl; 
-  
-  double randomaccesstime =0.0;
-   start = getNow();
-   uint32_t mark=0;
-   uint32_t* placeholder=NULL;
-    
-  for(int i=0;i<N;i++){    
-      
-      uint32_t tmpvalue = codec.randomdecodeArray8(res, i%block_size,placeholder , i/block_size);
-       mark+=tmpvalue;
-      
-       if(data[i]!=tmpvalue){
-        
-        std::cout<<"num: "<<i<< "true is: "<<data[i]<<" predict is: "<<tmpvalue<<std::endl;
-        flag = false;
-        std::cout<<"something wrong! decompress failed"<<std::endl;
-        
-      }
+*/
+  std::cout << "random access decompress!" << std::endl;
+
+  double randomaccesstime = 0.0;
+  double start = getNow();
+  uint32_t mark = 0;
+  uint32_t* placeholder = NULL;
+
+  for (int i = 0;i < N;i++) {
+    int index = random(N);
+    // int index = i; 
+
+    uint32_t tmpvalue = codec.randomdecodeArray8(res, index % block_size, placeholder, index / block_size);
+    mark += tmpvalue;
+
+    if(data[index]!=tmpvalue){
+
+    std::cout<<"num: "<<index<< "true is: "<<data[index]<<" predict is: "<<tmpvalue<<std::endl;
+    flag = false;
+    std::cout<<"something wrong! decompress failed"<<std::endl;
+
+    }
     if(!flag){
-        break;
+      break;
     }
 
-    }
-       end = getNow();
-      randomaccesstime+=(end-start);
+  }
+  double end = getNow();
+  randomaccesstime += (end - start);
 
-std::cout << "random decoding time per int: " << std::setprecision(8)
-     << randomaccesstime / data.size() * 1000000000 << "ns" << std::endl;
-std::cout << "random decoding speed: " << std::setprecision(10)
-     << data.size()/(randomaccesstime*1000) <<  std::endl;
-    
-  codec.destroy();  
+  std::cout << "random decoding time per int: " << std::setprecision(8)
+    << randomaccesstime / data.size() * 1000000000 << " ns" << std::endl;
+  std::cout << "random decoding speed: " << std::setprecision(10)
+    << data.size() / (randomaccesstime * 1000) << std::endl;
+
+  codec.destroy();
 
 
 
-  
+
 }

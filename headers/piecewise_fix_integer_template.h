@@ -1,0 +1,130 @@
+
+#ifndef PIECEWISEFIX_INTEGER_TEMPLATE_H_
+#define PIECEWISEFIX_INTEGER_TEMPLATE_H_
+
+#include "common.h"
+#include "codecs.h"
+#include "bit_write.h"
+#include "lr.h"
+#include "bit_read.h"
+#define INF 0x7f7fffff
+
+namespace Codecset
+{
+    template <typename T>
+    class Leco_int
+    {
+    public:
+        uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
+        {
+            uint8_t *out = res;
+            double *indexes = new double[length];
+            double *keys = new double[length];
+
+            for(uint32_t i = 0; i < length; i++){
+                indexes[i] = (double) i;
+                keys[i] = (double) data[i];
+            }
+
+            lr mylr;
+            mylr.caltheta(indexes,keys,length);
+            double theta0 = mylr.theta0;
+            double theta1 = mylr.theta1;
+
+            std::vector<T> delta;
+            std::vector<bool> signvec;
+            T max_error =0;
+
+            for (auto i = 0; i < length; i++)
+            {
+                T tmp_val;
+                if ( data[i] > (T)(theta0+theta1*(double)i))
+                {
+                    tmp_val = data[i] - (T)(theta0+theta1*(double)i);
+                    signvec.emplace_back(true); // means positive
+                }
+                else
+                {
+                    tmp_val =(T)(theta0+theta1*(double)i) -  data[i];
+                    signvec.emplace_back(false); // means negative
+                }
+
+                delta.emplace_back(tmp_val);
+
+                if (tmp_val > max_error)
+                {
+                    max_error = tmp_val;
+                }
+            }
+
+
+
+            uint8_t max_bit = 0;
+            if (max_error)
+            {
+                max_bit = bits_int_T(max_error) + 1;
+            }
+            // std::cout<< "max_bit: " << max_bit << std::endl;
+            if(max_bit>sizeof(T)*8){
+                max_bit = sizeof(T)*8;
+            }
+            memcpy(out, &max_bit, sizeof(max_bit));
+            out += sizeof(max_bit);
+            if(max_bit== sizeof(T)*8){
+                for (auto i = 0; i < length; i++)
+                {
+                    memcpy(out, &data[i], sizeof(T));
+                    out += sizeof(T);
+                }
+                return out;
+            }
+
+            memcpy(out, &theta0, sizeof(double));
+            out += sizeof(double);
+            memcpy(out, &theta1, sizeof(double));
+            out += sizeof(double);
+            if (max_bit)
+            {
+                out = write_delta_int_T(delta.data(),signvec, out, max_bit, length);
+            }
+
+            return out;
+        }
+
+
+        T randomdecodeArray8(uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
+        {
+            
+            uint8_t *tmpin = in;
+            uint8_t maxbits;
+            memcpy(&maxbits, tmpin, sizeof(uint8_t));
+            tmpin += sizeof(uint8_t);
+
+            if(maxbits==sizeof(T)*8){
+                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
+                return tmp_val;
+            }
+
+            double theta0;
+            memcpy(&theta0, tmpin, sizeof(double));
+            tmpin += sizeof(double);
+
+            double theta1;
+            memcpy(&theta1, tmpin, sizeof(double));
+            tmpin += sizeof(double);
+            
+            
+            T tmp_val = (long long)(theta0+theta1*(double)to_find);
+            if(maxbits){
+                tmp_val = read_bit_fix_int<T>(tmpin, maxbits, to_find, theta1, theta0);
+            }
+            return tmp_val;
+        }
+
+
+
+    };
+
+} // namespace FastPFor
+
+#endif /* SIMDFASTPFOR_H_ */
