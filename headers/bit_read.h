@@ -648,7 +648,7 @@ uint32_t read_bit_fix_T(uint8_t *in, int l, int to_find, double slope, double st
 }
 
 
-uint32_t read_bit_fix_float_T(uint8_t *in, int l, int to_find, float slope, int32_t start_key, int start)
+uint32_t read_bit_fix_float_T(uint8_t *in, int l, int to_find, float slope, float start_key, int start)
 {
   uint64_t find_bit = to_find * l;
   uint64_t start_byte = find_bit / 8;
@@ -684,7 +684,7 @@ uint32_t read_bit_fix_float_T(uint8_t *in, int l, int to_find, float slope, int3
     value = -value;
   }
   // uint32_t out = value + (long long)(start_key + (double)to_find * slope);
-  uint32_t out = value + start_key + (long long)((float)(to_find)*slope);
+  uint32_t out = value + (long long)start_key + (long long)((float)(to_find)*slope);
   return out;
   
 }

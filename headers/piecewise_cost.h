@@ -30,8 +30,7 @@ namespace Codecset {
         uint64_t total_byte = 0;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
-        int overhead = 13;
-        // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*10;//start_index + start_key + slope
+        int overhead = 10;
         uint32_t* array;
         int tolerance = 0;
         int block_num;
@@ -74,7 +73,7 @@ namespace Codecset {
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
-            int32_t theta0 = mylr.theta0;
+            float theta0 = mylr.theta0;
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
@@ -89,9 +88,8 @@ namespace Codecset {
                 }
             }
             uint32_t delta_final_max_bit = bits_int_T<uint32_t>(final_max_error) + 1;
-            // if (end_index<2100){
-            //     std::cout<<origin_index<<" "<<end_index<<" "<<(long long)theta0<<" "<<final_slope<<std::endl;
-            // }
+
+            
             
             if (delta_final_max_bit>=32){
                 delta_final_max_bit = 32;
@@ -384,6 +382,7 @@ namespace Codecset {
                     // if(segment_num ==1243665 ){
                     //     std::cout <<segment_num<<"//"<<total_segments<<" "<< block_start_vec[total_segments+newsegment_num] << std::endl;
                     // }
+                    // std::cout<<"merge "<<segment_num<<" "<<segment_num+1<<" ( "<<start_index<<" , "<<segment_index[segment_num+2]-1<<" ) "<<" init cost: "<<init_cost<<" merge cost: "<<merge_cost<<std::endl;
                     
                     new_block_start_vec.emplace_back(block_start_vec[total_segments+newsegment_num]);
                     new_segment_index.emplace_back(start_index);
@@ -428,7 +427,7 @@ namespace Codecset {
             uint8_t* this_block = block_start_vec[lower_bound(l, length)];
 
             uint8_t* tmpin = this_block;
-            int32_t theta0;
+            float theta0;
             float theta1;
             uint8_t maxerror;
             uint32_t start_ind;
