@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISEFIX_INTEGER_TEMPLATE_H_
-#define PIECEWISEFIX_INTEGER_TEMPLATE_H_
+#ifndef LECO_FLOAT_INTEGER_TEMPLATE_H_
+#define LECO_FLOAT_INTEGER_TEMPLATE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -12,7 +12,7 @@
 namespace Codecset
 {
     template <typename T>
-    class Leco_int
+    class Leco_int_float
     {
     public:
         uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
@@ -28,8 +28,8 @@ namespace Codecset
 
             lr mylr;
             mylr.caltheta(indexes,keys,length);
-            double theta0 = mylr.theta0;
-            double theta1 = mylr.theta1;
+            T theta0 = mylr.theta0;
+            float theta1 = (float)mylr.theta1;
 
             std::vector<T> delta;
             std::vector<bool> signvec;
@@ -38,14 +38,14 @@ namespace Codecset
             for (auto i = 0; i < length; i++)
             {
                 T tmp_val;
-                if ( data[i] > (T)(theta0+theta1*(double)i))
+                if ( data[i] > (T)((double)theta0+theta1*(float)i))
                 {
-                    tmp_val = data[i] - (T)(theta0+theta1*(double)i);
+                    tmp_val = data[i] - (T)((double)theta0+theta1*(float)i);
                     signvec.emplace_back(true); // means positive
                 }
                 else
                 {
-                    tmp_val =(T)(theta0+theta1*(double)i) -  data[i];
+                    tmp_val =(T)((double)theta0+theta1*(float)i) -  data[i];
                     signvec.emplace_back(false); // means negative
                 }
 
@@ -64,7 +64,7 @@ namespace Codecset
             {
                 max_bit = bits_int_T(max_error) + 1;
             }
-            // std::cout<< "max_bit: " << (int)max_bit << std::endl;
+            
             if(max_bit>sizeof(T)*8){
                 max_bit = sizeof(T)*8;
             }
@@ -79,10 +79,10 @@ namespace Codecset
                 return out;
             }
 
-            memcpy(out, &theta0, sizeof(double));
-            out += sizeof(double);
-            memcpy(out, &theta1, sizeof(double));
-            out += sizeof(double);
+            memcpy(out, &theta0, sizeof(theta0));
+            out += sizeof(theta0);
+            memcpy(out, &theta1, sizeof(float));
+            out += sizeof(float);
             if (max_bit)
             {
                 out = write_delta_int_T(delta.data(),signvec, out, max_bit, length);
@@ -105,21 +105,21 @@ namespace Codecset
                 return tmp_val;
             }
 
-            double theta0;
-            memcpy(&theta0, tmpin, sizeof(double));
-            tmpin += sizeof(double);
+            T theta0;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
 
-            double theta1;
-            memcpy(&theta1, tmpin, sizeof(double));
-            tmpin += sizeof(double);
+            float theta1;
+            memcpy(&theta1, tmpin, sizeof(float));
+            tmpin += sizeof(float);
             
             
             T tmp_val;
             if(maxbits){
-                tmp_val = read_bit_fix_int<T>(tmpin, maxbits, to_find, theta1, theta0);
+                tmp_val = read_bit_fix_int_float<T>(tmpin, maxbits, to_find, theta1, theta0);
             }
             else{
-                tmp_val = (theta0 + (double)to_find * theta1);
+                tmp_val = ((double)theta0 + (float)to_find * theta1);
             }
             return tmp_val;
         }

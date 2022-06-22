@@ -669,6 +669,42 @@ T read_bit_fix_int(uint8_t *in, uint8_t l, int to_find, double slope, double sta
 }
 
 
+
+template <typename T>
+T read_bit_fix_int_float(uint8_t *in, uint8_t l, int to_find, float slope, float start_key)
+{
+  uint64_t find_bit = to_find * (int)l;
+  uint64_t start_byte = find_bit / 8;
+  uint8_t start_bit = find_bit % 8;
+  uint64_t occupy = start_bit;
+  uint64_t total = 0;
+  
+  uint128_t decode = (reinterpret_cast<uint128_t *>(in+start_byte))[0];
+  // memcpy(&decode, in+start_byte, sizeof(uint64_t));
+  decode >>=start_bit;
+  decode &= (((T)1<<l)-1);
+  // T one = 1;
+  // one.left_shift((uint8_t)(l+8) ,*result);
+  // decode &= (*result - 1);
+
+  bool sign = (decode >> (l - 1)) & 1;
+  T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
+  // int128_t out = (int128_t)((double)start_key + (float)to_find * slope);
+  int128_t out = (T)(start_key + slope * (float)to_find);
+  if(!sign)
+  {
+    out = out-value;
+  }
+  else
+  {
+    out = out+value;
+  }
+
+  return (T)out;
+  
+}
+
+
 template <typename T>
 T read_FOR_int(uint8_t *in, uint8_t l, int to_find)
 {
