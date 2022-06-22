@@ -323,6 +323,74 @@ uint8_t * write_delta_int_T(T *in,std::vector<bool>& signvec, uint8_t *out, uint
 }
 
 
+template <typename T>
+uint8_t * write_FOR_int_T(T *in, uint8_t *out, uint8_t l, int numbers)
+{
+    uint128_t code = 0;
+    int occupy = 0;
+    uint64_t endbit = (l * (uint64_t)numbers);
+    uint64_t end = 0;
+    int writeind = 0;
+    T *tmpin = in;
+    int readind = 0;
+    if (endbit % 8 == 0)
+    {
+        end = endbit / 8;
+    }
+    else
+    {
+        end = endbit / 8 + 1;
+    }
+    uint8_t *last = out + end;
+    uint64_t left_val = 0;
+
+    while (out <= last)
+    {
+        while (occupy < 8)
+        {
+            if (tmpin >= in + numbers)
+            {
+                occupy = 8;
+                break;
+            }
+
+            
+            T tmpnum = tmpin[0];
+            T value1 =
+                (tmpnum & (((T)1 << l) - 1));
+
+
+            code += ((uint128_t)value1 << (uint8_t)occupy);
+            occupy += l;
+            tmpin++;
+            readind++;
+        } //end while
+        while (occupy >= 8)
+        {
+            left_val = code >> (uint8_t)8;
+            //std::cout<<code<<std::endl;
+            code = code & ((1 << 8) - 1);
+            uint8_t tmp_char = code;
+            occupy -= 8;
+            out[0] = tmp_char;
+            code = left_val;
+            //std::cout<< writeind<<std::endl;
+            //std::cout<<occupy<<" "<<left_val<<" "<<unsigned(out[0])<<std::endl;
+            out++;
+        }
+    }
+    
+    int pad = ceil((sizeof(uint32_t)*8 - l)/8);
+    for (int i = 0; i < pad; i++)
+    {
+        out[0] = 0;
+        out++;
+    }
+    return out;
+}
+
+
+
 
 uint8_t* write_delta_default(uint32_t *in,uint8_t* out, uint8_t l, int numbers){
     for(int i=0;i<numbers;i++){
