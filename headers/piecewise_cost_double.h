@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_COST_H_
-#define PIECEWISE_COST_H_
+#ifndef PIECEWISE_COST_DOUBLE_H_
+#define PIECEWISE_COST_DOUBLE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -13,7 +13,7 @@
 
 namespace Codecset {
 
-    class piecewiseCost : public IntegerCODEC {
+    class piecewise_cost_double : public IntegerCODEC {
     public:
         using IntegerCODEC::encodeArray;
         using IntegerCODEC::decodeArray;
@@ -30,9 +30,9 @@ namespace Codecset {
         uint64_t total_byte = 0;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
-        int overhead = 20;
+        int overhead = 0;
         uint32_t* array;
-        int tolerance = 0;
+        int tolerance = 10;
         int block_num;
         int block_size;
 
@@ -60,29 +60,29 @@ namespace Codecset {
         }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)*2);
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)*4);
             uint8_t* out = descriptor;
             int length = end_index - origin_index + 1;
             double* indexes = new double[length];
             double* keys = new double[length];
             for (int j = origin_index;j <= end_index;j++) {
-                indexes[j - origin_index] = j - origin_index;
-                keys[j - origin_index] = array[j];
+                indexes[j - origin_index] = (double)(j - origin_index);
+                keys[j - origin_index] = (double)array[j];
             }
 
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double theta0 = mylr.theta0;
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
 
             for (int j = origin_index;j <= end_index;j++) {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
-                long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
-                uint32_t tmp_error = abs(pred - array[j]);
-                delta_final[j - origin_index] = array[j] - pred;
+                long long  pred =  (long long)(theta0 + final_slope * (double)(j - origin_index));
+                uint32_t tmp_error = abs(pred - (long long)array[j]);
+                delta_final[j - origin_index] = (long long)array[j] - pred;
                 if (tmp_error > final_max_error) {
                     final_max_error = tmp_error;
                 }
@@ -126,6 +126,7 @@ namespace Codecset {
 
 
             uint64_t segment_size = out - descriptor;
+            // std::cout<<segment_size<<std::endl;
             descriptor = (uint8_t*)realloc(descriptor, segment_size);
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
@@ -427,7 +428,7 @@ namespace Codecset {
             uint8_t* this_block = block_start_vec[lower_bound(l, length)];
 
             uint8_t* tmpin = this_block;
-            float theta0;
+            double theta0;
             float theta1;
             uint8_t maxerror;
             uint32_t start_ind;
@@ -452,21 +453,23 @@ namespace Codecset {
                 }
                 return tmp;
             }
-            memcpy(&theta0, tmpin, 4);
-            tmpin += 4;
-            memcpy(&theta1, tmpin, 4);
-            tmpin += 4;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
             //std::cout<< "indexing "<<l<<std::endl;
             if( maxerror==32){
                 tmp = read_bit_default(tmpin,maxerror, l - start_ind, theta1, theta0, maxerror);
             } else{
-                tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+                tmp = read_bit_fix_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
             }
             
             // tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
             return tmp;
 
         }
+        
+        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;
@@ -498,7 +501,7 @@ namespace Codecset {
 
         }
         std::string name() const {
-            return "piecewise_cost";
+            return "piecewise_cost_double";
         }
 
     };

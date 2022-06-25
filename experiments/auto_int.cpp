@@ -26,16 +26,21 @@ int main() {
   using namespace Codecset;
 
   // We pick a CODEC
-  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost");
+  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost_dp");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/books_200M_uint32.txt", std::ios::in);
+  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/fb/fb-289000.txt", std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
   }
+  int counter = 0;
+  int cut = 3000;
   while (srcFile.good()) {
-
+    if(counter==cut){
+      break;
+    } 
+    counter++;
     uint32_t next;
     srcFile >> next;
     if (!srcFile.good()) { break; }
@@ -54,6 +59,7 @@ int main() {
 
 
   int blocks = 1;
+  int blocks_real = N;
   int block_size = data.size() / blocks;
   int delta = (1<<11);
   // int delta = (1<<30);
@@ -62,7 +68,7 @@ int main() {
   uint8_t* res = NULL;
 
   for (int i = 0;i < blocks;i++) {
-    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, N);
+    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, blocks_real);
   }
   totalsize = codec.get_block_nums();
   double compressrate = (totalsize) * 100.0 / (4 * N * 1.0);
@@ -113,6 +119,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
   for (int i = 0;i < N;i++) {
     int index = random(N);
     // int index = i; 
+
 
     uint32_t tmpvalue = codec.randomdecodeArray8(res, index % block_size, placeholder, index / block_size);
     mark += tmpvalue;

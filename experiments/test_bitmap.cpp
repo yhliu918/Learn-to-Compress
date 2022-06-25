@@ -16,10 +16,10 @@ int main() {
   std::vector<uint32_t> data;
   std::ifstream srcFile("../integer_data/books_200M_uint32.txt",std::ios::in);
   if (!srcFile)
-    {
-        std::cout << "error opening source file." << std::endl;
-        return 0;
-    }
+  {
+      std::cout << "error opening source file." << std::endl;
+      return 0;
+  }
   while(1){
       
       uint32_t next ;
@@ -31,23 +31,27 @@ int main() {
   srcFile.close();
   int N = data.size();
 
-  std::vector<std::string> file_system = {"bitmap_random_1e-05_200000000.txt", "bitmap_random_0.0001_200000000.txt", "bitmap_random_0.0005_200000000.txt", "bitmap_random_0.001_200000000.txt", "bitmap_random_0.01_200000000.txt","bitmap_random_0.1_200000000.txt"};
+  std::vector<std::string> file_system = { "bitmap_random_0.0001_200000000.txt","bitmap_random_1e-05_200000000.txt", "bitmap_random_0.0005_200000000.txt", "bitmap_random_0.001_200000000.txt", "bitmap_random_0.01_200000000.txt","bitmap_random_0.1_200000000.txt"};
   for(int j=0;j<(int)file_system.size();j++){
-    std::vector<bool> bitmap;
+    std::vector<uint32_t> bitmap;
     std::ifstream bitFile("/home/zxy/Learn-to-Compress-0510/data/bitmap_random/"+file_system[j],std::ios::in); 
     std::cout<< "../data/bitmap_random/"+file_system[j]<<std::endl;
     int k=0;
+    std::vector<uint32_t> bit_pos;
     for(int i=0;i<N;i++){
       
-        bool next ;
+        uint32_t next ;
         bitFile >> next;
+        if(next){
+          bit_pos.emplace_back(i);
+        }
         k++;
         if(bitFile.eof()){break;}
         bitmap.push_back(next);
 
     }
     bitFile.close();
-
+    
     int blocks =1000000;
 
   int block_size = data.size()/blocks;
@@ -106,10 +110,11 @@ int main() {
   double start = getNow();
   uint32_t tmpvalue =0;
   int counter=0;
-  for(int i=0;i<N;i++){    
-    if(bitmap[i]){
-      counter ++;
-      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)i/block_size], i%block_size, buffer, N);
+  for(int j=0;j<N;j++){    
+    if(bitmap[j]){
+      // uint32_t index = bit_pos[j];
+      // counter ++;
+      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)j/block_size], j%block_size, buffer, N);
       // std::cout<<tmpvalue<<std::endl;
       // if(tmpvalue!=data[i]){
       //   std::cout<<"error"<<std::endl;
@@ -117,7 +122,7 @@ int main() {
     }
   }
   double end = getNow();
-  std::cout<<counter<<std::endl;
+  std::cout<<bit_pos.size()<<std::endl;
   std::cout << "access time per int: " << std::setprecision(8)
      << (end - start)/N  * 1000000000 << " ns" << std::endl;
 

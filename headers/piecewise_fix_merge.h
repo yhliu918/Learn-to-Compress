@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_COST_H_
-#define PIECEWISE_COST_H_
+#ifndef PIECEWISE_FIX_MERGE_H_
+#define PIECEWISE_FIX_MERGE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -13,7 +13,7 @@
 
 namespace Codecset {
 
-    class piecewiseCost : public IntegerCODEC {
+    class piecewise_fix_merge : public IntegerCODEC {
     public:
         using IntegerCODEC::encodeArray;
         using IntegerCODEC::decodeArray;
@@ -30,7 +30,7 @@ namespace Codecset {
         uint64_t total_byte = 0;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
-        int overhead = 20;
+        // int overhead = 18;
         uint32_t* array;
         int tolerance = 0;
         int block_num;
@@ -66,23 +66,23 @@ namespace Codecset {
             double* indexes = new double[length];
             double* keys = new double[length];
             for (int j = origin_index;j <= end_index;j++) {
-                indexes[j - origin_index] = j - origin_index;
-                keys[j - origin_index] = array[j];
+                indexes[j - origin_index] = (double)(j - origin_index);
+                keys[j - origin_index] = (double)array[j];
             }
 
             lr mylr;
             mylr.caltheta(indexes, keys, length);
-            float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double final_slope = mylr.theta1;
+            double theta0 = mylr.theta0;
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
 
             for (int j = origin_index;j <= end_index;j++) {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
-                long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
-                uint32_t tmp_error = abs(pred - array[j]);
-                delta_final[j - origin_index] = array[j] - pred;
+                long long  pred =  (long long)(theta0 + final_slope * (double)(j - origin_index));
+                uint32_t tmp_error = abs(pred - (long long)array[j]);
+                delta_final[j - origin_index] = (long long)array[j] - pred;
                 if (tmp_error > final_max_error) {
                     final_max_error = tmp_error;
                 }
@@ -136,196 +136,26 @@ namespace Codecset {
             // }
         }
 
-        void newsegment_2(uint32_t origin_index, uint32_t end_index) {
-            // if(origin_index==1636 || origin_index+1 == 1636){
-            //     std::cout<<"hello"<<std::endl;
-            // }
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t));
-            uint8_t* out = descriptor;
-            memcpy(out, &origin_index, sizeof(origin_index));
-            out += sizeof(origin_index);
-            out[0] = (uint8_t)126; // this means that this segment only has two points
-            out++;
-            memcpy(out, &array[origin_index], sizeof(uint32_t));
-            out += sizeof(uint32_t);
-            memcpy(out, &(array[origin_index + 1]), sizeof(uint32_t));
-            out += sizeof(uint32_t);
-
-            uint64_t segment_size = out - descriptor;
-            descriptor = (uint8_t*)realloc(descriptor, segment_size);
-            block_start_vec.push_back(descriptor);
-            segment_index.push_back(origin_index);
-            segment_length.push_back(segment_size);
-
-            total_byte += segment_size;
-        }
-
-        void newsegment_1(uint32_t origin_index, uint32_t end_index) {
-            // if(origin_index == 1636){
-            //     std::cout<<origin_index<<std::endl;
-            // }
-            uint8_t* descriptor = (uint8_t*)malloc(3 * sizeof(uint64_t));
-            uint8_t* out = descriptor;
-            memcpy(out, &origin_index, sizeof(origin_index));
-            out += sizeof(origin_index);
-            out[0] = (uint8_t)127; // this means that this segment only has one point
-            out++;
-            memcpy(out, &array[origin_index], sizeof(uint32_t));
-            out += sizeof(uint32_t);
-
-            uint64_t segment_size = out - descriptor;
-            descriptor = (uint8_t*)realloc(descriptor, segment_size);
-            block_start_vec.push_back(descriptor);
-            segment_length.push_back(segment_size);
-            segment_index.push_back(origin_index);
-
-            total_byte += segment_size;
-        }
-
 
         uint8_t* encodeArray8(uint32_t* in, const size_t length, uint8_t* res, size_t nvalue) {
+            // nvalue is block_number here
             array = in;
-            std::vector<uint32_t> indexes;
-            for (uint32_t i = 0; i < nvalue; i++) {
-                indexes.push_back(i);
+            int block_interval = block_size / nvalue;
+            nvalue = block_size / block_interval;
+            if(block_size > block_interval * nvalue){
+                nvalue++;
             }
-            float high_slope = (float)INF;
-            float low_slope = 0.;
-            long long origin_key = in[0];
-            int origin_index = indexes[0];
-            int end_index = indexes[0];
-            int tmp_delta_bit = 0;
-            int tmp_max_delta = 0;
-            for (int i = 1; i < (long long)nvalue; i++) {
-                long long key = in[i];
-                int id = indexes[i];
-                float tmp_point_slope = ((key - origin_key) + 0.0) / ((id - origin_index) + 0.0);
-                if (id == nvalue - 1) {
-                        newsegment(origin_index, id);
-                        break;
-                }
-                if(id==origin_index){
-                    continue;
-                }
-                if (id == origin_index + 1) {
-                    if (abs(tmp_point_slope) >= tolerance) {
-                        newsegment_2(origin_index, origin_index+1);
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
-                        origin_index = id+1;
-                        origin_key = in[id+1];
-                        end_index = id+1;
-                        tmp_delta_bit = 0;
-                        tmp_max_delta = 0;
-                        continue;
-
-                    }
-
-                    low_slope = tmp_point_slope;
-                    end_index = id;
-                    continue;
-                }
-                if (id == origin_index + 2) {
-                    if (abs(tmp_point_slope) >= tolerance) {
-                        newsegment_2(origin_index, origin_index+1);
-
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
-                        origin_index = id;
-                        origin_key = key;
-                        end_index = id;
-                        tmp_delta_bit = 0;
-                        tmp_max_delta = 0;
-                        continue;
-
-                    }
-
-                    float tmp = 0;
-                    if (tmp_point_slope < low_slope) {
-                        tmp = low_slope;
-                        low_slope = tmp_point_slope;
-                        high_slope = tmp;
-                    }
-                    else {
-                        high_slope = tmp_point_slope;
-                    }
-                    end_index = id;
-                    float tmp_slope = (high_slope + low_slope) / 2;
-                    for (int j = origin_index + 1;j < id;j++) {
-                        long long pred = origin_key + (float)(id - origin_index) * tmp_slope;
-                        int tmp_error = abs(pred - in[j]);
-                        if (tmp_error > tmp_max_delta) {
-                            tmp_max_delta = tmp_error;
-                        }
-                        tmp_delta_bit = bits(tmp_max_delta) + 1;
-                    } 
-                    continue;
-                }
-
-                float tmp_slope = (high_slope + low_slope) / 2;
-                long long pred = origin_key + (float)(id - origin_index) * tmp_slope;
-                int tmp_error = abs(pred - key);
-                int tmp_error_bit = bits(tmp_error) + 1;
-                if (tmp_error_bit <= tmp_delta_bit) {
-                    end_index = id;
-                    if (tmp_error > tmp_max_delta) {
-                        tmp_max_delta = tmp_error;
-                    }
-                    continue;
-                }
-                else {
-                    float mid_slope = (high_slope + low_slope) / 2.;
-                    if (tmp_point_slope < low_slope) {
-                        mid_slope = (high_slope + tmp_point_slope) / 2.;
-                    }
-                    if (tmp_point_slope > high_slope) {
-                        mid_slope = (low_slope + tmp_point_slope) / 2.;
-                    }
-                    long long pred = origin_key + (float)(id - origin_index) * mid_slope;
-                    int tmp_error = abs(pred - in[id]);
-                    int delta_max_bit = bits(tmp_error) + 1;
-                    int cost = (id - origin_index + 1) * (delta_max_bit - tmp_delta_bit);
-                    if (cost < overhead) {
-
-                        if (tmp_point_slope < low_slope) {
-                            low_slope = tmp_point_slope;
-                        }
-                        if (low_slope < 0) {
-                            low_slope = 0.0;
-                        }
-                        if (tmp_point_slope > high_slope) {
-                            high_slope = tmp_point_slope;
-                        }
-                        end_index = id;
-                        if (delta_max_bit > tmp_delta_bit) {
-                            tmp_delta_bit = delta_max_bit;
-                        }
-
-
-                    }
-                    else {
-                        // delete[] delta;
-                        // write the last segment & start a new segment
-                        newsegment(origin_index, end_index);
-                        if (id == nvalue - 1) {
-                            newsegment_1(id, id);
-                        }
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
-                        origin_index = id;
-                        origin_key = key;
-                        end_index = id;
-
-                        tmp_delta_bit = 0;
-                        tmp_max_delta = 0;
-
-
-                    }
-
-                }
-
+            for(int i=0;i<nvalue;i++){
+                int start_index = block_interval*i;
+                int end_index = std::min(block_interval*(i+1), block_size) - 1;
+                // std::cout<<"block "<<i<<" "<<start_index<<" "<<end_index<<std::endl;
+                newsegment(start_index, end_index);
             }
+
             int iter = 0;
+            double compressrate = (total_byte) * 100.0 / (4 * block_size * 1.0);
+            std::cout << "try "<<iter<<" segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+
             uint64_t cost_decline = total_byte;
             while(cost_decline>0){
                 
@@ -333,7 +163,7 @@ namespace Codecset {
                 cost_decline = total_byte;
                 merge();
                 
-                double compressrate = (total_byte) * 100.0 / (4 * block_size * 1.0);
+                compressrate = (total_byte) * 100.0 / (4 * block_size * 1.0);
                 std::cout << "try "<<iter<<" segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
                 cost_decline = cost_decline - total_byte;
                 double cost_decline_percent = cost_decline * 100.0 / (4 * block_size * 1.0);
@@ -379,9 +209,6 @@ namespace Codecset {
                 merge_cost = segment_length[total_segments + newsegment_num];
                 if(init_cost>merge_cost){ // merge the two segments
                     // new_block_start_vec.emplace_back(std::unique_ptr<uint8_t>(block_start_vec[total_segments+newsegment_num]));
-                    // if(segment_num ==1243665 ){
-                    //     std::cout <<segment_num<<"//"<<total_segments<<" "<< block_start_vec[total_segments+newsegment_num] << std::endl;
-                    // }
                     // std::cout<<"merge "<<segment_num<<" "<<segment_num+1<<" ( "<<start_index<<" , "<<segment_index[segment_num+2]-1<<" ) "<<" init cost: "<<init_cost<<" merge cost: "<<merge_cost<<std::endl;
                     
                     new_block_start_vec.emplace_back(block_start_vec[total_segments+newsegment_num]);
@@ -427,8 +254,8 @@ namespace Codecset {
             uint8_t* this_block = block_start_vec[lower_bound(l, length)];
 
             uint8_t* tmpin = this_block;
-            float theta0;
-            float theta1;
+            double theta0;
+            double theta1;
             uint8_t maxerror;
             uint32_t start_ind;
             uint32_t tmp = 0;
@@ -452,21 +279,22 @@ namespace Codecset {
                 }
                 return tmp;
             }
-            memcpy(&theta0, tmpin, 4);
-            tmpin += 4;
-            memcpy(&theta1, tmpin, 4);
-            tmpin += 4;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
             //std::cout<< "indexing "<<l<<std::endl;
             if( maxerror==32){
                 tmp = read_bit_default(tmpin,maxerror, l - start_ind, theta1, theta0, maxerror);
             } else{
-                tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+                tmp = read_bit_fix_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
             }
             
             // tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);
             return tmp;
 
         }
+        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;
@@ -498,7 +326,7 @@ namespace Codecset {
 
         }
         std::string name() const {
-            return "piecewise_cost";
+            return "piecewise_fix_merge";
         }
 
     };

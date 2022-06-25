@@ -82,22 +82,25 @@ template <typename T>
 inline uint32_t bits_int_T(T v)
 {
   uint32_t r(0);
-  int length = sizeof(T) * 8;
-  if (length > 255 && v >= ((T)1 << (uint8_t)255))
+  constexpr int length = sizeof(T) * 8;
+  if constexpr(length > 255)
   {
-    v >>= 255;
+    if (v >= ((T)1 << (uint8_t)255))
+    {v >>= 255;
     //v = v/2;
-    r += 256;
+    r += 256;}
   }
-  if (length > 127 && v >= ((T)1 << (uint8_t)127))
+  if constexpr(length > 127)
   {
-    v >>= 128;
-    r += 128;
+    if (v >= ((T)1 << (uint8_t)127))
+    {v >>= 128;
+    r += 128;}
   }
-  if (length > 63 && v >= ((T)1 << (uint8_t)63))
+  if constexpr(length > 63)
   {
-    v >>= 64;
-    r += 64;
+    if (v >= ((T)1 << (uint8_t)63))
+    {v >>= 64;
+    r += 64;}
   }
   if (length > 31 && v >= ((T)1 << (uint8_t)31))
   {

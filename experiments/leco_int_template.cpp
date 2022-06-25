@@ -3,6 +3,10 @@
 #include "caltime.h"
 #include "lr.h"
 #include "piecewise_fix_integer_template.h"
+#include "piecewise_fix_integer_template_float.h"
+#include "piecewise_cost_integer_template.h"
+#include "FOR_integer_template.h"
+#include "delta_integer_template.h"
 
 typedef uint64_t leco_type;
 
@@ -42,8 +46,9 @@ int main()
 {
     using namespace Codecset;
     Leco_int<leco_type> codec;
+    // alternatives : Leco_int, Delta_int, FOR_int
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/fb_200M_uint64", true);
+    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/wiki_200M_uint64", true);
     int N = data.size();
 
     std::cout << "vector size = " << data.size() << std::endl;
@@ -57,6 +62,10 @@ int main()
     {
         blocks++;
     } // handle with the last block, maybe < block_size
+
+    // if using auto segmentation codecs
+    // int delta = (1<<11);
+    // codec.init(blocks, block_size, delta);
 
     std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
 
@@ -80,7 +89,9 @@ int main()
         block_start_vec.push_back(descriptor);
         totalsize += segment_size;
     }
-
+    // if(totalsize == 0){
+    //     totalsize = codec.get_block_nums();
+    // }
     double compressrate = (totalsize)*100.0 / (sizeof(leco_type) * N * 1.0);
     std::cout<<"compressed size "<<totalsize<<" uncompressed size "<<sizeof(leco_type)*N<<std::endl;
     std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
@@ -90,15 +101,14 @@ int main()
     std::cout << "random access decompress!" << std::endl;
     double randomaccesstime = 0.0;
     double start = getNow();
-    uint32_t mark = 0;
+    leco_type mark = 0;
     int search_count = N;
     for (int i = 0; i < search_count; i++)
     {
-        // std::cout<<i<<std::endl;
+
         // int index = random(N);
         int index = i;
 
-        
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
 
         mark += tmpvalue;
