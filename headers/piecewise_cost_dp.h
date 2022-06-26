@@ -26,6 +26,7 @@ namespace Codecset {
         std::vector<uint8_t*> block_start_vec;
         std::vector<uint32_t> segment_index;
         std::vector<uint32_t> segment_length;
+        int total_seg = 0;
         
 
         uint64_t total_byte = 0;
@@ -72,17 +73,18 @@ namespace Codecset {
             }
             uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)*2);
             uint8_t* out = descriptor;
-            double* indexes = new double[length];
-            double* keys = new double[length];
+            std::vector<double> indexes;
+            std::vector<double> keys;
             for (int j = origin_index;j <= end_index;j++) {
-                indexes[j - origin_index] = j - origin_index;
-                keys[j - origin_index] = array[j];
+                indexes.emplace_back(j - origin_index);
+                keys.emplace_back(array[j]);
             }
 
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
             float theta0 = mylr.theta0;
+
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
@@ -121,14 +123,6 @@ namespace Codecset {
                 out = write_delta_T(delta_final, out, delta_final_max_bit, (end_index - origin_index + 1));
             }
 
-
-            // if(1636>=origin_index && 1636<=end_index){
-                // std::cout<<"("<<origin_index<<" , "<<end_index<<") "<<(end_index - origin_index + 1)<<" "<<array[origin_index]<<" "<<array[end_index]<<" "<<delta_final_max_bit<<std::endl;
-                // for(int j=origin_index;j<=end_index;j++){
-                //     std::cout<<delta_final[j - origin_index]<<" ";
-                // }
-                // std::cout<<std::endl;
-            // }
 
 
             delete[] delta_final;
@@ -211,6 +205,7 @@ namespace Codecset {
                 segment_cost_sum[i] = 0;
             }
             for(int i=0;i<nvalue;i++){
+
                 uint64_t tmp = (1<<63) - 1;
                 uint32_t start_ind = 0;
                 uint32_t tmp_cost = segment_cost[0][i];
@@ -232,17 +227,21 @@ namespace Codecset {
                         segment_start_index[i].push_back(item);
 
                     }
+                    segment_start_index[i].emplace_back(start_ind+1);
                     
                 }
-                segment_start_index[i].emplace_back(start_ind);
+                else{
+                    segment_start_index[i].push_back(0);
+                }
+                
                 // for(auto item : segment_start_index[i]){
                 //     std::cout<<item<<" ";
                 // }
                 // std::cout<<std::endl;
-                
-                
 
             }
+            destroy();
+            segment_length.clear();
             block_start_vec.clear();
             segment_index.clear();
             total_byte = 0;
@@ -251,12 +250,21 @@ namespace Codecset {
                 newsegment(segment_start_index[nvalue-1][i], segment_start_index[nvalue-1][i+1]-1);
             }
             uint64_t min_cost = total_byte;
-            
+            total_seg += segment_start_index[nvalue-1].size() - 1 ;
             double compressrate = (min_cost) * 100.0 / (4 * block_size * 1.0);
-            std::cout<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+            std::cout<<"resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+            std::cout<<"totalsegment: "<<total_seg<<std::endl;
 
-
-
+            for (auto item : segment_start_index){
+                item.clear();
+            }
+            for (auto item : segment_cost){
+                item.clear();
+            }
+       
+            segment_start_index.clear();
+            segment_cost.clear();
+            segment_cost_sum.clear();
             
 
             return res;
@@ -336,9 +344,10 @@ namespace Codecset {
             return 1;
         }
         uint32_t get_block_nums() {
-            std::cout << "Total block num is " << block_start_vec.size() << std::endl;
+            // std::cout << "Total block num is " << block_start_vec.size() << std::endl;
             return total_byte;
         }
+
 
         void destroy() {
             for (int i = 0;i < (int)block_start_vec.size();i++) {

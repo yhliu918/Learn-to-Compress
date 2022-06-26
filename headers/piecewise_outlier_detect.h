@@ -43,13 +43,14 @@ int cal_log(int x){
 
 }
 uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nvalue) {
-    double *indexes = new double[length];
-    double *keys = new double[length];
+
     uint8_t *out = res;
     uint64_t * writebitmap=new uint64_t[temp];
+    std::vector<double> indexes;
+    std::vector<double> keys;
     for(uint32_t i = 0; i < length; i++){
-        indexes[i] = (double) i;
-        keys[i] = (double) in[i];
+        indexes.emplace_back((double) i);
+        keys.emplace_back((double) in[i]);
     }
     
     
@@ -95,8 +96,7 @@ uint8_t* encodeArray8(uint32_t *in, const size_t length,uint8_t*res, size_t nval
             break ;
         }
     }
-        free(indexes);
-        free(keys);
+
         free(counter);
 // GONNA USE PIECEWISE, BECAUSE NOT A SINGLE OUTLIER OCCURS
 

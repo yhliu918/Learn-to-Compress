@@ -37,21 +37,19 @@ void init(int blocks, int blocksize,int extra){
 
 // bit + theta0 + theta1 + delta[0]+ delta(after delta)
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
-    double *indexes = new double[length];
-    double *keys = new double[length];
     uint8_t *out = res;
+
+    std::vector<double> indexes;
+    std::vector<double> keys;
     for(uint32_t i = 0; i < length; i++){
-        indexes[i] = (double) i;
-        keys[i] = (double) in[i];
+        indexes.emplace_back((double) i);
+        keys.emplace_back((double) in[i]);
     }
     int *delta = new int[length];
     
     lr mylr;
     mylr.caltheta(indexes,keys,length);
 
-    free(indexes);
-    free(keys);
-    
     for(int i=0;i<(long long)length;i++){
         int tmp = (long long) in[i] - (long long)(mylr.theta0+mylr.theta1*(double)i);
         delta[i]=tmp;

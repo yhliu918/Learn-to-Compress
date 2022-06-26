@@ -42,14 +42,15 @@ int random(int m){
 
 // bit + theta0 + theta1 + delta   
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
-    double *indexes = new double[length];
-    double *keys = new double[length];
+
     //double *keys_sample = new double [length];
     //double *indexes_sample = new double[length];
     uint8_t *out = res;
+    std::vector<double> indexes;
+    std::vector<double> keys;
     for(uint32_t i = 0; i < length; i++){
-        indexes[i] = (double) i;
-        keys[i] = (double) in[i];
+        indexes.emplace_back((double) i);
+        keys.emplace_back((double) in[i]);
     }
     int *delta = new int[length];
 
@@ -57,10 +58,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     //mylr.caltheta_LOO(indexes,keys,length);
     mylr.caltheta(indexes,keys,length);
     
-    
-    
-    free(indexes);
-    free(keys);
+
     int max_error =0;
     for(int i=0;i<(long long)length;i++){
         int tmp = (long long) in[i] - (long long)(mylr.theta0+mylr.theta1*(double)i);

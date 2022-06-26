@@ -63,11 +63,11 @@ namespace Codecset {
             uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(uint64_t)*2);
             uint8_t* out = descriptor;
             int length = end_index - origin_index + 1;
-            double* indexes = new double[length];
-            double* keys = new double[length];
+            std::vector<double> indexes;
+            std::vector<double> keys;
             for (int j = origin_index;j <= end_index;j++) {
-                indexes[j - origin_index] = j - origin_index;
-                keys[j - origin_index] = array[j];
+                indexes.emplace_back(j - origin_index);
+                keys.emplace_back(array[j]);
             }
 
             lr mylr;

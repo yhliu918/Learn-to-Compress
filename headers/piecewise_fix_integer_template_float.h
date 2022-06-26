@@ -18,12 +18,11 @@ namespace Codecset
         uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
         {
             uint8_t *out = res;
-            double *indexes = new double[length];
-            double *keys = new double[length];
-
+            std::vector<double> indexes;
+            std::vector<double> keys;
             for(uint32_t i = 0; i < length; i++){
-                indexes[i] = (double) i;
-                keys[i] = (double) data[i];
+                indexes.emplace_back((double) i);
+                keys.emplace_back((double) data[i]);
             }
 
             lr mylr;

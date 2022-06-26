@@ -10,13 +10,36 @@ struct lr{//theta0+theta1*x
     double theta1;
     int delta;
     
-void caltheta(double x[], double y[], int m){
-    double avx= Utils::array_sum(x,m)*((double)1/m);
-    double avy= Utils::array_sum(y,m)*((double)1/m);
-    theta1=(Utils::array_sum(Utils::array_multiplication(x,y,m),m)-(double(m)*avx*avy))/(Utils::array_sum(Utils::array_multiplication(x,x,m),m)-(double(m)*avx*avx));
-    theta0=avy - theta1*avx;
+// void caltheta(double x[], double y[], int m){
+//     double avx= Utils::array_sum(x,m)*((double)1/m);
+//     double avy= Utils::array_sum(y,m)*((double)1/m);
+//     theta1=(Utils::array_sum(Utils::array_multiplication(x,y,m),m)-(double(m)*avx*avy))/(Utils::array_sum(Utils::array_multiplication(x,x,m),m)-(double(m)*avx*avx));
+//     theta0=avy - theta1*avx;
+    
+// }
+    
+void caltheta(std::vector<double>& x, std::vector<double>& y, int m){
+
+    double sumx = 0;
+    double sumy = 0;
+    double sumxy = 0;
+    double sumxx = 0;
+    for(int i=0;i<m;i++){
+        sumx = sumx + x[i];
+        sumy = sumy + y[i];
+        sumxx = sumxx+x[i]*x[i];
+        sumxy = sumxy+x[i]*y[i];
+    }
+    
+    double ccc= sumxy * m - sumx * sumy;
+    double xxx = sumxx * m - sumx * sumx;
+
+    theta1 = ccc/xxx;
+    theta0 = (sumy - theta1 * sumx)/m;
     
 }
+    
+  
 void caltheta_LOO(double x[], double y[], int m){
     double sumx= Utils::array_sum(x,m);
     double sumy= Utils::array_sum(y,m);

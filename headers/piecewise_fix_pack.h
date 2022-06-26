@@ -41,13 +41,13 @@ int random(int m){
 
 // bit + theta0 + theta1 + delta   
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
-    double *indexes = new double[length];
-    double *keys = new double[length];
 
     uint8_t *out = res;
+    std::vector<double> indexes;
+    std::vector<double> keys;
     for(uint32_t i = 0; i < length; i++){
-        indexes[i] = (double) i;
-        keys[i] = (double) in[i];
+        indexes.emplace_back((double) i);
+        keys.emplace_back((double) in[i]);
     }
     int *delta = new int[length];
     lr mylr;
@@ -55,9 +55,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     mylr.caltheta(indexes,keys,length);
     
     //std::cout<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
-    
-    free(indexes);
-    free(keys);
+
     int max_error =0;
     for(int i=0;i<(long long)length;i++){
         int tmp = (long long) in[i] - ((long long)mylr.theta0+(long long)(mylr.theta1*(double)i));
@@ -165,18 +163,18 @@ uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
 }
 
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *res,size_t nvalue) {
-    double *indexes = new double[length];
-    double *keys = new double[length];
+
     uint32_t *out = res;
+    std::vector<double> indexes;
+    std::vector<double> keys;
     for(uint32_t i = 0; i < length; i++){
-        indexes[i] = (double) i;
-        keys[i] = (double) in[i];
+        indexes.emplace_back((double) i);
+        keys.emplace_back((double) in[i]);
     }
     int *delta = new int[length];
     lr mylr;
     mylr.caltheta(indexes,keys,length);
-    free(indexes);
-    free(keys);
+
     int max_error =0;
     //double theta1_i = 0.0;
     for(int i=0;i<(long long)length;i++){
