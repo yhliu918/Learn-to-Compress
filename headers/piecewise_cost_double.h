@@ -30,9 +30,9 @@ namespace Codecset {
         uint64_t total_byte = 0;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
-        int overhead = 0;
+        int overhead = 10;
         uint32_t* array;
-        int tolerance = 10;
+        int tolerance = 0;
         int block_num;
         int block_size;
 

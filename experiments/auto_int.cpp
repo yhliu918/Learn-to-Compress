@@ -26,20 +26,20 @@ int main() {
   using namespace Codecset;
 
   // We pick a CODEC
-  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost_dp");
+  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/fb/fb-289000.txt", std::ios::in);
+  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/movieid.txt", std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
   }
   int counter = 0;
-  int cut = 3000;
+  // int cut = 2000;
   while (srcFile.good()) {
-    if(counter==cut){
-      break;
-    } 
+    // if(counter==cut){
+    //   break;
+    // } 
     counter++;
     uint32_t next;
     srcFile >> next;
@@ -61,21 +61,29 @@ int main() {
   int blocks = 1;
   int blocks_real = N;
   int block_size = data.size() / blocks;
-  int delta = (1<<11);
+  int delta = 0;
   // int delta = (1<<30);
+
+
   codec.init(blocks, block_size, delta);
   int totalsize = 0;
   uint8_t* res = NULL;
-
+  int total_seg = 0;
+  int block_length = block_size;
   for (int i = 0;i < blocks;i++) {
-    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, blocks_real);
+    std::cout<<i<<std::endl;
+    if(i==blocks-1){
+      block_length = N - i*block_size;
+    }
+    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, block_length);
+    totalsize += codec.get_block_nums();
+    
   }
-  totalsize = codec.get_block_nums();
+  
   double compressrate = (totalsize) * 100.0 / (4 * N * 1.0);
   std::cout << "compressed size " << totalsize << " uncompressed size " << 4 * N << std::endl;
   std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
   bool flag = true;
-  uint32_t* recover = new uint32_t[data.size()];
 
   //std::vector<uint32_t> recover(data.size());
   double totaltime = 0.0;
@@ -145,7 +153,7 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     << data.size() / (randomaccesstime * 1000) << std::endl;
 
   codec.destroy();
-
+  // free(&codec);
 
 
 

@@ -7,6 +7,7 @@
 #include "piecewise_cost_integer_template.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
+#include "delta_cost_integer_template.h"
 
 typedef uint64_t leco_type;
 
@@ -16,7 +17,7 @@ int random(int m)
 }
 
 template <typename T>
-static std::vector<T> load_data(const std::string& filename,
+static std::vector<T> load_data_binary(const std::string& filename,
                                 bool print = true) {
   std::vector<T> data;
   
@@ -42,20 +43,43 @@ static std::vector<T> load_data(const std::string& filename,
   return data;
 }
 
+
+template <typename T>
+static std::vector<T> load_data(const std::string& filename) {
+    std::vector<T> data;
+    std::ifstream srcFile(filename, std::ios::in);
+    if (!srcFile) {
+        std::cout << "error opening source file." << std::endl;
+        return data;
+    }
+
+    while (srcFile.good()) {
+        T next;
+        srcFile >> next;
+        if (!srcFile.good()) { break; }
+        data.emplace_back(next);
+
+    }
+    srcFile.close();
+
+  return data;
+}
+
 int main()
 {
     using namespace Codecset;
     Leco_int<leco_type> codec;
-    // alternatives : Leco_int, Delta_int, FOR_int
+    // alternatives : Leco_int, Delta_int, FOR_int, Leco_cost
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/wiki_200M_uint64", true);
+    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/poisson_timestamps_EVENT_50000_SENSOR_2000_randomdie_OUTER_1000s_INNER_20ms_100M.csv");
+    
     int N = data.size();
 
     std::cout << "vector size = " << data.size() << std::endl;
     std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
               << std::endl;
 
-    int blocks = 1000000;
+    int blocks = 100000;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -64,7 +88,7 @@ int main()
     } // handle with the last block, maybe < block_size
 
     // if using auto segmentation codecs
-    // int delta = (1<<11);
+    int delta = 54;
     // codec.init(blocks, block_size, delta);
 
     std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
@@ -83,7 +107,7 @@ int main()
         uint8_t *res = descriptor;
 
         // std::cout<<data[i*block_size]<<" "<<data[i * block_size+block_size-1]<<std::endl;
-        res = codec.encodeArray8_int(data.data() + (i * block_size), block_length, descriptor, i);
+        res = codec.encodeArray8_int(data.data() + (i * block_size), block_length, descriptor, block_size);
         uint32_t segment_size = res - descriptor;
         descriptor = (uint8_t *)realloc(descriptor, segment_size);
         block_start_vec.push_back(descriptor);
@@ -106,8 +130,8 @@ int main()
     for (int i = 0; i < search_count; i++)
     {
 
-        // int index = random(N);
-        int index = i;
+        int index = random(N);
+        // int index = i;
 
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
 
