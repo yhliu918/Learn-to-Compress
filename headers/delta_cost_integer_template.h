@@ -52,8 +52,12 @@ namespace Codecset {
         }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
-            // if(origin_index == 199999979){
-            //     std::cout<<"merging 199999979"<<std::endl;
+
+            // if(origin_index == end_index){
+            //     return newsegment_1(origin_index,origin_index);
+            // }
+            // if(origin_index == end_index+1){
+            //     return newsegment_2(origin_index,origin_index);
             // }
             uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T)*4);
             uint8_t* out = descriptor;
@@ -129,6 +133,7 @@ namespace Codecset {
             segment_index.push_back(origin_index);
             segment_length.push_back(segment_size);
             total_byte += segment_size;
+            // std::cout<<"segment_size: "<<segment_size<<std::endl;
             // if(origin_index == 2024){
             //     std::cout<<segment_size<<" "<<end_index<<std::endl;
             // }
@@ -211,6 +216,23 @@ namespace Codecset {
                         tmp_max_delta = array[id-1] - array[id];
                     }
                     tmp_delta_bit = bits_int_T<T>(tmp_max_delta)+1;
+                    if(origin_index!=0){
+                        double prev_cr = total_byte/(origin_index*sizeof(T));
+                        double cur_cr = tmp_max_delta/(sizeof(T)*8);
+                        if (cur_cr >= prev_cr) {
+                            newsegment_2(origin_index, origin_index+1);
+
+                            origin_index = id;
+                            origin_key = key;
+                            end_index = id;
+                            tmp_delta_bit = 0;
+                            tmp_max_delta = 0;
+                            continue;
+
+                        }
+                    }
+                    
+                    end_index = id;
                     continue;
                 }
 
@@ -235,6 +257,7 @@ namespace Codecset {
                     
                     int delta_max_bit = bits_int_T<T>(current_delta) + 1;
                     uint64_t cost = (id - origin_index + 1) * (delta_max_bit - tmp_delta_bit);
+                    // std::cout<<id<<" "<<origin_index<<std::endl;
                     // std::cout<<delta_max_bit<<" "<<tmp_delta_bit<<" "<<cost<<std::endl;
                     if (cost < overhead) {
                         end_index = id;
