@@ -68,7 +68,7 @@ static std::vector<T> load_data(const std::string& filename) {
 int main()
 {
     using namespace Codecset;
-    Leco_int<leco_type> codec;
+    Delta_cost<leco_type> codec;
     // alternatives : Leco_int, Delta_int, FOR_int, Leco_cost
 
     std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/poisson_timestamps_EVENT_50000_SENSOR_2000_randomdie_OUTER_1000s_INNER_20ms_100M.csv");
@@ -79,7 +79,7 @@ int main()
     std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
               << std::endl;
 
-    int blocks = 100000;
+    int blocks = 1;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -88,8 +88,8 @@ int main()
     } // handle with the last block, maybe < block_size
 
     // if using auto segmentation codecs
-    int delta = 54;
-    // codec.init(blocks, block_size, delta);
+    int delta = 0;
+    codec.init(blocks, block_size, delta);
 
     std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
 
@@ -113,9 +113,9 @@ int main()
         block_start_vec.push_back(descriptor);
         totalsize += segment_size;
     }
-    // if(totalsize == 0){
-    //     totalsize = codec.get_block_nums();
-    // }
+    if(totalsize == 0){
+        totalsize = codec.get_block_nums();
+    }
     double compressrate = (totalsize)*100.0 / (sizeof(leco_type) * N * 1.0);
     std::cout<<"compressed size "<<totalsize<<" uncompressed size "<<sizeof(leco_type)*N<<std::endl;
     std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;

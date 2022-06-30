@@ -29,13 +29,13 @@ int main() {
   IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/movieid.txt", std::ios::in);
+  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/normal_200M_uint32.txt", std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
   }
   int counter = 0;
-  // int cut = 2000;
+  // int cut = 20000;
   while (srcFile.good()) {
     // if(counter==cut){
     //   break;
@@ -61,7 +61,7 @@ int main() {
   int blocks = 1;
   int blocks_real = N;
   int block_size = data.size() / blocks;
-  int delta = 0;
+  int delta = 10;
   // int delta = (1<<30);
 
 
@@ -71,7 +71,7 @@ int main() {
   int total_seg = 0;
   int block_length = block_size;
   for (int i = 0;i < blocks;i++) {
-    std::cout<<i<<std::endl;
+    // std::cout<<i<<std::endl;
     if(i==blocks-1){
       block_length = N - i*block_size;
     }

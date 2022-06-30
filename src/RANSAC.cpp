@@ -73,18 +73,18 @@ int RANSAC::compute(lr& mylr, double x[], double y[],int numbers,int num_for_est
 
       if (res.second)
       {
-        double *tmpx = new double[num_for_estimate];
-        double *tmpy = new double[num_for_estimate];
-        
+
+        std::vector<double> tmpx;
+        std::vector<double> tmpy;
         for (int i=0; i<num_for_estimate; i++)
         {
-          tmpx[i] = x[cur_inti_sub_set_indexs[i]];
-          tmpy[i] = y[cur_inti_sub_set_indexs[i]];
+          tmpx.emplace_back(x[cur_inti_sub_set_indexs[i]]);
+          tmpy.emplace_back(y[cur_inti_sub_set_indexs[i]]);
         }
 
+
         mylr.caltheta(tmpx,tmpy,num_for_estimate);
-        free(tmpx);
-        free(tmpy);
+
         for(int i=0; i<num_data; i++)
         {
           if(0 == cur_votes[i] && 
@@ -130,8 +130,8 @@ int RANSAC::compute(lr& mylr, double x[], double y[],int numbers,int num_for_est
   chosen_sub_sets.clear();
 
 
-  double *choosex = new double[best_model_num];
-  double *choosey = new double[best_model_num];
+  std::vector<double> choosex(best_model_num, 0);
+  std::vector<double> choosey(best_model_num, 0);
   int k1=0;
   int k2=0;
   for(int j=0; j<num_data; j++) {
@@ -148,8 +148,6 @@ int RANSAC::compute(lr& mylr, double x[], double y[],int numbers,int num_for_est
   mylr.caltheta(choosex,choosey,best_model_num);
   //std::cout<<"a: "<<mylr.theta1<<" b: "<<mylr.theta0<<std::endl;
 
-  free(choosex);
-  free(choosey);
   delete []best_votes;
   delete []cur_votes;
 
