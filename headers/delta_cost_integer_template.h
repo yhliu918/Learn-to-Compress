@@ -50,6 +50,37 @@ namespace Codecset {
             return y;
 
         }
+        uint32_t cal_length(uint32_t origin_index, uint32_t end_index){
+            uint32_t totallength = 0;
+            T max_error = 0;
+            for (auto i = origin_index; i <=end_index-1; i++)
+            {
+                T tmp_val;
+                if ( array[i+1] > array[i])
+                {
+                    tmp_val = array[i+1] - array[i];
+                }
+                else
+                {
+                    tmp_val = array[i] -  array[i+1];
+                }
+
+                if (tmp_val > max_error)
+                {
+                    max_error = tmp_val;
+                }
+            }
+
+            uint8_t max_bit = 0;
+            if (max_error)
+            {
+                max_bit = bits_int_T(max_error) + 1;
+            }
+            totallength += (sizeof(uint32_t)+sizeof(uint8_t)+sizeof(T));
+            totallength += ceil(max_bit*(end_index-origin_index+1)/8);
+            return totallength;
+
+        }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
 
@@ -216,8 +247,9 @@ namespace Codecset {
                         tmp_max_delta = array[id-1] - array[id];
                     }
                     tmp_delta_bit = bits_int_T<T>(tmp_max_delta)+1;
-                    if(origin_index!=0){
-                        double prev_cr = total_byte/(origin_index*sizeof(T));
+                    // if(origin_index!=0){
+                        uint32_t aheadbytes = cal_length(origin_index, std::min(origin_index+99,(uint32_t)block_size-1));
+                        double prev_cr = aheadbytes/(100*sizeof(T));
                         double cur_cr = tmp_max_delta/(sizeof(T)*8);
                         if (cur_cr >= prev_cr) {
                             newsegment_2(origin_index, origin_index+1);
@@ -230,7 +262,7 @@ namespace Codecset {
                             continue;
 
                         }
-                    }
+                    // }
                     
                     end_index = id;
                     continue;
