@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISEFIXOP_H_
-#define PIECEWISEFIXOP_H_
+#ifndef PIECEWISEFIXOP_FLOAT_H_
+#define PIECEWISEFIXOP_FLOAT_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -15,7 +15,7 @@ namespace Codecset {
 
 
     
-class piecewise_fix_op : public IntegerCODEC {
+class piecewise_fix_op_float : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
   using IntegerCODEC::decodeArray;
@@ -59,11 +59,12 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     mylr.caltheta(indexes,keys,length);
     
     
-    
+    float theta0 = mylr.theta0;
+    float theta1 = mylr.theta1;
 
     int max_error =0;
     for(int i=0;i<(long long)length;i++){
-        int tmp = (long long) in[i] - (long long)(mylr.theta0+mylr.theta1*(double)i);
+        int tmp = (long long) in[i] - (long long)(theta0+theta1*(float)i);
         delta[i]=tmp;
         if(abs(tmp)>max_error){
             max_error = abs(tmp);
@@ -94,8 +95,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     //std::cout<<"bit_length: "<<tmp_bit<<std::endl;
     out[0]=(uint8_t)tmp_bit;
     out++;
-    double theta0 = mylr.theta0;
-    double theta1 = mylr.theta1;
+    
     //models[nvalue*2] = theta0;
     //models[nvalue*2+1] = theta1;
     memcpy(out,&theta0,sizeof(theta0));
@@ -142,15 +142,15 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
     return out;
 }
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
-    double theta0;
-    double theta1;
+    float theta0;
+    float theta1;
     uint8_t maxerror;
     uint8_t * tmpin=in;
     memcpy(&maxerror,tmpin,1);
     tmpin++;
-    theta0 = reinterpret_cast<double*>(tmpin)[0];
-    theta1 = reinterpret_cast<double*>(tmpin)[1];
-    tmpin+=sizeof(double) * 2;
+    theta0 = reinterpret_cast<float*>(tmpin)[0];
+    theta1 = reinterpret_cast<float*>(tmpin)[1];
+    tmpin+=sizeof(float) * 2;
     uint32_t tmp=0;
     if(maxerror){
         if(maxerror>=31){
@@ -159,11 +159,11 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
         //return interpret[l];
         }
         else{
-        tmp = read_bit_fix_T(tmpin ,maxerror, l, theta1,theta0, 0);
+        tmp = read_bit_fix_float_T(tmpin ,maxerror, l, theta1,theta0, 0);
         }
     }
     else{
-        tmp = (long long)(theta0+theta1*(double)l);
+        tmp = (long long)(theta0+theta1*(float)l);
     }
 
     return tmp; 
@@ -213,7 +213,7 @@ uint32_t get_block_nums(){
       return 1;
 }    
 std::string name() const {
-    return "piecewise_fix_op"; 
+    return "piecewise_fix_op_float"; 
 }    
  void destroy(){} 
 };

@@ -6,15 +6,18 @@ int random(int m)
 {
   return rand() % m;
 }
-int main()
+int main(int argc, const char* argv[])
 {
     using namespace Codecset;
+    std::string method = std::string(argv[1]);
+    std::string source_file = std::string(argv[2]);
+    int blocks = atoi(argv[3]);
 
     // We pick a CODEC
-    IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
+    IntegerCODEC &codec = *CODECFactory::getFromName(method);
 
     std::vector<uint32_t> data;
-    std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/poisson_timestamps_20000.csv", std::ios::in);
+    std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file, std::ios::in);
     // std::ifstream srcFile("/home/lyh/postingList_10M.txt", std::ios::in);
     if (!srcFile)
     {
@@ -45,7 +48,6 @@ int main()
     std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
               << std::endl;
 
-    int blocks = 100000;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)

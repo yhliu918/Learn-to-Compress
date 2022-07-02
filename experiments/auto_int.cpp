@@ -22,14 +22,17 @@ int random(int m)
 }
 
 
-int main() {
+int main(int argc, const char* argv[]) {
   using namespace Codecset;
+  std::string method = std::string(argv[1]);
+  std::string source_file = std::string(argv[2]);
+  int delta = atoi(argv[3]);
 
   // We pick a CODEC
-  IntegerCODEC& codec = *CODECFactory::getFromName("piecewise_cost");
+  IntegerCODEC& codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/normal_200M_uint32.txt", std::ios::in);
+  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file, std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
@@ -61,7 +64,6 @@ int main() {
   int blocks = 1;
   int blocks_real = N;
   int block_size = data.size() / blocks;
-  int delta = 10;
   // int delta = (1<<30);
 
 
