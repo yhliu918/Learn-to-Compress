@@ -47,6 +47,7 @@ typedef __int128_t int128_t;
 #include <numeric>
 #include <queue>
 #include <set>
+#include <list>
 #include <sstream>
 #include <stdexcept>
 #include <string>

@@ -98,7 +98,11 @@ namespace Codecset {
                 }
             }
 
-            uint32_t delta_final_max_bit = bits_int_T<T>(final_max_error) + 1;
+            uint32_t delta_final_max_bit = 0;
+            if(final_max_error){
+                delta_final_max_bit=bits_int_T<T>(final_max_error) + 1;
+            }
+            
             
             if (delta_final_max_bit>= sizeof(T)*8){
                 delta_final_max_bit = sizeof(T)*8;
@@ -512,6 +516,7 @@ namespace Codecset {
             return tmp_val;
 
         }
+        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;

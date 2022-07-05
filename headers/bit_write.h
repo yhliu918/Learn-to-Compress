@@ -255,14 +255,14 @@ uint8_t * write_delta_T(int *in, uint8_t *out, uint8_t l, int numbers)
 
 
 template <typename T>
-uint8_t * write_delta_int_T(T *in,std::vector<bool>& signvec, uint8_t *out, uint8_t l, int numbers)
+uint8_t * write_delta_int_T(std::vector<T>& in,std::vector<bool>& signvec, uint8_t *out, uint8_t l, int numbers)
 {
     uint128_t code = 0;
     int occupy = 0;
     uint64_t endbit = (l * (uint64_t)numbers);
     uint64_t end = 0;
     int writeind = 0;
-    T *tmpin = in;
+    
     int readind = 0;
     if (endbit % 8 == 0)
     {
@@ -279,14 +279,14 @@ uint8_t * write_delta_int_T(T *in,std::vector<bool>& signvec, uint8_t *out, uint
     {
         while (occupy < 8)
         {
-            if (tmpin >= in + numbers)
+            if (readind >= numbers)
             {
                 occupy = 8;
                 break;
             }
 
             
-            T tmpnum = tmpin[0];
+            T tmpnum = in[readind];
             bool sign = signvec[readind];
             T value1 =
                 (tmpnum & (((T)1 << (uint8_t)(l - 1)) - 1)) 
@@ -295,7 +295,7 @@ uint8_t * write_delta_int_T(T *in,std::vector<bool>& signvec, uint8_t *out, uint
 
             code += ((uint128_t)value1 << (uint8_t)occupy);
             occupy += l;
-            tmpin++;
+           
             readind++;
         } //end while
         while (occupy >= 8)
@@ -313,7 +313,7 @@ uint8_t * write_delta_int_T(T *in,std::vector<bool>& signvec, uint8_t *out, uint
         }
     }
     
-    int pad = ceil((sizeof(uint32_t)*8 - l)/8);
+    int pad = ceil((sizeof(T)*8 - l)/8);
     for (int i = 0; i < pad; i++)
     {
         out[0] = 0;

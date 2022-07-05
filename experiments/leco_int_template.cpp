@@ -5,11 +5,13 @@
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
 #include "piecewise_cost_integer_template.h"
+#include "piecewise_cost_merge_integer_template.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
+#include "delta_cost_merge_integer_template.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
@@ -65,13 +67,15 @@ static std::vector<T> load_data(const std::string& filename) {
   return data;
 }
 
-int main()
+int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Delta_cost<leco_type> codec;
+    Delta_cost_merge<leco_type> codec;
+    std::string source_file = std::string(argv[1]);
+    int blocks = atoi(argv[2]);
     // alternatives : Leco_int, Delta_int, FOR_int, Leco_cost
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/poisson_timestamps_EVENT_50000_SENSOR_2000_randomdie_OUTER_1000s_INNER_20ms_100M.csv");
+    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/"+source_file);
     
     int N = data.size();
 
@@ -79,7 +83,6 @@ int main()
     std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
               << std::endl;
 
-    int blocks = 1;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -98,6 +101,7 @@ int main()
     uint64_t totalsize = 0;
     for (int i = 0; i < blocks; i++)
     {
+        std::cout<<"block "<<i<<std::endl;
         int block_length = block_size;
         if (i == blocks - 1)
         {
@@ -107,7 +111,10 @@ int main()
         uint8_t *res = descriptor;
 
         // std::cout<<data[i*block_size]<<" "<<data[i * block_size+block_size-1]<<std::endl;
-        res = codec.encodeArray8_int(data.data() + (i * block_size), block_length, descriptor, block_size);
+        // if adaptive segment
+        res = codec.encodeArray8_int(data.data(), block_length, descriptor, i);
+        // if fixed length segment
+        // res = codec.encodeArray8_int(data.data()+(i*block_size), block_length, descriptor, i);
         uint32_t segment_size = res - descriptor;
         descriptor = (uint8_t *)realloc(descriptor, segment_size);
         block_start_vec.push_back(descriptor);
@@ -132,8 +139,10 @@ int main()
 
         int index = random(N);
         // int index = i;
+        
 
-        leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
+        // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
+        leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
 
         mark += tmpvalue;
 
