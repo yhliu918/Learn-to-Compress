@@ -59,7 +59,7 @@ int main(int argc, const char *argv[])
     bitmap.push_back(next);
   }
   bitFile.close();
-  Bitvector bitvector(bitmap);
+  // Bitvector bitvector(bitmap);
 
   int block_size = data.size() / blocks;
   blocks = data.size() / block_size;
@@ -114,14 +114,14 @@ int main(int argc, const char *argv[])
     */
 
   // PIECEWISE
-  uint32_t *buffer = NULL;
+  std::vector<uint32_t> recover(block_size);
   double start = getNow();
   uint32_t tmpvalue = 0;
   int counter = 0;
   for (auto &pos : bit_pos)
   {
     counter++;
-    tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)pos / block_size], pos % block_size, buffer, N);
+    tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)pos / block_size], pos % block_size, recover.data(), N);
   }
   double end = getNow();
   std::cout << bit_pos.size() << std::endl;
