@@ -5,15 +5,14 @@
 #include "../headers/lr.h"
 #include "../headers/bitvector.hpp"
 
-int main(int argc, char **argv)
+int main()
 {
   using namespace Codecset;
-  std::string codec_name = argv[1];
+
   // We pick a CODEC
   // IntegerCODEC &codec = *CODECFactory::getFromName("delta_my");
   // IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix_op");
-  // IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
-  IntegerCODEC &codec = *CODECFactory::getFromName(codec_name);
+  IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
 
   std::vector<uint32_t> data;
   std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/books_200M_uint32.txt", std::ios::in);
@@ -36,8 +35,7 @@ int main(int argc, char **argv)
   srcFile.close();
   int N = data.size();
 
-  std::vector<std::string> file_system = {"bitmap_random_1e-05_200000000.txt", "bitmap_random_0.0001_200000000.txt", "bitmap_random_0.0005_200000000.txt", "bitmap_random_0.001_200000000.txt", "bitmap_random_0.01_200000000.txt", "bitmap_random_0.1_200000000.txt"};
-  std::vector<double> results;
+  std::vector<std::string> file_system = {"bitmap_random_0.0001_200000000.txt", "bitmap_random_1e-05_200000000.txt", "bitmap_random_0.0005_200000000.txt", "bitmap_random_0.001_200000000.txt", "bitmap_random_0.01_200000000.txt", "bitmap_random_0.1_200000000.txt"};
   for (int j = 0; j < (int)file_system.size(); j++)
   {
     std::vector<uint32_t> bitmap;
@@ -62,7 +60,7 @@ int main(int argc, char **argv)
       bitmap.push_back(next);
     }
     bitFile.close();
-    // Bitvector bitvector(bitmap);
+    Bitvector bitvector(bitmap);
 
     int blocks = 1000000;
 
@@ -123,17 +121,44 @@ int main(int argc, char **argv)
     double start = getNow();
     uint32_t tmpvalue = 0;
     int counter = 0;
-    for (auto &pos : bit_pos)
+    /* OLD vector of int32 logic
+    for (int j = 0; j < N; j++)
     {
-      counter++;
-      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)pos / block_size], pos % block_size, buffer, pos / block_size);
+      // if (bitmap[j])
+      if (bitvector.readBit(j))
+      {
+        // uint32_t index = bit_pos[j];
+        // counter ++;
+        tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)j / block_size], j % block_size, buffer, N);
+        // std::cout<<tmpvalue<<std::endl;
+        // if(tmpvalue!=data[i]){
+        //   std::cout<<"error"<<std::endl;
+        // }
+      }
     }
-
+    */
+    auto num_words = bitvector.numWords();
+    for (int i = 0; i < num_words; i++)
+    {
+      auto word = bitvector.getWord(i);
+      for (int j = 0; j < 64 && counter < N; j++)
+      {
+        if (word & (1ULL << j))
+        {
+          counter++;
+          tmpvalue = codec.randomdecodeArray8(block_start_vec[counter / block_size], counter % block_size, buffer, N);
+          // std::cout<<tmpvalue<<std::endl;
+          // if(tmpvalue!=data[i]){
+          //   std::cout<<"error"<<std::endl;
+          // }
+        }
+      }
+    }
     double end = getNow();
     std::cout << bit_pos.size() << std::endl;
     std::cout << "access time per int: " << std::setprecision(8)
               << (end - start) / N * 1000000000 << " ns" << std::endl;
-    results.push_back((end - start) / N * 1000000000);
+
     /*
     // PIECEWISE DETECT
       uint32_t* buffer = NULL;
@@ -223,10 +248,5 @@ int main(int argc, char **argv)
     {
       free(block_start_vec[i]);
     }
-  }
-  printf("----printing results----\n");
-  for (auto &result : results)
-  {
-    std::cout << result << std::endl;
   }
 }
