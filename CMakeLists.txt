@@ -7,7 +7,7 @@ project(example
 
 set(CMAKE_CXX_STANDARD 11)
 find_package(Snappy)
-add_compile_options(-O0 -g )#-fsanitize=address
+add_compile_options(-O3 -g )#-fsanitize=address
 # link_libraries(-fsanitize=address)
 
 # .h document

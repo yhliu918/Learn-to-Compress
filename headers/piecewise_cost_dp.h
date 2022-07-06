@@ -29,7 +29,7 @@ namespace Codecset {
         int total_seg = 0;
         
 
-        uint64_t total_byte = 0;
+        uint64_t total_byte;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
         int overhead = 10;
@@ -43,6 +43,7 @@ namespace Codecset {
             block_num = blocks;
             block_size = blocksize;
             tolerance = delta; // add some punishing item
+            total_byte = 0;
 
         }
         uint32_t lower_bound(uint32_t v, uint32_t len)
@@ -76,8 +77,8 @@ namespace Codecset {
             std::vector<double> indexes;
             std::vector<double> keys;
             for (int j = origin_index;j <= end_index;j++) {
-                indexes.emplace_back(j - origin_index);
-                keys.emplace_back(array[j]);
+                indexes.emplace_back((double)j - origin_index);
+                keys.emplace_back((double)array[j]);
             }
 
             lr mylr;
@@ -195,7 +196,7 @@ namespace Codecset {
             std::vector<std::vector<uint32_t> > segment_cost(nvalue,std::vector<uint32_t>());
             for(int i=0;i<nvalue;i++){
                 for(int j=0;j<=i;j++){ //[j,i]
-                    segment_cost[j].emplace_back( newsegment(j,i));
+                    segment_cost[j].push_back( newsegment(j,i));
                     // std::cout<<"("<<j<<" , "<<i<<") "<<segment_cost[j][i -j]<<std::endl;
                 }
                 // std::cout<<"segment "<<i<<std::endl;
@@ -227,7 +228,7 @@ namespace Codecset {
                         segment_start_index[i].push_back(item);
 
                     }
-                    segment_start_index[i].emplace_back(start_ind+1);
+                    segment_start_index[i].push_back(start_ind+1);
                     
                 }
                 else{
@@ -241,9 +242,6 @@ namespace Codecset {
 
             }
             destroy();
-            segment_length.clear();
-            block_start_vec.clear();
-            segment_index.clear();
             total_byte = 0;
             segment_start_index[nvalue-1].push_back(nvalue);
             for(int i=0;i<segment_start_index[nvalue-1].size()-1;i++){
@@ -354,6 +352,9 @@ namespace Codecset {
                 // block_start_vec[i].reset();
                 free(block_start_vec[i]);
             }
+            segment_length.clear();
+            block_start_vec.clear();
+            segment_index.clear();
 
         }
         std::string name() const {

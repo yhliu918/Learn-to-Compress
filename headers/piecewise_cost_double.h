@@ -30,9 +30,9 @@ namespace Codecset {
         uint64_t total_byte = 0;
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t)*4;//start_index + start_key + slope
         // int overhead = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
-        int overhead = 0;
+        int overhead = 10;
         uint32_t* array;
-        int tolerance = 10;
+        int tolerance = 0;
         int block_num;
         int block_size;
 
@@ -209,18 +209,6 @@ namespace Codecset {
                     continue;
                 }
                 if (id == origin_index + 1) {
-                    if (abs(tmp_point_slope) >= tolerance) {
-                        newsegment_2(origin_index, origin_index+1);
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
-                        origin_index = id+1;
-                        origin_key = in[id+1];
-                        end_index = id+1;
-                        tmp_delta_bit = 0;
-                        tmp_max_delta = 0;
-                        continue;
-
-                    }
 
                     low_slope = tmp_point_slope;
                     end_index = id;
@@ -260,6 +248,19 @@ namespace Codecset {
                         }
                         tmp_delta_bit = bits(tmp_max_delta) + 1;
                     } 
+                    int new_cost = tmp_delta_bit * (id - origin_index + 1);
+                    int old_cost =  sizeof(double)+sizeof(double)+sizeof(uint32_t);
+                    if(new_cost-old_cost>overhead){
+                        newsegment_2(origin_index, origin_index+1);
+                        high_slope = (float)INF;
+                        low_slope = 0.0;
+                        origin_index = id;
+                        origin_key = key;
+                        end_index = id;
+                        tmp_delta_bit = 0;
+                        tmp_max_delta = 0;
+                        continue;
+                    }
                     continue;
                 }
 

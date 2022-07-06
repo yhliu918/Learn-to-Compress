@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_COST_INTEGER_TEMPLATE_H_
-#define PIECEWISE_COST_INTEGER_TEMPLATE_H_
+#ifndef DELTA_COST_INTEGER_TEMPLATE_H_
+#define DELTA_COST_INTEGER_TEMPLATE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -13,7 +13,7 @@
 
 namespace Codecset {
     template <typename T>
-    class Leco_cost
+    class Delta_cost
     {
     public:
         
@@ -50,71 +50,92 @@ namespace Codecset {
             return y;
 
         }
+        uint32_t cal_length(uint32_t origin_index, uint32_t end_index){
+            uint32_t totallength = 0;
+            T max_error = 0;
+            for (auto i = origin_index; i <=end_index-1; i++)
+            {
+                T tmp_val;
+                if ( array[i+1] > array[i])
+                {
+                    tmp_val = array[i+1] - array[i];
+                }
+                else
+                {
+                    tmp_val = array[i] -  array[i+1];
+                }
+
+                if (tmp_val > max_error)
+                {
+                    max_error = tmp_val;
+                }
+            }
+
+            uint8_t max_bit = 0;
+            if (max_error)
+            {
+                max_bit = bits_int_T(max_error) + 1;
+            }
+            totallength += (sizeof(uint32_t)+sizeof(uint8_t)+sizeof(T));
+            totallength += ceil(max_bit*(end_index-origin_index+1)/8);
+            return totallength;
+
+        }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
-            // if(origin_index == 199999979){
-            //     std::cout<<"merging 199999979"<<std::endl;
+
+            // if(origin_index == end_index){
+            //     return newsegment_1(origin_index,origin_index);
+            // }
+            // if(origin_index == end_index+1){
+            //     return newsegment_2(origin_index,origin_index);
             // }
             uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T)*4);
             uint8_t* out = descriptor;
-            int length = end_index - origin_index + 1;
 
-            std::vector<double> indexes;
-            std::vector<double> keys;
-            for (int j = origin_index;j <= end_index;j++) {
-                indexes.emplace_back(j - origin_index);
-                keys.emplace_back(array[j]);
-            }
-
-            lr mylr;
-            mylr.caltheta(indexes, keys, length);
-            double final_slope = mylr.theta1;
-            double theta0 = mylr.theta0;
-
-            T final_max_error = 0;
+            std::vector<T> delta;
             std::vector<bool> signvec;
-            std::vector<T> delta_final;
+            T max_error = 0;
 
-            for (int j = origin_index;j <= end_index;j++) {
-                // long long pred = theta0 + (float)(j - origin_index) * final_slope;
+            for (auto i = origin_index; i <=end_index-1; i++)
+            {
                 T tmp_val;
-                int128_t pred = (theta0 + final_slope * (float)(j - origin_index));
-                if ( array[j] > pred)
+                if ( array[i+1] > array[i])
                 {
-                    tmp_val = array[j] - pred;
+                    tmp_val = array[i+1] - array[i];
                     signvec.emplace_back(true); // means positive
                 }
                 else
                 {
-                    tmp_val = pred - array[j];
+                    tmp_val = array[i] -  array[i+1];
                     signvec.emplace_back(false); // means negative
                 }
 
-                delta_final.emplace_back(tmp_val);
+                delta.emplace_back(tmp_val);
 
-                if (tmp_val > final_max_error)
+                if (tmp_val > max_error)
                 {
-                    final_max_error = tmp_val;
+                    max_error = tmp_val;
                 }
             }
 
-            uint32_t delta_final_max_bit = 0;
-            if(final_max_error){
-                delta_final_max_bit=bits_int_T<T>(final_max_error) + 1;
-            }
-            
-            
-            if (delta_final_max_bit>= sizeof(T)*8){
-                delta_final_max_bit = sizeof(T)*8;
-            }
 
+
+            uint8_t max_bit = 0;
+            if (max_error)
+            {
+                max_bit = bits_int_T(max_error) + 1;
+            }
+            
+            if(max_bit>sizeof(T)*8){
+                max_bit = sizeof(T)*8;
+            }
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
-            out[0] = (uint8_t)delta_final_max_bit;
-            out++;
-
-            if(delta_final_max_bit== sizeof(T)*8){
-                for (auto i = origin_index; i<=end_index; i++)
+            memcpy(out, &max_bit, sizeof(max_bit));
+            out += sizeof(max_bit);
+            if(max_bit== sizeof(T)*8){
+                for (auto i = origin_index; i <= end_index; i++)
                 {
                     memcpy(out, &array[i], sizeof(T));
                     out += sizeof(T);
@@ -125,28 +146,25 @@ namespace Codecset {
                 segment_index.push_back(origin_index);
                 segment_length.push_back(segment_size);
                 total_byte += segment_size;
-                
                 return;
             }
 
-            memcpy(out, &theta0, sizeof(theta0));
-            out += sizeof(theta0);
+            memcpy(out, &array[origin_index], sizeof(T));
+            out += sizeof(T);
 
-            memcpy(out, &final_slope, sizeof(final_slope));
-            out += sizeof(final_slope);
-
-
-            if(delta_final_max_bit){
-                out = write_delta_int_T(delta_final.data(),signvec, out, delta_final_max_bit, (end_index - origin_index + 1));
+            if (max_bit)
+            {
+                out = write_delta_int_T(delta.data(),signvec, out, max_bit, (end_index-origin_index+1));
             }
 
-
+            
             uint64_t segment_size = out - descriptor;
             descriptor = (uint8_t*)realloc(descriptor, segment_size);
             block_start_vec.push_back(descriptor);
             segment_index.push_back(origin_index);
             segment_length.push_back(segment_size);
             total_byte += segment_size;
+            // std::cout<<"segment_size: "<<segment_size<<std::endl;
             // if(origin_index == 2024){
             //     std::cout<<segment_size<<" "<<end_index<<std::endl;
             // }
@@ -200,8 +218,6 @@ namespace Codecset {
             for (uint32_t i = 0; i < block_size; i++) {
                 indexes.push_back(i);
             }
-            float high_slope = (float)INF;
-            float low_slope = 0.;
             int128_t origin_key = in[0];
             uint32_t origin_index = indexes[0];
             uint32_t end_index = indexes[0];
@@ -211,7 +227,7 @@ namespace Codecset {
 
                 int128_t key = in[i];
                 int id = indexes[i];
-                float tmp_point_slope = ((key - origin_key) + 0.0) / ((id - origin_index) + 0.0);
+                
                 if (id == block_size - 1) {
                     if(id==origin_index){
                         newsegment_1(origin_index, origin_index);
@@ -223,130 +239,70 @@ namespace Codecset {
                 if(id==origin_index){
                     continue;
                 }
-                if (id == origin_index + 1) {
-                    low_slope = tmp_point_slope;
-                    end_index = id;
-                    continue;
-                }
-                if (id == origin_index + 2) {
-
-                    float tmp = 0;
-                    if (tmp_point_slope < low_slope) {
-                        tmp = low_slope;
-                        low_slope = tmp_point_slope;
-                        high_slope = tmp;
+                if(id==origin_index+1){
+                    if(array[id]>array[id-1]){
+                        tmp_max_delta = array[id] - array[id-1];
                     }
-                    else {
-                        high_slope = tmp_point_slope;
+                    else{
+                        tmp_max_delta = array[id-1] - array[id];
                     }
-                    end_index = id;
-                    float tmp_slope = (high_slope + low_slope) / 2;
-                    for (int j = origin_index + 1;j < id;j++) {
-                        T pred = origin_key + (float)(id - origin_index) * tmp_slope;
-                        T tmp_error = 0;
-                        if(pred > in[j]){
-                            tmp_error = pred - in[j];
-                        }
-                        else{
-                            tmp_error = in[j] - pred;
-                        }
-                        if (tmp_error > tmp_max_delta) {
-                            tmp_max_delta = tmp_error;
-                        }
-                        tmp_delta_bit = bits_int_T<T>(tmp_max_delta) + 1;
-                    } 
-                    int new_cost = tmp_delta_bit * (id - origin_index + 1);
-                    int old_cost =  sizeof(double)+sizeof(double)+sizeof(uint32_t);
-                    // if (tmp_max_delta >= tolerance) {
-                    //     newsegment_2(origin_index, origin_index+1);
+                    tmp_delta_bit = bits_int_T<T>(tmp_max_delta)+1;
+                    // if(origin_index!=0){
+                        uint32_t aheadbytes = cal_length(origin_index, std::min(origin_index+99,(uint32_t)block_size-1));
+                        double prev_cr = aheadbytes/(100*sizeof(T));
+                        double cur_cr = tmp_max_delta/(sizeof(T)*8);
+                        if (cur_cr >= prev_cr) {
+                            newsegment_2(origin_index, origin_index+1);
 
-                    //     high_slope = (float)INF;
-                    //     low_slope = 0.0;
-                    //     origin_index = id;
-                    //     origin_key = key;
-                    //     end_index = id;
-                    //     tmp_delta_bit = 0;
-                    //     tmp_max_delta = 0;
-                    //     continue;
+                            origin_index = id;
+                            origin_key = key;
+                            end_index = id;
+                            tmp_delta_bit = 0;
+                            tmp_max_delta = 0;
+                            continue;
 
+                        }
                     // }
-                    if(new_cost-old_cost>overhead){
-                        newsegment_2(origin_index, origin_index+1);
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
-                        origin_index = id;
-                        origin_key = key;
-                        end_index = id;
-                        tmp_delta_bit = 0;
-                        tmp_max_delta = 0;
-                        continue;
-                    }
+                    
+                    end_index = id;
                     continue;
                 }
 
-                float tmp_slope = (high_slope + low_slope) / 2;
-                T pred = origin_key + (float)(id - origin_index) * tmp_slope;
-                T tmp_error = 0;
-                if(pred>key){
-                    tmp_error = pred - key;
+                T current_delta = 0;
+                if(array[id]>array[id-1]){
+                    current_delta = array[id] - array[id-1];
                 }
                 else{
-                    tmp_error = key - pred;
+                    current_delta = array[id-1] - array[id];
                 }
+
                 
-                int tmp_error_bit = bits_int_T<T>(tmp_error) + 1;
+                int tmp_error_bit = bits_int_T<T>(current_delta) + 1;
                 if (tmp_error_bit <= tmp_delta_bit) {
                     end_index = id;
-                    if (tmp_error > tmp_max_delta) {
-                        tmp_max_delta = tmp_error;
+                    if (current_delta > tmp_max_delta) {
+                        tmp_max_delta = current_delta;
                     }
                     continue;
                 }
                 else {
-                    float mid_slope = (high_slope + low_slope) / 2.;
-                    if (tmp_point_slope < low_slope) {
-                        mid_slope = (high_slope + tmp_point_slope) / 2.;
-                    }
-                    if (tmp_point_slope > high_slope) {
-                        mid_slope = (low_slope + tmp_point_slope) / 2.;
-                    }
-                    T pred = origin_key + (float)(id - origin_index) * mid_slope;
-                    T tmp_error = 0;
-                    if(pred>in[id]){
-                        tmp_error = pred - in[id];
-                    }
-                    else{
-                        tmp_error = in[id] - pred;
-                    }
-                    int delta_max_bit = bits_int_T<T>(tmp_error) + 1;
+                    
+                    int delta_max_bit = bits_int_T<T>(current_delta) + 1;
                     uint64_t cost = (id - origin_index + 1) * (delta_max_bit - tmp_delta_bit);
+                    // std::cout<<id<<" "<<origin_index<<std::endl;
+                    // std::cout<<delta_max_bit<<" "<<tmp_delta_bit<<" "<<cost<<std::endl;
                     if (cost < overhead) {
-
-                        if (tmp_point_slope < low_slope) {
-                            low_slope = tmp_point_slope;
-                        }
-                        if (low_slope < 0) {
-                            low_slope = 0.0;
-                        }
-                        if (tmp_point_slope > high_slope) {
-                            high_slope = tmp_point_slope;
-                        }
                         end_index = id;
                         if (delta_max_bit > tmp_delta_bit) {
                             tmp_delta_bit = delta_max_bit;
                         }
-
-
                     }
                     else {
-                        // delete[] delta;
-                        // write the last segment & start a new segment
                         newsegment(origin_index, end_index);
                         if (id == block_size - 1) {
                             newsegment_1(id, id);
                         }
-                        high_slope = (float)INF;
-                        low_slope = 0.0;
+                        
                         origin_index = id;
                         origin_key = key;
                         end_index = id;
@@ -377,9 +333,7 @@ namespace Codecset {
                 }
                 
             }
-            // for(int j=0;j<4;j++){
-            //     merge();
-            // }
+ 
 
 
             return res;
@@ -470,20 +424,15 @@ namespace Codecset {
             memcpy(&start_ind, tmpin, 4);
             tmpin += 4;
 
-            uint8_t maxerror;
-            memcpy(&maxerror, tmpin, 1);
-            tmpin++;
-            if(maxerror==sizeof(T)*8){
-                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
-                return tmp_val;
-            }
-
             T tmp_val = 0;
-            if (maxerror == 127) {
+            uint8_t maxbits;
+            memcpy(&maxbits, tmpin, sizeof(uint8_t));
+            tmpin += sizeof(uint8_t);
+            if (maxbits == 127) {
                 memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                 return tmp_val;
             }
-            if (maxerror == 126) {
+            if (maxbits == 126) {
                 if (to_find - start_ind == 0) {
                     memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                 }
@@ -494,21 +443,18 @@ namespace Codecset {
                 return tmp_val;
             }
 
-            double theta0;
-            memcpy(&theta0, tmpin, sizeof(theta0));
-            tmpin += sizeof(theta0);
+            if(maxbits==sizeof(T)*8){
+                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
+                return tmp_val;
+            }
 
-            double theta1;
-            memcpy(&theta1, tmpin, sizeof(theta1));
-            tmpin += sizeof(theta1);
+            T base;
+            memcpy(&base, tmpin, sizeof(T));
+            tmpin += sizeof(T);
             
-
-            if(maxerror){
-                // tmp_val = read_bit_fix_int_float<T>(tmpin, maxerror, to_find-start_ind, theta1, theta0);
-                tmp_val = read_bit_fix_int<T>(tmpin, maxerror, to_find - start_ind, theta1, theta0);
-            } 
-            else{
-                tmp_val = (T)(theta0+theta1 * (double)(to_find - start_ind));
+            tmp_val = base;
+            if(maxbits){
+                tmp_val = read_Delta_int(tmpin, maxbits, to_find - start_ind, base);
             }
   
             
@@ -516,7 +462,6 @@ namespace Codecset {
             return tmp_val;
 
         }
-        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;

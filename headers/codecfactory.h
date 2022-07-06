@@ -20,6 +20,7 @@
 #include "piecewise_cost_lookahead.h"
 #include "piecewise_cost_dp.h"
 #include "piecewise_fix_op.h"
+#include "piecewise_fix_op_float.h"
 #include "piecewise_fix_merge.h"
 #include "piecewise_fix_pack.h"
 #include "piecewise_ransac.h"
@@ -104,6 +105,7 @@ static inline CodecMap initializefactory() {
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_fix_op"]= new piecewise_fix_op();
+  map["piecewise_fix_op_float"]= new piecewise_fix_op_float();
   map["piecewise_fix_merge"]= new piecewise_fix_merge();
   map["piecewise_fix_pack"]= new piecewise_fix_pack();
   map["nonlinear_fix"]= new nonlinear_fix();

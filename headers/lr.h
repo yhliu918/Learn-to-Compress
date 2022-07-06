@@ -35,7 +35,7 @@ void caltheta(std::vector<double>& x, std::vector<double>& y, int m){
     double xxx = sumxx * m - sumx * sumx;
 
     theta1 = ccc/xxx;
-    theta0 = (sumy - theta1 * sumx)/m;
+    theta0 = (sumy - theta1 * sumx)/(double)m;
     
 }
     
