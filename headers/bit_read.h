@@ -654,7 +654,7 @@ T read_bit_fix_int(uint8_t *in, uint8_t l, int to_find, double slope, double sta
 
   bool sign = (decode >> (l - 1)) & 1;
   T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
-  int128_t out = (int128_t)(start_key + (double)to_find * slope);
+  int128_t out = (int128_t)round(start_key + (double)to_find * slope);
   if(!sign)
   {
     out = out-value;

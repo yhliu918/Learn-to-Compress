@@ -73,14 +73,15 @@ namespace Codecset {
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double theta0 = mylr.theta0;
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
 
             for (int j = origin_index;j <= end_index;j++) {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
-                long long  pred = (long long)theta0 + (long long)(final_slope * (float)(j - origin_index));
+                long long  pred = round(theta0 + final_slope * (double)(j - origin_index));
+
                 uint32_t tmp_error = abs(pred - array[j]);
                 delta_final[j - origin_index] = array[j] - pred;
                 if (tmp_error > final_max_error) {
@@ -329,7 +330,8 @@ namespace Codecset {
 
                 iter++;
                 cost_decline = total_byte;
-                merge();
+                // merge();
+                merge_both_direction();
 
                 double compressrate = (total_byte) * 100.0 / (4 * block_size * 1.0);
                 std::cout << "try " << iter << " segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
@@ -348,74 +350,74 @@ namespace Codecset {
             return res;
 
         }
-        /*
-                void merge(){
-                    // this function is to merge blocks in block_start_vec to large blocks
-                    int start_index = 0; // before the start_index is the finished blocks
-                    int segment_num = 0; // the current segment index
-                    int newsegment_num = 0;
-                    int total_segments = block_start_vec.size(); // the total number of segments
-                    uint64_t totalbyte_after_merge = 0;
-                    segment_index.push_back(block_size);
-                    std::vector<uint8_t*> new_block_start_vec;
-                    std::vector<uint32_t> new_segment_index;
-                    std::vector<uint32_t> new_segment_length;
-                    while(segment_num < total_segments){
-                        // std::cout<<"segment_num: "<<segment_num <<" / "<<total_segments<<std::endl;
-
-                        if (segment_num == total_segments - 1) {
-                            // std::cout <<segment_num<<"///"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
-                            new_block_start_vec.push_back(block_start_vec[segment_num]);
-                            new_segment_index.emplace_back(segment_index[segment_num]);
-                            new_segment_length.emplace_back(segment_length[segment_num]);
-                            totalbyte_after_merge += segment_length[segment_num];
-                            start_index=block_size;
-                            segment_num++;
-                            break;
-                        }
-                        uint32_t init_cost = segment_length[segment_num] + segment_length[segment_num+1];
-                        uint32_t merge_cost = 0;
-                        newsegment(start_index, segment_index[segment_num+2]-1);
-                        merge_cost = segment_length[total_segments + newsegment_num];
-                        if(init_cost>merge_cost){ // merge the two segments
-                            // new_block_start_vec.emplace_back(std::unique_ptr<uint8_t>(block_start_vec[total_segments+newsegment_num]));
-                            // if(segment_num ==1243665 ){
-                            //     std::cout <<segment_num<<"//"<<total_segments<<" "<< block_start_vec[total_segments+newsegment_num] << std::endl;
-                            // }
-                            // std::cout<<"merge "<<segment_num<<" "<<segment_num+1<<" ( "<<start_index<<" , "<<segment_index[segment_num+2]-1<<" ) "<<" init cost: "<<init_cost<<" merge cost: "<<merge_cost<<std::endl;
-
-                            new_block_start_vec.emplace_back(block_start_vec[total_segments+newsegment_num]);
-                            new_segment_index.emplace_back(start_index);
-                            new_segment_length.emplace_back(merge_cost);
-                            totalbyte_after_merge += merge_cost;
-                            start_index=segment_index[segment_num+2];
-                            segment_num+=2;
-                            // std::cout<<segment_num<<std::endl;
-                            newsegment_num++;
-                        }
-                        else {
-                            // std::cout <<segment_num<<"/"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
-                            new_block_start_vec.emplace_back(block_start_vec[segment_num]);
-                            // new_block_start_vec.emplace_back(std::move(std::unique_ptr<uint8_t>(block_start_vec[segment_num])));
-                            new_segment_index.emplace_back(segment_index[segment_num]);
-                            new_segment_length.emplace_back(segment_length[segment_num]);
-                            totalbyte_after_merge += segment_length[segment_num];
-                            start_index=segment_index[segment_num+1];
-                            segment_num++;
-                            newsegment_num++;
-                        }
-
-                    }
-                    block_start_vec.swap(new_block_start_vec);
-                    segment_index.swap(new_segment_index);
-                    segment_length.swap(new_segment_length);
-                    total_byte = totalbyte_after_merge;
-                    // std::cout<<total_byte<<std::endl;
-
-                }
-        */
 
         void merge() {
+            // this function is to merge blocks in block_start_vec to large blocks
+            int start_index = 0; // before the start_index is the finished blocks
+            int segment_num = 0; // the current segment index
+            int newsegment_num = 0;
+            int total_segments = block_start_vec.size(); // the total number of segments
+            uint64_t totalbyte_after_merge = 0;
+            segment_index.push_back(block_size);
+            std::vector<uint8_t*> new_block_start_vec;
+            std::vector<uint32_t> new_segment_index;
+            std::vector<uint32_t> new_segment_length;
+            while (segment_num < total_segments) {
+                // std::cout<<"segment_num: "<<segment_num <<" / "<<total_segments<<std::endl;
+
+                if (segment_num == total_segments - 1) {
+                    // std::cout <<segment_num<<"///"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
+                    new_block_start_vec.push_back(block_start_vec[segment_num]);
+                    new_segment_index.emplace_back(segment_index[segment_num]);
+                    new_segment_length.emplace_back(segment_length[segment_num]);
+                    totalbyte_after_merge += segment_length[segment_num];
+                    start_index = block_size;
+                    segment_num++;
+                    break;
+                }
+                uint32_t init_cost = segment_length[segment_num] + segment_length[segment_num + 1];
+                uint32_t merge_cost = 0;
+                newsegment(start_index, segment_index[segment_num + 2] - 1);
+                merge_cost = segment_length[total_segments + newsegment_num];
+                if (init_cost > merge_cost) { // merge the two segments
+                    // new_block_start_vec.emplace_back(std::unique_ptr<uint8_t>(block_start_vec[total_segments+newsegment_num]));
+                    // if(segment_num ==1243665 ){
+                    //     std::cout <<segment_num<<"//"<<total_segments<<" "<< block_start_vec[total_segments+newsegment_num] << std::endl;
+                    // }
+                    // std::cout<<"merge "<<segment_num<<" "<<segment_num+1<<" ( "<<start_index<<" , "<<segment_index[segment_num+2]-1<<" ) "<<" init cost: "<<init_cost<<" merge cost: "<<merge_cost<<std::endl;
+
+                    new_block_start_vec.emplace_back(block_start_vec[total_segments + newsegment_num]);
+                    new_segment_index.emplace_back(start_index);
+                    new_segment_length.emplace_back(merge_cost);
+                    totalbyte_after_merge += merge_cost;
+                    start_index = segment_index[segment_num + 2];
+                    segment_num += 2;
+                    // std::cout<<segment_num<<std::endl;
+                    newsegment_num++;
+                }
+                else {
+                    // std::cout <<segment_num<<"/"<<total_segments<<" "<< block_start_vec[segment_num] << std::endl;
+                    new_block_start_vec.emplace_back(block_start_vec[segment_num]);
+                    // new_block_start_vec.emplace_back(std::move(std::unique_ptr<uint8_t>(block_start_vec[segment_num])));
+                    new_segment_index.emplace_back(segment_index[segment_num]);
+                    new_segment_length.emplace_back(segment_length[segment_num]);
+                    totalbyte_after_merge += segment_length[segment_num];
+                    start_index = segment_index[segment_num + 1];
+                    segment_num++;
+                    newsegment_num++;
+                }
+
+            }
+            block_start_vec.swap(new_block_start_vec);
+            segment_index.swap(new_segment_index);
+            segment_length.swap(new_segment_length);
+            total_byte = totalbyte_after_merge;
+            // std::cout<<total_byte<<std::endl;
+
+        }
+
+
+        void merge_both_direction() {
             // this function is to merge blocks in block_start_vec to large blocks
             int start_index = 0; // before the start_index is the finished blocks
             int segment_num = 0; // the current segment index
@@ -528,7 +530,7 @@ namespace Codecset {
             uint8_t* this_block = block_start_vec[lower_bound(l, length)];
 
             uint8_t* tmpin = this_block;
-            float theta0;
+            double theta0;
             float theta1;
             uint8_t maxerror;
             uint32_t start_ind;
@@ -553,22 +555,23 @@ namespace Codecset {
                 }
                 return tmp;
             }
-            memcpy(&theta0, tmpin, 4);
-            tmpin += 4;
-            memcpy(&theta1, tmpin, 4);
-            tmpin += 4;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
             //std::cout<< "indexing "<<l<<std::endl;
-            
-            if(maxerror){
+
+            if (maxerror) {
                 if (maxerror == 32) {
                     tmp = read_bit_default(tmpin, maxerror, l - start_ind, theta1, theta0, maxerror);
                 }
                 else {
-                    tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+                    tmp = read_bit_fix_int<uint32_t>(tmpin, maxerror, l - start_ind, (double)theta1, theta0);
+
                 }
             }
-            else{
-                tmp = (long long)theta0 + (long long)(theta1 * (float)(l - start_ind));
+            else {
+                tmp = round(theta0 + theta1 * (double)(l - start_ind));
             }
 
             // tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);

@@ -11,9 +11,10 @@
 #include "lr.h"
 #define INF 0x7f7fffff
 
+// not working yet
 namespace Codecset {
     template <typename T>
-    class Piecewise_cost_merge
+    class Leco_cost_merge
     {
     public:
 
