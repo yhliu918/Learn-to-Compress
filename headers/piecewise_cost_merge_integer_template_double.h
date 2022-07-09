@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_COST_INTEGER_MERGE_TEMPLATE_H_
-#define PIECEWISE_COST_INTEGER_MERGE_TEMPLATE_H_
+#ifndef PIECEWISE_COST_INTEGER_MERGE_DOUBLE_TEMPLATE_H_
+#define PIECEWISE_COST_INTEGER_MERGE_DOUBLE_TEMPLATE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -14,7 +14,7 @@
 // not working yet
 namespace Codecset {
     template <typename T>
-    class Leco_cost_merge
+    class Leco_cost_merge_double
     {
     public:
 
@@ -80,7 +80,7 @@ namespace Codecset {
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double theta0 = mylr.theta0;
 
             T final_max_error = 0;
             std::vector<bool> signvec;
@@ -660,7 +660,7 @@ namespace Codecset {
                 return tmp_val;
             }
 
-            float theta0;
+            double theta0;
             memcpy(&theta0, tmpin, sizeof(theta0));
             tmpin += sizeof(theta0);
 
