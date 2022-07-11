@@ -6,13 +6,14 @@
 #include "piecewise_fix_integer_template_float.h"
 #include "piecewise_cost_integer_template.h"
 #include "piecewise_cost_merge_integer_template.h"
+#include "piecewise_cost_merge_integer_template_double.h"
 #include "piecewise_cost_merge_hc_integer_template.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
 
-typedef uint32_t leco_type;
+typedef uint64_t leco_type;
 
 int random(int m)
 {
@@ -71,11 +72,11 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge_hc<leco_type> codec;
+    Delta_cost<leco_type> codec;
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int delta = atoi(argv[3]);
-    // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge, Leco_cost_merge_hc
+    // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
     std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/"+source_file);
     
@@ -103,7 +104,7 @@ int main(int argc, const char* argv[])
     uint64_t totalsize = 0;
     for (int i = 0; i < blocks; i++)
     {
-        std::cout<<"block "<<i<<std::endl;
+        // std::cout<<"block "<<i<<std::endl;
         int block_length = block_size;
         if (i == blocks - 1)
         {

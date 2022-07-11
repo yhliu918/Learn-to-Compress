@@ -373,6 +373,8 @@ namespace Codecset {
                             }
 
                         }
+                        segment_id = lower_bound(j, segment_index_new.size(), segment_index_new);
+                        j = segment_index_new[segment_id + 1] - 1;
                         
                         
 
@@ -414,7 +416,7 @@ namespace Codecset {
                 iter++;
                 cost_decline = total_byte;
                 merge(nvalue);
-                // merge_both_direction(nvalue);
+                // merge_both_direction(nvalue, length);
                 
                 double compressrate = (total_byte) * 100.0 / (sizeof(T) * block_size * 1.0);
                 std::cout << "try "<<iter<<" segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
@@ -518,13 +520,13 @@ namespace Codecset {
 
         }
 
-        void merge_both_direction(int nvalue) {
+        void merge_both_direction(int nvalue, int length) {
             // this function is to merge blocks in block_start_vec to large blocks
             int start_index = segment_index[0];  // before the start_index is the finished blocks
             int segment_num = 0; // the current segment index
             int total_segments = block_start_vec.size(); // the total number of segments
             uint64_t totalbyte_after_merge = 0;
-            segment_index.push_back(block_size*(nvalue+1));
+            segment_index.push_back(block_size*nvalue + length);
             std::vector<uint8_t*> new_block_start_vec;
             std::vector<uint32_t> new_segment_index;
             std::vector<uint32_t> new_segment_length;
@@ -604,7 +606,7 @@ namespace Codecset {
             segment_index.clear();
             segment_length.clear();
             int segment_number = (int)new_segment_index.size();
-            new_segment_index.push_back(block_size*(nvalue+1));
+            new_segment_index.push_back(block_size*nvalue + length);
             for (int i = 0;i < segment_number;i++) {
                 newsegment(new_segment_index[i], new_segment_index[i + 1] - 1);
                 // std::cout<<i<<" / "<<segment_index.size()<<" "<<total_byte<<std::endl;

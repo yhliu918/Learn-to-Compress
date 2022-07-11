@@ -72,7 +72,7 @@ namespace Codecset
 
             if (max_bit)
             {
-                out = write_delta_int_T(delta.data(),signvec, out, max_bit, length);
+                out = write_delta_int_T(delta,signvec, out, max_bit, length);
             }
 
             return out;
