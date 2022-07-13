@@ -118,7 +118,7 @@ int main()
   // could use others, e.g., "simdfastpfor256", "BP32"
   ProfilerStart("test_capture.prof");
   std::vector<std::string> string_vec;
-  std::ifstream srcFile("/home/lyh/rocksdb/dump_data/padding_a_wholestring_key.txt", std::ios::in);
+  std::ifstream srcFile("/home/lyh/rocksdb/dump_data/mail_server_host_reverse_min_10_max_26_key.txt", std::ios::in);
   // std::ifstream srcFile("/home/lyh/Learn-to-Compress/data/poisson_2000000/key.txt", std::ios::in);
   if (!srcFile)
   {

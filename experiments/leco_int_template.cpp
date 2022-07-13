@@ -72,7 +72,7 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Delta_cost<leco_type> codec;
+    Leco_cost<leco_type> codec;
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int delta = atoi(argv[3]);

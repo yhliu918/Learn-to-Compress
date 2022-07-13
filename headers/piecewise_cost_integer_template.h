@@ -78,7 +78,7 @@ namespace Codecset {
             for (int j = origin_index;j <= end_index;j++) {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
                 T tmp_val;
-                int128_t pred = (theta0 + final_slope * (float)(j - origin_index));
+                int128_t pred = round(theta0 + final_slope * (float)(j - origin_index));
                 if ( array[j] > pred)
                 {
                     tmp_val = array[j] - pred;
@@ -508,7 +508,7 @@ namespace Codecset {
                 tmp_val = read_bit_fix_int<T>(tmpin, maxerror, to_find - start_ind, theta1, theta0);
             } 
             else{
-                tmp_val = (T)(theta0+theta1 * (double)(to_find - start_ind));
+                tmp_val = (T)round(theta0+theta1 * (double)(to_find - start_ind));
             }
   
             

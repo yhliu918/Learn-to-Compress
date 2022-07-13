@@ -142,14 +142,14 @@ std::string convertToString_long_int(long_int *record)
 // }
 
 template <typename T>
-inline std::string convertToString(T *record, int str_len, int cutoff)
+inline std::string convertToString(T *record, int str_len)
 {
   // std::cout<<sizeof(record)<<std::endl;
   const char * res = reinterpret_cast<const char *>(record);
   std::string val = std::string(res , str_len);
   reverse(val.begin(), val.end());
   //std::string ret(val.rbegin(),val.rend());
-  return val.substr(0, cutoff);
+  return val;
 
 }
 

@@ -37,37 +37,5 @@ void caltheta(std::vector<int>& x, std::vector<long_int>& y, int m){
     
 
 
-struct string_lr_128{
-    
-uint128_t theta0 = 0;
-uint128_t theta1 = 0;
-    
-void caltheta(std::vector<int>& x, std::vector<uint128_t>& y, int m){
-
-    uint128_t sumx = 0;
-    uint128_t sumy = 0;
-    uint128_t sumxy = 0;
-    uint128_t sumxx = 0;
-    for(int i=0;i<m;i++){
-        sumx = sumx + x[i];
-        sumy = sumy + y[i];
-        sumxx = sumxx+x[i]*x[i];
-        sumxy = sumxy+x[i]*y[i];
-    }
-    
-    uint128_t ccc= sumxy * m - sumx * sumy;
-    uint128_t xxx = sumxx * m - sumx * sumx;
-
-    theta1 = ccc/xxx;
-    theta0 = (sumy - theta1 * sumx)/m;
-    
-}
-    
-    
-};
-    
-
-
-
 
 #endif 
