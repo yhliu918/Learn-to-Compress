@@ -67,7 +67,7 @@ void read_all_bit_fix_string(uint8_t *in, int start_byte, int start_index, int n
 
       // double start_double = Codecset::getNow();
       long_int tmpval(tmpval_mpz);
-      result.emplace_back(convertToString(&tmpval,l,l));
+      result.emplace_back(convertToString(&tmpval,l));
       // double end_double = Codecset::getNow();
       // totaltime += end_double - start_double;
 
@@ -230,7 +230,7 @@ void read_all_fix_string(uint8_t *in, int start_byte, int start_index, int numbe
           record_val = (T)(start_key + writeind * slope) - tmpval;
       }
       
-      result[writeind] = convertToString<T>(&record_val);
+      result[writeind] = convertToString<T>(&record_val, l);
       writeind++;
       left -= l;
       if (left == 0)
@@ -364,7 +364,7 @@ std::string read_bit_fix_string_(uint8_t *in, uint32_t l, int to_find, long_int 
   mpz_clear(decode_mpz);
   mpz_clear(in_start);
 
-  return convertToString(&out,0,0);
+  return convertToString(&out,0);
 }
 
 void read_bit_fix_string_long_int(uint8_t *in, uint32_t l, int to_find, long_int theta1, long_int theta0, mpz_t *result)

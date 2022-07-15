@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISE_COST_INTEGER_MERGE_TEMPLATE_H_
-#define PIECEWISE_COST_INTEGER_MERGE_TEMPLATE_H_
+#ifndef PIECEWISE_COST_INTEGER_MERGE_DOUBLE_TEMPLATE_H_
+#define PIECEWISE_COST_INTEGER_MERGE_DOUBLE_TEMPLATE_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -14,7 +14,7 @@
 // not working yet
 namespace Codecset {
     template <typename T>
-    class Leco_cost_merge
+    class Leco_cost_merge_double
     {
     public:
 
@@ -60,13 +60,13 @@ namespace Codecset {
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
 
-            if (origin_index == end_index) {
-                return newsegment_1(origin_index, origin_index);
+            if(origin_index == end_index){
+                return newsegment_1(origin_index,origin_index);
             }
-            if (end_index == origin_index + 1) {
-                return newsegment_2(origin_index, end_index);
+            if(end_index == origin_index+1){
+                return newsegment_2(origin_index,end_index);
             }
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T) * 4);
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T)*4);
             uint8_t* out = descriptor;
             int length = end_index - origin_index + 1;
 
@@ -80,7 +80,7 @@ namespace Codecset {
             lr mylr;
             mylr.caltheta(indexes, keys, length);
             float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double theta0 = mylr.theta0;
 
             T final_max_error = 0;
             std::vector<bool> signvec;
@@ -90,7 +90,7 @@ namespace Codecset {
                 // long long pred = theta0 + (float)(j - origin_index) * final_slope;
                 T tmp_val;
                 int128_t pred = round(theta0 + final_slope * (double)(j - origin_index));
-                if (array[j] > pred)
+                if ( array[j] > pred)
                 {
                     tmp_val = array[j] - pred;
                     signvec.emplace_back(true); // means positive
@@ -110,13 +110,13 @@ namespace Codecset {
             }
 
             uint32_t delta_final_max_bit = 0;
-            if (final_max_error) {
+            if(final_max_error){
                 delta_final_max_bit = bits_int_T<T>(final_max_error) + 1;
             }
-
-
-            if (delta_final_max_bit >= sizeof(T) * 8) {
-                delta_final_max_bit = sizeof(T) * 8;
+        
+            
+            if (delta_final_max_bit>= sizeof(T)*8){
+                delta_final_max_bit = sizeof(T)*8;
             }
 
             memcpy(out, &origin_index, sizeof(origin_index));
@@ -124,8 +124,8 @@ namespace Codecset {
             out[0] = (uint8_t)delta_final_max_bit;
             out++;
 
-            if (delta_final_max_bit == sizeof(T) * 8) {
-                for (auto i = origin_index; i <= end_index; i++)
+            if(delta_final_max_bit== sizeof(T)*8){
+                for (auto i = origin_index; i<=end_index; i++)
                 {
                     memcpy(out, &array[i], sizeof(T));
                     out += sizeof(T);
@@ -136,7 +136,7 @@ namespace Codecset {
                 segment_index.push_back(origin_index);
                 segment_length.push_back(segment_size);
                 total_byte += segment_size;
-
+                
                 return;
             }
 
@@ -147,8 +147,8 @@ namespace Codecset {
             out += sizeof(final_slope);
 
 
-            if (delta_final_max_bit) {
-                out = write_delta_int_T(delta_final, signvec, out, delta_final_max_bit, (end_index - origin_index + 1));
+            if(delta_final_max_bit){
+                out = write_delta_int_T(delta_final,signvec, out, delta_final_max_bit, (end_index - origin_index + 1));
             }
 
 
@@ -164,8 +164,8 @@ namespace Codecset {
         }
 
         void newsegment_2(uint32_t origin_index, uint32_t end_index) {
-
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T) * 2);
+            
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T)*2);
             uint8_t* out = descriptor;
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
@@ -205,10 +205,10 @@ namespace Codecset {
             total_byte += segment_size;
         }
         uint32_t cal_bits(int64_t min, int64_t max) {
-            int64_t range = ceil(abs(max - min) / 2.);
+            int64_t range = ceil(abs(max - min)/2.);
             uint32_t bits = 0;
-            if (range) {
-                bits = bits_int_T<T>(range) + 1;
+            if(range){
+                bits = bits_int_T<T>(range)+1;
             }
             return bits;
         }
@@ -221,28 +221,28 @@ namespace Codecset {
             uint32_t max_second_bit = 0;
             uint32_t min_second_bit = UINT32_MAX;
 
-            for (int i = nvalue * block_size;i < nvalue * block_size + length - 1;i++) {
-                int64_t delta_first = (int64_t)in[i + 1] - (int64_t)in[i];
-                delta_first_layer[i - nvalue * block_size] = delta_first;
+            for (int i = nvalue*block_size;i < nvalue*block_size+length - 1;i++) {
+                int64_t delta_first = (int64_t)in[i+1] -  (int64_t)in[i];
+                delta_first_layer[i-nvalue*block_size] = delta_first;
             }
 
             for (int i = 0;i < length - 2;i++) {
-                uint32_t delta_tmp_bit = cal_bits(delta_first_layer[i], delta_first_layer[i + 1]);
-                if (delta_tmp_bit > max_second_bit) {
+                uint32_t delta_tmp_bit = cal_bits(delta_first_layer[i], delta_first_layer[i+1]);
+                if(delta_tmp_bit > max_second_bit){
                     max_second_bit = delta_tmp_bit;
                 }
-                if (delta_tmp_bit < min_second_bit) {
+                if(delta_tmp_bit < min_second_bit){
                     min_second_bit = delta_tmp_bit;
                 }
                 delta_second_bits.push_back(delta_tmp_bit);
-
+                
             }
-
+            
             std::vector<uint32_t> segment_index_new;
             std::vector<uint32_t> key_to_seg;
             std::vector<int64_t> segment_max_delta;
             std::vector<int64_t> segment_min_delta;
-
+            
 
             for (int j = 0;j <= length - 2;j++) {
                 segment_index_new.push_back(j);
@@ -253,8 +253,8 @@ namespace Codecset {
             segment_max_delta.push_back(0);
             segment_min_delta.push_back(0);
 
-
-
+            
+            
             // std::cout << "********" << 0 << "********" << std::endl;
             // for (auto item : segment_index_new) {
             //     std::cout << item << " ";
@@ -267,180 +267,179 @@ namespace Codecset {
 
                 for (int j = 0;j < length - 2;j++) {
                     if (delta_second_bits[j] == aim_bit) {
-
+ 
                         // aim_bit is the initiate bit of the two segment, first check whether merging these two segments can reduce the cost
                         // if so, scan left & scan right to merge more segments into it
                         int segment_id = lower_bound(j, segment_index_new.size(), segment_index_new);
                         int former_index = segment_index_new[segment_id]; // former_index ~ start_index - 1
-                        int start_index = segment_index_new[segment_id + 1];
-                        int now_index = segment_index_new[segment_id + 2] - 1; // start_index ~ now_index
+                        int start_index = segment_index_new[segment_id+1];
+                        int now_index = segment_index_new[segment_id+2]-1; // start_index ~ now_index
                         int left_bit_origin = cal_bits(segment_min_delta[segment_id], segment_max_delta[segment_id]);
-                        int right_bit_origin = cal_bits(segment_min_delta[segment_id + 1], segment_max_delta[segment_id + 1]);
+                        int right_bit_origin = cal_bits(segment_min_delta[segment_id+1], segment_max_delta[segment_id+1]);
                         // need to compare to [seg+1]-1
+                        
 
-                        int64_t new_max_delta = std::max(segment_max_delta[segment_id], segment_max_delta[segment_id + 1]);
-                        int64_t new_min_delta = std::min(segment_min_delta[segment_id], segment_min_delta[segment_id + 1]);
-                        new_max_delta = std::max(new_max_delta, delta_first_layer[segment_index_new[segment_id + 1] - 1]);
-                        new_min_delta = std::min(new_min_delta, delta_first_layer[segment_index_new[segment_id + 1] - 1]);
+                        int64_t new_max_delta = std::max(segment_max_delta[segment_id], segment_max_delta[segment_id+1]);
+                        int64_t new_min_delta = std::min(segment_min_delta[segment_id], segment_min_delta[segment_id+1]);
+                        new_max_delta = std::max(new_max_delta, delta_first_layer[segment_index_new[segment_id+1]-1]);
+                        new_min_delta = std::min(new_min_delta, delta_first_layer[segment_index_new[segment_id+1]-1]);
                         int new_bit = cal_bits(new_min_delta, new_max_delta);
 
-                        int origin_cost = (start_index - former_index) * left_bit_origin + (now_index - start_index + 1) * right_bit_origin;
-                        int merged_cost = new_bit * (now_index - former_index + 1);
-                        if (merged_cost - origin_cost < overhead && segment_id + 1 < segment_index_new.size()) {
+                        int origin_cost = (start_index - former_index)*left_bit_origin + (now_index - start_index + 1)*right_bit_origin;
+                        int merged_cost = new_bit*(now_index - former_index + 1);
+                        if(merged_cost - origin_cost < overhead && segment_id+1 < segment_index_new.size()){
                             // merge
-                            segment_index_new.erase(segment_index_new.begin() + segment_id + 1);
-                            segment_max_delta.erase(segment_max_delta.begin() + segment_id + 1);
-                            segment_min_delta.erase(segment_min_delta.begin() + segment_id + 1);
+                            segment_index_new.erase(segment_index_new.begin() + segment_id+1);
+                            segment_max_delta.erase(segment_max_delta.begin() + segment_id+1);
+                            segment_min_delta.erase(segment_min_delta.begin() + segment_id+1);
                             segment_max_delta[segment_id] = new_max_delta;
                             segment_min_delta[segment_id] = new_min_delta;
-
+                            
                         }
-                        else {
+                        else{
                             continue;
                         }
                         // look left & look right
 
                         int segment_id_search_left = segment_id - 1;
-                        while (segment_id_search_left >= 0) {
+                        while(segment_id_search_left >= 0 ){
 
                             // std::cout<<"left"<<segment_id_search_left<<std::endl;
                             int left_index = segment_index_new[segment_id_search_left];
                             int64_t left_max_delta = std::max(segment_max_delta[segment_id_search_left], segment_max_delta[segment_id]);
                             int64_t left_min_delta = std::min(segment_min_delta[segment_id_search_left], segment_min_delta[segment_id]);
                             // need to compare to the delta between left segment and the current segment
-                            left_max_delta = std::max(left_max_delta, delta_first_layer[segment_index_new[segment_id] - 1]);
-                            left_min_delta = std::min(left_min_delta, delta_first_layer[segment_index_new[segment_id] - 1]);
+                            left_max_delta = std::max(left_max_delta, delta_first_layer[segment_index_new[segment_id]-1]);
+                            left_min_delta = std::min(left_min_delta, delta_first_layer[segment_index_new[segment_id]-1]);
 
                             int delta_new_bit = cal_bits(left_min_delta, left_max_delta);
                             int origin_left_delta_bit = cal_bits(segment_min_delta[segment_id_search_left], segment_max_delta[segment_id_search_left]);
                             int origin_right_delta_bit = cal_bits(segment_min_delta[segment_id], segment_max_delta[segment_id]);
 
-                            int origin_cost = (segment_index_new[segment_id] - left_index) * origin_left_delta_bit + (segment_index_new[segment_id + 1] - segment_index_new[segment_id]) * origin_right_delta_bit;
-                            int merged_cost = delta_new_bit * (segment_index_new[segment_id + 1] - left_index);
+                            int origin_cost = (segment_index_new[segment_id] - left_index)*origin_left_delta_bit + (segment_index_new[segment_id+1] - segment_index_new[segment_id])*origin_right_delta_bit;
+                            int merged_cost = delta_new_bit*(segment_index_new[segment_id+1] - left_index);
 
-                            if (merged_cost - origin_cost < overhead && segment_id < segment_index_new.size()) {
+                            if(merged_cost - origin_cost < overhead && segment_id < segment_index_new.size()){
                                 // merge
-
+                
                                 segment_index_new.erase(segment_index_new.begin() + segment_id);
                                 segment_max_delta.erase(segment_max_delta.begin() + segment_id);
                                 segment_min_delta.erase(segment_min_delta.begin() + segment_id);
-                                segment_max_delta[segment_id - 1] = left_max_delta;
-                                segment_min_delta[segment_id - 1] = left_min_delta;
+                                segment_max_delta[segment_id-1] = left_max_delta;
+                                segment_min_delta[segment_id-1] = left_min_delta;
                                 segment_id_search_left--;
-
-
-                            }
-                            else {
+                            
                                 
+                            } 
+                            else{
                                 break;
                             }
 
                         }
-
+                        
 
                         segment_id = lower_bound(j, segment_index_new.size(), segment_index_new);
                         int segment_id_search_right = segment_id + 1;
                         now_index = segment_index_new[segment_id];
-
-                        while (segment_id_search_right + 1 < segment_index_new.size()) {
-                            // std::cout<<"right"<<segment_id_search_right<<" / "<<segment_index_new.size()<<std::endl;
-                            int right_index = segment_index_new[segment_id_search_right + 1];
+ 
+                        while(segment_id_search_right+1 < segment_index_new.size() ){
+                            // std::cout<<"right"<<segment_id_search_right<<std::endl;
+                            int right_index = segment_index_new[segment_id_search_right+1];
                             int64_t right_max_delta = std::max(segment_max_delta[segment_id_search_right], segment_max_delta[segment_id]);
                             int64_t right_min_delta = std::min(segment_min_delta[segment_id_search_right], segment_min_delta[segment_id]);
                             // need to compare to the delta between seg & seg+1
-                            right_max_delta = std::max(right_max_delta, delta_first_layer[segment_index_new[segment_id_search_right] - 1]);
-                            right_min_delta = std::min(right_min_delta, delta_first_layer[segment_index_new[segment_id_search_right] - 1]);
+                            right_max_delta = std::max(right_max_delta, delta_first_layer[segment_index_new[segment_id_search_right]-1]);
+                            right_min_delta = std::min(right_min_delta, delta_first_layer[segment_index_new[segment_id_search_right]-1]);
 
                             int delta_new_bit = cal_bits(right_min_delta, right_max_delta);
                             int origin_left_delta_bit = cal_bits(segment_min_delta[segment_id], segment_max_delta[segment_id]);
                             int origin_right_delta_bit = cal_bits(segment_min_delta[segment_id_search_right], segment_max_delta[segment_id_search_right]);
+                            
+                            int origin_cost = (right_index - segment_index_new[segment_id_search_right])*origin_right_delta_bit + (segment_index_new[segment_id_search_right] - now_index)*origin_left_delta_bit;
+                            int merged_cost = delta_new_bit*(right_index - now_index);
 
-                            int origin_cost = (right_index - segment_index_new[segment_id_search_right]) * origin_right_delta_bit + (segment_index_new[segment_id_search_right] - now_index) * origin_left_delta_bit;
-                            int merged_cost = delta_new_bit * (right_index - now_index);
-
-                            if (merged_cost - origin_cost < overhead) {
+                            if(merged_cost - origin_cost < overhead){
                                 // merge
-                                if (segment_id + 1 < segment_index_new.size()) {
-                                    segment_index_new.erase(segment_index_new.begin() + segment_id + 1);
-                                    segment_max_delta.erase(segment_max_delta.begin() + segment_id + 1);
-                                    segment_min_delta.erase(segment_min_delta.begin() + segment_id + 1);
+                                if(segment_id+1 < segment_index_new.size()){
+                                    segment_index_new.erase(segment_index_new.begin() + segment_id+1);
+                                    segment_max_delta.erase(segment_max_delta.begin() + segment_id+1);
+                                    segment_min_delta.erase(segment_min_delta.begin() + segment_id+1);
                                     segment_max_delta[segment_id] = right_max_delta;
                                     segment_min_delta[segment_id] = right_min_delta;
                                 }
-                            }
-                            else {
-                                
+                            } 
+                            else{
                                 break;
                             }
 
                         }
                         segment_id = lower_bound(j, segment_index_new.size(), segment_index_new);
                         j = segment_index_new[segment_id + 1] - 1;
-
-
+                        
+                        
 
 
                     }
 
                 }
-
+                
                 // std::cout << "********" << aim_bit << "********" << std::endl;
                 // for (int i=0;i<segment_index_new.size();i++) {
                 //     std::cout << segment_index_new[i] << " "<< segment_min_delta[i] << " " << segment_max_delta[i] << std::endl;
                 // }
                 // std::cout << std::endl;
 
-
+               
                 // for (auto item : key_to_seg) {
                 //     std::cout << item << " ";
                 // }
                 // std::cout << std::endl;
-
+                
 
             }
-
+        
 
             total_byte = 0;
             int segment_total = segment_index_new.size();
-            segment_index_new.push_back(nvalue * block_size + length);
-            for (int i = 0;i < segment_total;i++) {
-                segment_index_new[i] += nvalue * block_size;
+            segment_index_new.push_back(nvalue * block_size+length);
+            for(int i = 0;i < segment_total;i++) {
+                segment_index_new[i]+= nvalue * block_size;
             }
-            for (int i = 0;i < segment_total;i++) {
-                newsegment(segment_index_new[i], segment_index_new[i + 1] - 1);
+            for (int i=0;i<segment_total;i++) {
+                newsegment(segment_index_new[i], segment_index_new[i+1]-1);
             }
-
+            
             int iter = 0;
             uint64_t cost_decline = total_byte;
-            while (cost_decline > 0) {
-
+            while(cost_decline>0){
+                
                 iter++;
                 cost_decline = total_byte;
-                // merge(nvalue);
-                merge_both_direction(nvalue, length);
-
+                merge(nvalue);
+                // merge_both_direction(nvalue, length);
+                
                 double compressrate = (total_byte) * 100.0 / (sizeof(T) * block_size * 1.0);
-                std::cout << "try " << iter << " segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+                std::cout << "try "<<iter<<" segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
                 cost_decline = cost_decline - total_byte;
                 double cost_decline_percent = cost_decline * 100.0 / (sizeof(T) * block_size * 1.0);
-                if (cost_decline_percent < 0.01) {
+                if(cost_decline_percent<0.01){
                     break;
                 }
-
+                
             }
             double compressrate = (total_byte) * 100.0 / (sizeof(T) * block_size * 1.0);
-            std::cout << "segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
-
-            for (auto item : block_start_vec) {
+            std::cout <<"segment number "<<(int)block_start_vec.size()<<" resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+            
+            for(auto item: block_start_vec){
                 block_start_vec_total.push_back(item);
             }
-            for (auto item : segment_index) {
+            for(auto item: segment_index){
                 segment_index_total.push_back(item);
             }
-            for (auto item : segment_length) {
+            for(auto item: segment_length){
                 segment_length_total.push_back(item);
             }
-            total_byte_total += total_byte;
+            total_byte_total+=total_byte;
             block_start_vec.clear();
             segment_index.clear();
             segment_length.clear();
@@ -462,7 +461,7 @@ namespace Codecset {
             int newsegment_num = 0;
             int total_segments = block_start_vec.size(); // the total number of segments
             uint64_t totalbyte_after_merge = 0;
-            segment_index.push_back((nvalue + 1) * block_size);
+            segment_index.push_back((nvalue+1)*block_size);
             std::vector<uint8_t*> new_block_start_vec;
             std::vector<uint32_t> new_segment_index;
             std::vector<uint32_t> new_segment_length;
@@ -475,7 +474,7 @@ namespace Codecset {
                     new_segment_index.emplace_back(segment_index[segment_num]);
                     new_segment_length.emplace_back(segment_length[segment_num]);
                     totalbyte_after_merge += segment_length[segment_num];
-                    start_index = block_size * (nvalue + 1);
+                    start_index = block_size*(nvalue+1);
                     segment_num++;
                     break;
                 }
@@ -527,7 +526,7 @@ namespace Codecset {
             int segment_num = 0; // the current segment index
             int total_segments = block_start_vec.size(); // the total number of segments
             uint64_t totalbyte_after_merge = 0;
-            segment_index.push_back(block_size * nvalue + length);
+            segment_index.push_back(block_size*nvalue + length);
             std::vector<uint8_t*> new_block_start_vec;
             std::vector<uint32_t> new_segment_index;
             std::vector<uint32_t> new_segment_length;
@@ -542,27 +541,12 @@ namespace Codecset {
 
                 if (segment_num == total_segments - 1) {
                     // only can try merging with former one
-                    int last_merged_segment = new_segment_length.size() - 1;
-                    uint32_t init_cost_front = segment_length[segment_num] + new_segment_length[last_merged_segment];
-                    newsegment(new_segment_index[last_merged_segment], segment_index[segment_num + 1] - 1);
-                    uint32_t merge_cost_front = segment_length[segment_length.size() - 1];
-                    int saved_cost_front = init_cost_front - merge_cost_front;
-                    if(saved_cost_front>0){
-                        new_block_start_vec[new_block_start_vec.size() - 1] = block_start_vec[block_start_vec.size() - 1];
-                        totalbyte_after_merge -= new_segment_length[new_segment_length.size() - 1];
-                        new_segment_length[new_segment_length.size() - 1] = merge_cost_front;
-                        totalbyte_after_merge += merge_cost_front;
-                        segment_num ++;
-                    }
-                    else{
-                        new_block_start_vec.push_back(block_start_vec[segment_num]);
-                        new_segment_index.emplace_back(segment_index[segment_num]);
-                        new_segment_length.emplace_back(segment_length[segment_num]);
-                        totalbyte_after_merge += segment_length[segment_num];
-                        segment_num++;
-                    }
-
-                    
+                    new_block_start_vec.push_back(block_start_vec[segment_num]);
+                    new_segment_index.emplace_back(segment_index[segment_num]);
+                    new_segment_length.emplace_back(segment_length[segment_num]);
+                    totalbyte_after_merge += segment_length[segment_num];
+                    start_index = block_size*(nvalue+1);
+                    segment_num++;
                     break;
                 }
                 int last_merged_segment = new_segment_length.size() - 1;
@@ -622,7 +606,7 @@ namespace Codecset {
             segment_index.clear();
             segment_length.clear();
             int segment_number = (int)new_segment_index.size();
-            new_segment_index.push_back(block_size * nvalue + length);
+            new_segment_index.push_back(block_size*nvalue + length);
             for (int i = 0;i < segment_number;i++) {
                 newsegment(new_segment_index[i], new_segment_index[i + 1] - 1);
                 // std::cout<<i<<" / "<<segment_index.size()<<" "<<total_byte<<std::endl;
@@ -643,13 +627,13 @@ namespace Codecset {
         }
 
 
-        T randomdecodeArray8(uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
+        T randomdecodeArray8(uint8_t *in, int to_find, uint32_t *out, size_t nvalue){
 
             uint32_t length = segment_index_total.size();
             uint8_t* this_block = block_start_vec_total[lower_bound(to_find, length, segment_index_total)];
 
             uint8_t* tmpin = this_block;
-
+            
             uint32_t start_ind;
             memcpy(&start_ind, tmpin, 4);
             tmpin += 4;
@@ -657,8 +641,8 @@ namespace Codecset {
             uint8_t maxerror;
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
-            if (maxerror == sizeof(T) * 8) {
-                T tmp_val = reinterpret_cast<T*>(tmpin)[to_find];
+            if(maxerror==sizeof(T)*8){
+                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
                 return tmp_val;
             }
 
@@ -678,31 +662,31 @@ namespace Codecset {
                 return tmp_val;
             }
 
-            float theta0;
+            double theta0;
             memcpy(&theta0, tmpin, sizeof(theta0));
             tmpin += sizeof(theta0);
 
             float theta1;
             memcpy(&theta1, tmpin, sizeof(theta1));
             tmpin += sizeof(theta1);
+            
 
-
-            if (maxerror) {
+            if(maxerror){
                 // tmp_val = read_bit_fix_int_float<T>(tmpin, maxerror, to_find-start_ind, theta1, theta0);
                 // tmp_val = read_bit_fix_int_float<T>(tmpin, maxerror, to_find - start_ind, theta1, theta0);
                 tmp_val = read_bit_fix_int<T>(tmpin, maxerror, to_find - start_ind, (double)theta1, theta0);
+            } 
+            else{
+                tmp_val = (T)round(theta0+theta1 * (double)(to_find - start_ind));
             }
-            else {
-                tmp_val = (T)round(theta0 + theta1 * (double)(to_find - start_ind));
-            }
-
-
-
+  
+            
+                
             return tmp_val;
 
         }
-
-
+        
+        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;

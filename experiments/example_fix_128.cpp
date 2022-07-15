@@ -179,7 +179,7 @@ int main()
     // uint128_t base = convertTo128(string_vec[index]);
     // print_u128_u(base);
     // printf("\n");
-    std::string tmp_str = convertToString<uint128_t>(&tmpval, 1, 1);
+    std::string tmp_str = convertToString<uint128_t>(&tmpval, 1);
     // // std::cout<<i<<" "<<tmpvalue<<" block "<<(int)index / block_size<<std::endl;
     //  if (string_vec[index].compare(tmp_str))
     //  {

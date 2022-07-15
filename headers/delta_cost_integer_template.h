@@ -154,7 +154,7 @@ namespace Codecset {
 
             if (max_bit)
             {
-                out = write_delta_int_T(delta.data(),signvec, out, max_bit, (end_index-origin_index+1));
+                out = write_delta_int_T(delta,signvec, out, max_bit, (end_index-origin_index+1));
             }
 
             

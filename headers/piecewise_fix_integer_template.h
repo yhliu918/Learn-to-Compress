@@ -39,12 +39,12 @@ namespace Codecset
                 T tmp_val;
                 if ( data[i] > (T)(theta0+theta1*(double)i))
                 {
-                    tmp_val = data[i] - (T)(theta0+theta1*(double)i);
+                    tmp_val = data[i] - (T)round(theta0+theta1*(double)i);
                     signvec.emplace_back(true); // means positive
                 }
                 else
                 {
-                    tmp_val =(T)(theta0+theta1*(double)i) -  data[i];
+                    tmp_val =(T)round(theta0+theta1*(double)i) -  data[i];
                     signvec.emplace_back(false); // means negative
                 }
 
@@ -84,7 +84,7 @@ namespace Codecset
             out += sizeof(double);
             if (max_bit)
             {
-                out = write_delta_int_T(delta.data(),signvec, out, max_bit, length);
+                out = write_delta_int_T(delta,signvec, out, max_bit, length);
             }
 
             return out;
@@ -118,7 +118,7 @@ namespace Codecset
                 tmp_val = read_bit_fix_int<T>(tmpin, maxbits, to_find, theta1, theta0);
             }
             else{
-                tmp_val = (theta0 + (double)to_find * theta1);
+                tmp_val = round(theta0 + (double)to_find * theta1);
             }
             return tmp_val;
         }

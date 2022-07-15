@@ -7,7 +7,7 @@
 #include "../headers/string/string_utils.h"
 #include "../headers/string/piecewise_fix_string_template.h"
 #include <gperftools/profiler.h>
-#include "../headers/leco_uint256.h"
+#include "../headers/string/leco_uint256.h"
 //typedef leco_uint256 leco_t;
 typedef uint128_t leco_t;
 //#include "headers/string/piecewise_fix_string_modify.h"
