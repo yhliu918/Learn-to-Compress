@@ -5,17 +5,19 @@
 #include "../headers/caltime.h"
 #include "../headers/string/lr_string.h"
 #include "../headers/string/string_utils.h"
-#include "../headers/string/leco_string.h"
+#include "../headers/string/leco_string_subset.h"
 #include <gperftools/profiler.h>
 
 // typedef leco_uint256 leco_t;
 //#include "headers/string/piecewise_fix_string_modify.h"
 using namespace Codecset;
 
+int max_ascii = 123;
+int min_ascii = 46;
 template <typename T>
 void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_ind, int block_length, int padding_length, char padding_char, std::vector<uint8_t*>& descriptor_of_each_block, std::string* common_prefix, int common_prefix_length, uint8_t encoding_type, uint64_t& totalsize_without_padding, uint64_t& totalsize_with_padding, uint64_t& totalsize) {
-    Leco_string<T> codec;
-
+    Leco_string_subset<T> codec;
+    codec.set_ascii_set(min_ascii, max_ascii);
     codec.Padding_string(data_vec_tmp, start_ind, block_length,
         padding_char, padding_length);
     codec.get_uncompressed_size(totalsize_with_padding,
@@ -38,16 +40,41 @@ void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_in
 }
 
 
-int main()
-{
+template <typename T>
+static std::vector<T> load_data_binary(const std::string& filename,
+                                bool print = true) {
+    std::vector<T> data;
+  
+    std::ifstream in(filename, std::ios::binary);
+    if (!in.is_open()) {
+      std::cerr << "unable to open " << filename << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    // Read size.
+    uint64_t size=1000000;
+    // in.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+    std::cout<<"size: "<<size<<std::endl;
+    data.resize(size);
+    // Read values.
+    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
+    in.close();
 
-    // ProfilerStart("test_capture.prof");
+  return data;
+}
+
+
+
+int main(int argc, const char* argv[])
+{
+    std::string source_file = std::string(argv[1]);
+    int block_size = atoi(argv[2]);
+
     std::vector<std::string> string_vec;
     char padding_char = 0;
-
-    // std::ifstream srcFile("/home/lyh/string_data/email_list/mail_server_host_reverse_min_10_max_26.txt", std::ios::in);
-    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/key_2000000_no.txt", std::ios::in);
-    std::ifstream srcFile("/home/lyh/Learn-to-Compress/data/string_linear_1M.txt", std::ios::in);
+    std::ifstream srcFile(source_file, std::ios::in);
+    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/mail_server_host_reverse_min_10_max_26_key.txt", std::ios::in);
+    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/poisson_20000_sep_key.txt", std::ios::in);
+    // std::ifstream srcFile("/home/lyh/Learn-to-Compress/string_data/string_linear_1M.txt", std::ios::in);
     if (!srcFile)
     {
         std::cout << "error opening source file." << std::endl;
@@ -65,14 +92,21 @@ int main()
         // std::cout << next << std::endl;
         string_vec.push_back(tmp_str);
     }
-
     srcFile.close();
+    // std::string tmp_str;
+    // for(std::string line;std::getline(srcFile, tmp_str, srcFile.widen('\n'));){
+    //     string_vec.push_back(tmp_str);
+    //     uint128_t result = convertToASCII<uint128_t>(tmp_str);
+    //     print_u128_u(result);
+    //     std::cout<<std::endl;
+    // }
+
+    
 
     std::vector<std::string> string_vec_base(string_vec);
     int N = string_vec.size();
     std::cout << "vector size = " << string_vec.size() << std::endl;
 
-    int block_size = 32;
     int blocks = N / block_size;
     while (block_size * blocks < N)
     {
@@ -128,35 +162,43 @@ int main()
 
     double pad_compressrate = (totalsize) * 100.0 / (totalsize_with_padding * 1.0);
     double no_pad_compressrate = (totalsize) * 100.0 / (totalsize_without_padding * 1.0);
+    uint64_t totalsize_with_index = totalsize+blocks*sizeof(unsigned);
+    double compressrate_with_index = totalsize_with_index*100.0 / (totalsize_without_padding * 1.0);
 
     std::cout << N << std::endl;
-    std::cout << "compressed size " << totalsize << " without padding uncompressed size " << totalsize_with_padding << " without padding cr%: " << std::setprecision(4) << pad_compressrate << std::endl;
     std::cout << "compressed size " << totalsize << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate << std::endl;
+    std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << compressrate_with_index << std::endl;
 
+    std::vector<int> ra_pos;
+    int repeat = 1;
+    for(int i=0;i<N*repeat;i++){
+        // ra_pos.push_back(random(N));
+        ra_pos.push_back(i);
+    }
 
     bool flag = true;
     double totaltime = 0.0;
     std::cout << "random access decompress!" << std::endl;
     double randomaccesstime = 0.0;
     double start = getNow();
-    for (int i = 0; i < N; i++)
+    
+    for (auto index : ra_pos)
     {
-        // int index = i;
-        int index = random(N);
-        std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size );
-        if (strcmp(result.c_str(), string_vec_base[index].c_str()) != 0)
-        {
-            flag = false;
-            std::cout << "error at index " << index << " result " << result << " expected " << string_vec_base[index] << std::endl;
-        }
-        if(!flag){
-            break;
-        }
+
+        std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size,min_ascii, max_ascii );
+        // if (memcmp(result.c_str(), string_vec_base[index].c_str(), string_vec_base[index].size()) != 0)
+        // {
+        //     flag = false;
+        //     std::cout << "error at index " << index << " result " << result << " expected " << string_vec_base[index] << std::endl;
+        // }
+        // if(!flag){
+        //     break;
+        // }
 
         
     }
     double end = getNow();
-    randomaccesstime += (end - start);
+    randomaccesstime += (end - start)/repeat;
 
     std::cout << "random decoding time per int: " << std::setprecision(8)
         << randomaccesstime / N * 1000000000 << " ns" << std::endl;

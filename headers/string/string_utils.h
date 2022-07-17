@@ -35,6 +35,45 @@ inline T convertToASCII(std::string& letter)
   return result;
 }
 
+long_int convertToLongInt_subset(int min_ascii, int max_ascii, std::string letter)
+{
+  int set_size = max_ascii - min_ascii + 1;
+  std::string s2 = "";
+  long_int result = 0;
+  for (auto i = 0; i < letter.size(); i++)
+  {
+    char x = letter.at(i);
+
+    if(long_int(x)-46<long_int(set_size-1)){
+      result *= set_size;
+      result += (long_int(x)-min_ascii);
+    }
+    else{
+      result *= set_size;
+      result += (long_int(set_size-1));
+    }
+    
+    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
+  }
+  return result;
+}
+
+
+template <typename T>
+inline T convertToASCII_subset(int min_ascii, int max_ascii,std::string& letter)
+{
+  int set_size = max_ascii - min_ascii + 1;
+  std::string s2 = "";
+  T result = 0;
+
+  for (auto x:letter)
+  {
+    result *=set_size;
+    result += std::min(T(x)-min_ascii, T(set_size-1));
+  }
+  return result;
+}
+
 
 uint128_t convertTo128(std::string letter)
 {
@@ -146,6 +185,25 @@ inline std::string convertToString(T *record, int str_len)
 {
   // std::cout<<sizeof(record)<<std::endl;
   const char * res = reinterpret_cast<const char *>(record);
+  std::string val = std::string(res , str_len);
+  reverse(val.begin(), val.end());
+  //std::string ret(val.rbegin(),val.rend());
+  return val;
+
+}
+
+template <typename T>
+inline std::string convertToString_subset(int min_ascii, int max_ascii,T *record, int str_len)
+{
+  // std::cout<<sizeof(record)<<std::endl;
+  int set_size = max_ascii - min_ascii + 1;
+  char* res = new char[str_len];
+  int i = 0;
+  while((*record)>0){
+		uint32_t m = (*record) - ((*record)/set_size)*set_size;
+    res[i++]= (char)(m+min_ascii);
+		(*record)=((*record)-m)/set_size;
+	}
   std::string val = std::string(res , str_len);
   reverse(val.begin(), val.end());
   //std::string ret(val.rbegin(),val.rend());

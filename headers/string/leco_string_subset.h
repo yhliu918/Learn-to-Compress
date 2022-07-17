@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISEFIX_STRING_TEMPLATE_H_
-#define PIECEWISEFIX_STRING_TEMPLATE_H_
+#ifndef PIECEWISEFIX_STRING_SUBSET_TEMPLATE_H_
+#define PIECEWISEFIX_STRING_SUBSET_TEMPLATE_H_
 
 #include "../common.h"
 #include "../codecs.h"
@@ -23,12 +23,17 @@ namespace Codecset
         std::string last_str = string_vec[start_ind + block_length - 1];
         int compare_length = std::min(first_str.size(), last_str.size());
         common_prefix_length = 0;
-        for (int j = 0; j < compare_length; j++) {
+        int j=0;
+        for (j = 0; j < compare_length; j++) {
             if (first_str[j] != last_str[j]) {
                 common_prefix_length = j;
                 break;
             }
         }
+        if(j==compare_length && common_prefix_length==0){
+            common_prefix_length = compare_length;
+        }
+            
         common_prefix = first_str.substr(0, common_prefix_length);
 
         int max_padding_length = 0;
@@ -45,7 +50,7 @@ namespace Codecset
     }
 
     template <typename T>
-    class Leco_string {
+    class Leco_string_subset {
     public:
         void Padding_string(std::vector<std::string>& string_vec, int start_ind,
             int block_length, char x, int padding_length) {
@@ -90,10 +95,10 @@ namespace Codecset
             // and convert its param to type T later
             std::vector<int> index;
             for (size_t i = 0; i < length; i++) {
-                ascii_vec.emplace_back(convertToASCII<T>(string_vec[i + start_idx]));
-                long_int_vec.emplace_back(convertToLongInt(string_vec[i + start_idx]));
-                ascii_vec_min.emplace_back(convertToASCII<T>(padding_min[i]));
-                ascii_vec_max.emplace_back(convertToASCII<T>(padding_max[i]));
+                ascii_vec.emplace_back(convertToASCII_subset<T>(min_ascii, max_ascii, string_vec[i + start_idx]));
+                long_int_vec.emplace_back(convertToLongInt_subset(min_ascii, max_ascii, string_vec[i + start_idx]));
+                ascii_vec_min.emplace_back(convertToASCII_subset<T>(min_ascii, max_ascii, padding_min[i]));
+                ascii_vec_max.emplace_back(convertToASCII_subset<T>(min_ascii, max_ascii, padding_max[i]));
                 index.emplace_back(i);
             }
 
@@ -201,7 +206,7 @@ namespace Codecset
             if (maxbits == 0) {
                 for (int i = 0; i < length; i++) {
                     T tmp_val = theta0 + theta1 * i;
-                    string_vec.emplace_back(convertToString<T>(&tmp_val));
+                    string_vec.emplace_back(convertToString_subset<T>(min_ascii, max_ascii, &tmp_val));
                 }
             }
             else {
@@ -229,6 +234,11 @@ namespace Codecset
             buf.append(reinterpret_cast<const char*>(&block_padding_length), sizeof(char));
         }
 
+        void set_ascii_set(int min, int max){
+            min_ascii = min;
+            max_ascii = max;
+        }
+
     private:
         uint64_t totalsize_without_padding;
         uint64_t totalsize_with_padding;
@@ -236,6 +246,8 @@ namespace Codecset
         std::vector<std::string> padding_max;
         std::vector<std::string> padding_min;
         uint8_t block_padding_length;
+        int min_ascii;
+        int max_ascii;
     };
 
     template <typename T>
@@ -276,7 +288,7 @@ namespace Codecset
     }
 
 
-    std::string randomdecode_string(uint8_t* in, int idx){
+    std::string randomdecode_string(uint8_t* in, int idx, int min_ascii, int max_ascii) {
         uint8_t* tmpin = in;
 
         uint8_t encoding_type = tmpin[0];
@@ -291,19 +303,19 @@ namespace Codecset
             case 0:{
                 uint64_t result;
                 uint8_t ori_length = randomdecodeArray_leco_string<uint64_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString<uint64_t>(&result, ori_length));
+                common_prefix.append(convertToString_subset<uint64_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             case 1: {
                 uint128_t result;
                 uint8_t ori_length =randomdecodeArray_leco_string<uint128_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString<uint128_t>(&result, ori_length));
+                common_prefix.append(convertToString_subset<uint128_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             case 2:{
                 uint256_t result;
                 uint8_t ori_length = randomdecodeArray_leco_string<uint256_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString<uint256_t>(&result, ori_length));
+                common_prefix.append(convertToString_subset<uint256_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             default:
