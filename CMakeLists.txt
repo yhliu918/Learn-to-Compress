@@ -4,10 +4,14 @@ project(example
     DESCRIPTION  "C++ library to compress with learned methods"
     HOMEPAGE_URL "https://github.com/yhliu918/Learn-to-Compress"
 )
-
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 set(CMAKE_CXX_STANDARD 11)
 find_package(Snappy)
-add_compile_options(-O3 -g )#-fsanitize=address
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+# add_compile_options(-O3 -g )#-fsanitize=address
 # link_libraries(-fsanitize=address)
 
 # .h document

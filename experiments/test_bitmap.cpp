@@ -5,7 +5,7 @@
 #include "../headers/lr.h"
 #include "../headers/bitvector.hpp"
 
-int main(int argc, const char* argv[])
+int main(int argc, const char *argv[])
 {
   using namespace Codecset;
   std::string method = std::string(argv[1]);
@@ -15,7 +15,7 @@ int main(int argc, const char* argv[])
   // We pick a CODEC
   // IntegerCODEC &codec = *CODECFactory::getFromName("delta_my");
   // IntegerCODEC &codec = *CODECFactory::getFromName("piecewise_fix_op");
-  IntegerCODEC& codec = *CODECFactory::getFromName(method);
+  IntegerCODEC &codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
   std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/" + source_file, std::ios::in);
@@ -59,8 +59,7 @@ int main(int argc, const char* argv[])
     bitmap.push_back(next);
   }
   bitFile.close();
-  Bitvector bitvector(bitmap);
-
+  // Bitvector bitvector(bitmap);
 
   int block_size = data.size() / blocks;
   blocks = data.size() / block_size;
@@ -71,7 +70,7 @@ int main(int argc, const char* argv[])
   std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
   int delta = 32;
   codec.init(blocks, block_size, delta);
-  std::vector<uint8_t*> block_start_vec;
+  std::vector<uint8_t *> block_start_vec;
   std::vector<int> start_index;
   int totalsize = 0;
   for (int i = 0; i < blocks; i++)
@@ -81,15 +80,15 @@ int main(int argc, const char* argv[])
     {
       block_length = N - (blocks - 1) * block_size;
     }
-    uint8_t* descriptor = (uint8_t*)malloc(block_length * sizeof(uint64_t));
-    uint8_t* res = descriptor;
+    uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t));
+    uint8_t *res = descriptor;
     res = codec.encodeArray8(data.data() + (i * block_size), block_length, descriptor, N);
-    descriptor = (uint8_t*)realloc(descriptor, (res - descriptor));
+    descriptor = (uint8_t *)realloc(descriptor, (res - descriptor));
     block_start_vec.push_back(descriptor);
     totalsize += (res - descriptor);
   }
 
-  double compressrate = (totalsize) * 100.0 / (4 * N * 1.0);
+  double compressrate = (totalsize)*100.0 / (4 * N * 1.0);
   std::cout << "total compression rate:" << std::setprecision(4) << compressrate << std::endl;
   //************************************************************
   /*
@@ -114,48 +113,20 @@ int main(int argc, const char* argv[])
     }
     */
 
-    // PIECEWISE
-  uint32_t* buffer = NULL;
+  // PIECEWISE
+  std::vector<uint32_t> recover(block_size);
   double start = getNow();
   uint32_t tmpvalue = 0;
   int counter = 0;
-  /* OLD vector of int32 logic
-  for (int j = 0; j < N; j++)
+  for (auto &pos : bit_pos)
   {
-    // if (bitmap[j])
-    if (bitvector.readBit(j))
-    {
-      // uint32_t index = bit_pos[j];
-      // counter ++;
-      tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)j / block_size], j % block_size, buffer, N);
-      // std::cout<<tmpvalue<<std::endl;
-      // if(tmpvalue!=data[i]){
-      //   std::cout<<"error"<<std::endl;
-      // }
-    }
-  }
-  */
-  auto num_words = bitvector.numWords();
-  for (int i = 0; i < num_words; i++)
-  {
-    auto word = bitvector.getWord(i);
-    for (int j = 0; j < 64 && counter < N; j++)
-    {
-      if (word & (1ULL << j))
-      {
-        counter++;
-        tmpvalue = codec.randomdecodeArray8(block_start_vec[counter / block_size], counter % block_size, buffer, N);
-        // std::cout<<tmpvalue<<std::endl;
-        // if(tmpvalue!=data[i]){
-        //   std::cout<<"error"<<std::endl;
-        // }
-      }
-    }
+    counter++;
+    tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)pos / block_size], pos % block_size, recover.data(), N);
   }
   double end = getNow();
   std::cout << bit_pos.size() << std::endl;
   std::cout << "access time per int: " << std::setprecision(8)
-    << (end - start) / N * 1000000000 << " ns" << std::endl;
+            << (end - start) / N * 1000000000 << " ns" << std::endl;
 
   /*
   // PIECEWISE DETECT
@@ -210,15 +181,12 @@ int main(int argc, const char* argv[])
               tmpvalue = recover[j];
               flag = true;
             }
-
           }
         }
-
     }
     double end = getNow();
     std::cout << "access time per int: " << std::setprecision(8)
        << (end - start)/data.size()  * 1000000000 << "ns" << std::endl;
-
   */
 
   /*
@@ -233,18 +201,13 @@ int main(int argc, const char* argv[])
               tmpvalue = recover[j];
           }
         }
-
     }
     double end = getNow();
     std::cout << "access time per int: " << std::setprecision(8)
        << (end - start)/data.size()  * 1000000000 << "ns" << std::endl;
-
-
-
   */
   for (int i = 0; i < (int)block_start_vec.size(); i++)
   {
     free(block_start_vec[i]);
   }
-
 }
