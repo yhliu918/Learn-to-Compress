@@ -117,6 +117,7 @@ namespace Codecset
                 out[i] = code+delta_up_till_now;
 
             }
+            free(delta);
             return out;
 
         }

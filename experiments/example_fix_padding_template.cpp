@@ -167,13 +167,13 @@ int main(int argc, const char* argv[])
 
     std::cout << N << std::endl;
     std::cout << "compressed size " << totalsize << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate << std::endl;
-    std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << compressrate_with_index << std::endl;
+    std::cout << "compressed size with index " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << compressrate_with_index << std::endl;
 
     std::vector<int> ra_pos;
     int repeat = 1;
     for(int i=0;i<N*repeat;i++){
-        // ra_pos.push_back(random(N));
-        ra_pos.push_back(i);
+        ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
 
     bool flag = true;

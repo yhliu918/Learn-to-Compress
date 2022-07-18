@@ -198,14 +198,17 @@ inline std::string convertToString_subset(int min_ascii, int max_ascii,T *record
   // std::cout<<sizeof(record)<<std::endl;
   int set_size = max_ascii - min_ascii + 1;
   char* res = new char[str_len];
-  int i = 0;
+  int i = str_len;
   while((*record)>0){
-		uint32_t m = (*record) - ((*record)/set_size)*set_size;
-    res[i++]= (char)(m+min_ascii);
-		(*record)=((*record)-m)/set_size;
+    i--;
+    T result = (*record)/set_size;
+		uint32_t m = (*record) - result*set_size;
+    res[i]= (char)(m+min_ascii);
+		(*record)=result;
+
 	}
   std::string val = std::string(res , str_len);
-  reverse(val.begin(), val.end());
+  // reverse(val.begin(), val.end());
   //std::string ret(val.rbegin(),val.rend());
   return val;
 
