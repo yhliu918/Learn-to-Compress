@@ -6,8 +6,6 @@
 #include "../headers/string/lr_string.h"
 #include "../headers/string/string_utils.h"
 #include "../headers/string/piecewise_fix_string.h"
-
-#include <gperftools/profiler.h>
 //#include "headers/string/piecewise_fix_string_modify.h"
 using namespace Codecset;
 

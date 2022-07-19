@@ -5,19 +5,22 @@
 #include "../headers/caltime.h"
 #include "../headers/string/lr_string.h"
 #include "../headers/string/string_utils.h"
-#include "../headers/string/leco_string_subset.h"
-#include <gperftools/profiler.h>
+// #include "../headers/string/leco_string_subset.h"
+#include "../headers/string/leco_string.h"
 
 // typedef leco_uint256 leco_t;
 //#include "headers/string/piecewise_fix_string_modify.h"
 using namespace Codecset;
 
-int max_ascii = 123;
-int min_ascii = 46;
+// email: 46-123
+//uuid: 46-90
+int max_ascii = 90;
+int min_ascii = 45;
 template <typename T>
 void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_ind, int block_length, int padding_length, char padding_char, std::vector<uint8_t*>& descriptor_of_each_block, std::string* common_prefix, int common_prefix_length, uint8_t encoding_type, uint64_t& totalsize_without_padding, uint64_t& totalsize_with_padding, uint64_t& totalsize) {
-    Leco_string_subset<T> codec;
-    codec.set_ascii_set(min_ascii, max_ascii);
+    // Leco_string_subset<T> codec;
+    // codec.set_ascii_set(min_ascii, max_ascii);
+    Leco_string<T> codec;
     codec.Padding_string(data_vec_tmp, start_ind, block_length,
         padding_char, padding_length);
     codec.get_uncompressed_size(totalsize_with_padding,
@@ -123,6 +126,7 @@ int main(int argc, const char* argv[])
         if (i == blocks - 1) {
             block_length = N - (blocks - 1) * block_size;
         }
+
         int common_prefix_length = 0;
         std::string common_prefix = "";
         int padding_length = extract_common_prefix(
@@ -185,7 +189,8 @@ int main(int argc, const char* argv[])
     for (auto index : ra_pos)
     {
 
-        std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size,min_ascii, max_ascii );
+        // std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size,min_ascii, max_ascii );
+        std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size);
         // if (memcmp(result.c_str(), string_vec_base[index].c_str(), string_vec_base[index].size()) != 0)
         // {
         //     flag = false;

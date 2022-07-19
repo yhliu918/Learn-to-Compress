@@ -6,7 +6,7 @@
 #include "../headers/string/lr_string.h"
 #include "../headers/string/string_utils.h"
 #include "../headers/string/piecewise_fix_string.h"
-#include <gperftools/profiler.h>
+
 //#include "headers/string/piecewise_fix_string_modify.h"
 using namespace Codecset;
 
@@ -116,7 +116,6 @@ int main()
   // We pick a CODEC
 
   // could use others, e.g., "simdfastpfor256", "BP32"
-  ProfilerStart("test_capture.prof");
   std::vector<std::string> string_vec;
   std::ifstream srcFile("/home/lyh/rocksdb/dump_data/mail_server_host_reverse_min_10_max_26_key.txt", std::ios::in);
   // std::ifstream srcFile("/home/lyh/Learn-to-Compress/data/poisson_2000000/key.txt", std::ios::in);
@@ -277,5 +276,4 @@ int main()
   std::cout << "binary time per time: " << std::setprecision(8)
             << ourbinarytime / sample_size * 1000000000 << " ns" << std::endl;
 
-  ProfilerStop();
 }
