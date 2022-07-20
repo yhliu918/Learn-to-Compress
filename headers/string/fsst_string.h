@@ -66,7 +66,7 @@ namespace Codecset
 
         std::string randomdecode_string(int idx, int offset_val, int offset_val2) {
             vector<char> target;
-            target.resize(800);
+            target.resize((offset_val2-offset_val)*10);
             char* writer = target.data();
             auto limit = writer + target.size();
             auto data = compressedData.data();

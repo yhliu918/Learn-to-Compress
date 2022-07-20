@@ -53,7 +53,7 @@ namespace Codecset
     class Leco_string_subset {
     public:
         void Padding_string(std::vector<std::string>& string_vec, int start_ind,
-            int block_length, char x, int padding_length) {
+            int block_length, char x, int padding_length, int min_ascii, int max_ascii) {
             totalsize_without_padding = 0;
             totalsize_with_padding = 0;
             for (int j = 0; j < block_length; j++) {
@@ -66,8 +66,8 @@ namespace Codecset
                 string_wo_padding_length.emplace_back((uint8_t)temp_len);
                 std::string tmp_str_max = string_vec[start_ind + j];
                 std::string tmp_str_min = tmp_str_max;
-                padding_max.emplace_back(tmp_str_max.append(padding_length - temp_len, std::numeric_limits<char>::max()));
-                padding_min.emplace_back(tmp_str_min.append(padding_length - temp_len, 1));
+                padding_max.emplace_back(tmp_str_max.append(padding_length - temp_len, max_ascii));
+                padding_min.emplace_back(tmp_str_min.append(padding_length - temp_len, min_ascii));
                 string_vec[start_ind + j].append(padding_length - temp_len, x);
             }
         }
@@ -106,11 +106,11 @@ namespace Codecset
             mylr.caltheta(index, long_int_vec, length);
 
             T theta0 = 0;
+
             // auto theta0_len = (mpz_sizeinbase(mylr.theta0.backend().data(), 2) + 7) /
             // 8;
             mpz_export(&theta0, NULL, -1, 1, 1, 0, mylr.theta0.backend().data());
-            // print_u128_u(theta0);
-            // printf("\n");
+            
 
             T theta1 = 0;
             // auto theta1_len = (mpz_sizeinbase(mylr.theta1.backend().data(), 2) + 7) /
@@ -251,7 +251,7 @@ namespace Codecset
     };
 
     template <typename T>
-    uint8_t randomdecodeArray_leco_string(const uint8_t* in, int idx, T* result) {
+    std::string randomdecodeArray_leco_string(const uint8_t* in, int idx, T* result, int min_ascii, int max_ascii) {
         const uint8_t* tmpin = in;
 
         uint32_t maxbits = 0;
@@ -277,14 +277,14 @@ namespace Codecset
         }
         else{
             *result = theta0 + theta1 * idx;
-            ori_length = block_pad_length;
+            // ori_length = block_pad_length;
         }
-
-        // int shift = (block_pad_length - ori_length);
+        std::string tmp = convertToString_subset<T>(min_ascii, max_ascii, result, block_pad_length);
+        tmp = tmp.substr(0, ori_length);
         // *result = *result >> (uint8_t)(8 * shift);
         // *result = *result << (uint8_t)(8 * shift);
 
-        return block_pad_length;
+        return tmp;
     }
 
 
@@ -302,20 +302,23 @@ namespace Codecset
         switch(encoding_type){
             case 0:{
                 uint64_t result;
-                uint8_t ori_length = randomdecodeArray_leco_string<uint64_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString_subset<uint64_t>(min_ascii, max_ascii, &result, ori_length));
+                std::string suffix =randomdecodeArray_leco_string<uint64_t>(tmpin, idx, &result, min_ascii, max_ascii);
+                common_prefix.append(suffix);
+                // common_prefix.append(convertToString_subset<uint64_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             case 1: {
                 uint128_t result;
-                uint8_t ori_length =randomdecodeArray_leco_string<uint128_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString_subset<uint128_t>(min_ascii, max_ascii, &result, ori_length));
+                std::string suffix =randomdecodeArray_leco_string<uint128_t>(tmpin, idx, &result, min_ascii, max_ascii);
+                common_prefix.append(suffix);
+                // common_prefix.append(convertToString_subset<uint128_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             case 2:{
                 uint256_t result;
-                uint8_t ori_length = randomdecodeArray_leco_string<uint256_t>(tmpin, idx, &result);
-                common_prefix.append(convertToString_subset<uint256_t>(min_ascii, max_ascii, &result, ori_length));
+                std::string suffix =randomdecodeArray_leco_string<uint256_t>(tmpin, idx, &result, min_ascii, max_ascii);
+                common_prefix.append(suffix);
+                // common_prefix.append(convertToString_subset<uint256_t>(min_ascii, max_ascii, &result, ori_length));
                 return common_prefix;
             }
             default:

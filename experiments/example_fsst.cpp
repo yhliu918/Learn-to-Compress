@@ -85,7 +85,7 @@ int main(int argc, const char* argv[])
         }
         totalsize = codec.encodeArray8_string(string_vec, offset);
     }
-
+    offset.insert(offset.begin(), 0);
     if(offset_delta_compress){
         for (int i = 0; i < delta_blocks; i++) {
             int block_length = delta_block_size;
@@ -116,10 +116,10 @@ int main(int argc, const char* argv[])
     std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate_with_ind << std::endl;
 
     std::vector<int> ra_pos;
-    int repeat = 1;
+    int repeat = 10;
     for(int i=0;i<N*repeat;i++){
-        // ra_pos.push_back(random(N));
-        ra_pos.push_back(i);
+        ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
 
     bool flag = true;
@@ -128,18 +128,32 @@ int main(int argc, const char* argv[])
     double randomaccesstime = 0.0;
     double start = getNow();
     std::vector<uint32_t> buffer(N);
+    uint32_t* out = new uint32_t[delta_block_size];
+    uint32_t* out2 = new uint32_t[delta_block_size];
     for (auto index : ra_pos)
     {
         std::string result;
         if(offset_delta_compress){
-            uint32_t* out = new uint32_t[N];
+            
             uint32_t offset_val = 0;
-            if(index){
-                offset_val = delta_codec.randomdecodeArray8(delta_descriptor_of_each_block[(int)(index-1) / delta_block_size], (index-1) % delta_block_size, buffer.data(), N);
+            uint32_t offset_val2 = 0;
+            out = delta_codec.decodeArray8(delta_descriptor_of_each_block[(int)(index) / delta_block_size], delta_block_size,out, N);
+            offset_val = out[(index) % delta_block_size];
+            
+            if((index+1)%delta_block_size==0 && (index+1)<N){
+                out2 = delta_codec.decodeArray8(delta_descriptor_of_each_block[(int)(index+1) / delta_block_size], delta_block_size,out2, N);
+                offset_val2 = out2[(index+1)%delta_block_size];
+            }
+            else{
+                offset_val2 = out[(index+1)%delta_block_size];
+            }
+            if(index==N-1){
+                offset_val2 = offset_val+100;
             }
             // uint32_t offset_val2 = delta_codec.randomdecodeArray8(delta_descriptor_of_each_block[index/delta_block_size], index%delta_block_size, out, N);
-            // std::cout<<offset_val<<" "<<offset_val2<<std::endl;
-            result = codec.randomdecode_string(index, offset_val, offset[index]);
+            // std::cout<<index<<" "<<offset_val<<" "<<offset_val2<<std::endl;
+            result = codec.randomdecode_string(index, offset_val, offset_val2);
+            
 
         }
         else{

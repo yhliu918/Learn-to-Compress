@@ -44,7 +44,7 @@ long_int convertToLongInt_subset(int min_ascii, int max_ascii, std::string lette
   {
     char x = letter.at(i);
 
-    if(long_int(x)-46<long_int(set_size-1)){
+    if(long_int(x)-min_ascii<long_int(set_size-1)){
       result *= set_size;
       result += (long_int(x)-min_ascii);
     }
@@ -207,6 +207,10 @@ inline std::string convertToString_subset(int min_ascii, int max_ascii,T *record
 		(*record)=result;
 
 	}
+  while(i){
+    i--;
+    res[i]= (char)(min_ascii);
+  }
   std::string val = std::string(res , str_len);
   // reverse(val.begin(), val.end());
   //std::string ret(val.rbegin(),val.rend());
