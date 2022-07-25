@@ -13,8 +13,8 @@ using namespace Codecset;
 
 // email: 46-123
 //uuid: 46-90
-int max_ascii = 122;
-int min_ascii = 97;
+int max_ascii = 90;
+int min_ascii = 48;
 template <typename T>
 void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_ind, int block_length, int padding_length, char padding_char, std::vector<uint8_t*>& descriptor_of_each_block, std::string* common_prefix, int common_prefix_length, uint8_t encoding_type, uint64_t& totalsize_without_padding, uint64_t& totalsize_with_padding, uint64_t& totalsize) {
     Leco_string_subset<T> codec;
@@ -167,14 +167,14 @@ int main(int argc, const char* argv[])
 
         std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size,min_ascii, max_ascii );
         // std::string result = randomdecode_string(descriptor_of_each_block[index/block_size], index%block_size);
-        if (memcmp(result.c_str(), string_vec_base[index].c_str(), string_vec_base[index].size()) != 0)
-        {
-            flag = false;
-            std::cout << "error at index " << index << " result " << result << " expected " << string_vec_base[index] << std::endl;
-        }
-        if(!flag){
-            break;
-        }
+        // if (memcmp(result.c_str(), string_vec_base[index].c_str(), string_vec_base[index].size()) != 0)
+        // {
+        //     flag = false;
+        //     std::cout << "error at index " << index << " result " << result << " expected " << string_vec_base[index] << std::endl;
+        // }
+        // if(!flag){
+        //     break;
+        // }
 
         
     }
