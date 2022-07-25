@@ -331,7 +331,7 @@ namespace Codecset {
 
                             }
                             else {
-                                
+
                                 break;
                             }
 
@@ -369,7 +369,7 @@ namespace Codecset {
                                 }
                             }
                             else {
-                                
+
                                 break;
                             }
 
@@ -420,7 +420,7 @@ namespace Codecset {
                 merge_both_direction(nvalue, length);
 
                 double compressrate = (total_byte) * 100.0 / (sizeof(T) * block_size * 1.0);
-                std::cout << "try " << iter << " segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+                // std::cout << "try " << iter << " segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
                 cost_decline = cost_decline - total_byte;
                 double cost_decline_percent = cost_decline * 100.0 / (sizeof(T) * block_size * 1.0);
                 if (cost_decline_percent < 0.01) {
@@ -429,7 +429,7 @@ namespace Codecset {
 
             }
             double compressrate = (total_byte) * 100.0 / (sizeof(T) * block_size * 1.0);
-            std::cout << "segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
+            // std::cout << "segment number " << (int)block_start_vec.size() << " resulting compression rate: " << std::setprecision(4) << compressrate << std::endl;
 
             for (auto item : block_start_vec) {
                 block_start_vec_total.push_back(item);
@@ -547,14 +547,14 @@ namespace Codecset {
                     newsegment(new_segment_index[last_merged_segment], segment_index[segment_num + 1] - 1);
                     uint32_t merge_cost_front = segment_length[segment_length.size() - 1];
                     int saved_cost_front = init_cost_front - merge_cost_front;
-                    if(saved_cost_front>0){
+                    if (saved_cost_front > 0) {
                         new_block_start_vec[new_block_start_vec.size() - 1] = block_start_vec[block_start_vec.size() - 1];
                         totalbyte_after_merge -= new_segment_length[new_segment_length.size() - 1];
                         new_segment_length[new_segment_length.size() - 1] = merge_cost_front;
                         totalbyte_after_merge += merge_cost_front;
-                        segment_num ++;
+                        segment_num++;
                     }
-                    else{
+                    else {
                         new_block_start_vec.push_back(block_start_vec[segment_num]);
                         new_segment_index.emplace_back(segment_index[segment_num]);
                         new_segment_length.emplace_back(segment_length[segment_num]);
@@ -562,7 +562,7 @@ namespace Codecset {
                         segment_num++;
                     }
 
-                    
+
                     break;
                 }
                 int last_merged_segment = new_segment_length.size() - 1;
@@ -636,9 +636,57 @@ namespace Codecset {
 
         }
 
-        uint32_t* decodeArray8(uint8_t* in, const size_t length, uint32_t* out, size_t nvalue) {
+        uint32_t* decodeArray8(const size_t length, T* out, size_t nvalue) {
+            T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
+            segment_index_total.push_back(length);
+            float theta0;
+            float theta1;
+            uint8_t maxerror;
+            for (int i = 0;i < block_start_vec_total.size();i++) {
+                int segment_length = segment_index_total[i + 1] - segment_index_total[i];
+                uint8_t* tmpin = block_start_vec_total[i];
+                tmpin += sizeof(uint32_t);
+                maxerror = tmpin[0];
+                tmpin++;
+                if (maxerror == 127) {
+                    T tmp_val;
+                    memcpy(&tmp_val, tmpin, sizeof(tmp_val));
+                    res[0] = tmp_val;
+                    res++;
+                    continue;
+                }
+                if (maxerror == 126) {
+                    T tmp_val;
+                    memcpy(&tmp_val, tmpin, sizeof(tmp_val));
+                    res[0] = tmp_val;
+                    res++;
+                    memcpy(&tmp_val, tmpin+sizeof(T), sizeof(tmp_val));
+                    res[0] = tmp_val;
+                    res++;
+                    continue;
+                }
 
+
+                memcpy(&theta0, tmpin, sizeof(theta0));
+                tmpin += sizeof(theta0);
+                memcpy(&theta1, tmpin, sizeof(theta1));
+                tmpin += sizeof(theta1);
+                if (maxerror) {
+                    if (maxerror >= sizeof(T) * 8 - 1) {
+                        read_all_default(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
+                    }
+                    else {
+                        read_all_bit_fix_round<T>(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
+                    }
+                }
+                else {
+                    for (int j = 0;j < segment_length;j++) {
+                        res[j] = (long long)round(theta0 + theta1 * (double)j);
+                    }
+                }
+                res += segment_length;
+            }
             return out;
         }
 
@@ -721,9 +769,11 @@ namespace Codecset {
             std::cout << "Haven't implement. Please try uint8_t one..." << std::endl;
             return 1;
         }
-        uint32_t get_block_nums() {
-            std::cout << "Total block num is " << block_start_vec_total.size() << std::endl;
+        uint32_t get_total_byte() {
             return total_byte_total;
+        }
+        uint32_t get_total_blocks() {
+            return block_start_vec_total.size();
         }
 
 

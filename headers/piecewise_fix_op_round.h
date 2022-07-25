@@ -100,27 +100,35 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
 }
     
 uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t nvalue) {
-    //std::cout<<"decompressing all!"<<std::endl;
     double theta0;
     double theta1;
     uint8_t maxerror;
     uint8_t * tmpin=in;
     memcpy(&maxerror,tmpin,1);
     tmpin++;
-    memcpy(&theta0,tmpin,8);
-    tmpin+=8;
-    memcpy(&theta1,tmpin,8);
-    tmpin+=8;
-    if(maxerror>=31){
-        read_all_default(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+    memcpy(&theta0,tmpin,sizeof(double));
+    tmpin+=sizeof(double);
+    memcpy(&theta1,tmpin,sizeof(double));
+    tmpin+=sizeof(double);
+    if(maxerror){
+        if(maxerror>=31){
+            read_all_default(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+        }
+        else{
+            
+            read_all_bit_fix_round<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+        }
     }
     else{
-        
-        read_all_bit_fix(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+        for(int i=0;i<length;i++){
+            out[i] = (long long)round(theta0+theta1*(double)i);
+        }
     }
+
 
     return out;
 }
+
 uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t nvalue){
     double theta0;
     double theta1;
