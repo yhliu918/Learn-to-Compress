@@ -12,6 +12,7 @@
 #include "codecs.h"
 #include "util.h"
 #include "FOR.h"
+#include "FOR_my.h"
 #include "combinedcodec.h"
 #include "piecewise.h"
 #include "piecewise_fix.h"
@@ -21,6 +22,7 @@
 #include "piecewise_cost_dp.h"
 #include "piecewise_fix_op.h"
 #include "piecewise_fix_op_minimize_maxerror.h"
+#include "piecewise_fix_op_minimize_maxerror_round.h"
 #include "piecewise_fix_op_round.h"
 #include "piecewise_fix_op_float.h"
 #include "piecewise_fix_merge.h"
@@ -96,6 +98,7 @@ static inline CodecMap initializefactory() {
   CodecMap map;
 
   map["FOR"]= new Codecset::FOR();
+  map["FOR_my"]= new FOR_my();
   map["rle"]= new rle();
   map["delta_my"] = new delta_my();
   map["delta"] = new delta();
@@ -108,6 +111,7 @@ static inline CodecMap initializefactory() {
   map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_fix_op"]= new piecewise_fix_op();
   map["piecewise_fix_op_max"]= new piecewise_fix_op_max();
+  map["piecewise_fix_op_max_round"]= new piecewise_fix_op_max_round();
   map["piecewise_fix_op_round"]= new piecewise_fix_op_round();
   map["piecewise_fix_op_float"]= new piecewise_fix_op_float();
   map["piecewise_fix_merge"]= new piecewise_fix_merge();

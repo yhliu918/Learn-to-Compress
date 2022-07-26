@@ -918,6 +918,49 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
 }
 
 
+template <typename T>
+void read_all_bit_FOR(uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  T* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  while (start <= end)
+  {
+    while (left >= l)
+    {
+      
+      T tmpval = decode & (((T)1 << l) - 1);
+      decode = (decode >> l);
+      T decode_val = base + tmpval;
+      
+      *res = decode_val;
+      res++;
+      writeind++;
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+      // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
+    }
+    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    // decode = decode<<64 + tmp_64;
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+}
+
 
 
 uint32_t read_bit_fix_float_T(uint8_t* in, int l, int to_find, float slope, float start_key, int start)

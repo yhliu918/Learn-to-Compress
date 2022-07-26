@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISEFIXOP_MAX_H_
-#define PIECEWISEFIXOP_MAX_H_
+#ifndef PIECEWISEFIXOP_MAX_ROUND_H_
+#define PIECEWISEFIXOP_MAX_ROUND_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -15,7 +15,7 @@ namespace Codecset {
 
 
     
-class piecewise_fix_op_max : public IntegerCODEC {
+class piecewise_fix_op_max_round : public IntegerCODEC {
 public:
   using IntegerCODEC::encodeArray;
   using IntegerCODEC::decodeArray;
@@ -62,7 +62,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     int max_error_delta = INT_MIN;
     int min_error_delta = INT_MAX;
     for(int i=0;i<(long long)length;i++){
-        int tmp = in[i] - (long long)(theta0+theta1*(double)i);
+        int tmp = in[i] - round(theta0+theta1*(double)i);
         if(tmp>max_error_delta){
             max_error_delta = tmp;
         }
@@ -74,7 +74,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     
     int max_error = 0;
     for(int i=0;i<(long long)length;i++){
-        int tmp = in[i] - (long long)(theta0+theta1*(double)i);
+        int tmp = in[i] - round(theta0+theta1*(double)i);
         delta[i]=tmp;
         if(abs(tmp)>max_error){
             max_error = abs(tmp);
@@ -131,12 +131,12 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         }
         else{
             
-            read_all_bit_fix<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+            read_all_bit_fix_round<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
         }
     }
     else{
         for(int i=0;i<length;i++){
-            out[i] = (long long)(theta0+theta1*(double)i);
+            out[i] = (long long)round(theta0+theta1*(double)i);
         }
     }
 
@@ -162,11 +162,11 @@ uint32_t randomdecodeArray8( uint8_t *in, const size_t l, uint32_t *out, size_t 
         tmp = read_bit_default(tmpin ,maxerror, l, theta1,theta0, 0);
         }
         else{
-        tmp = read_bit_fix_T(tmpin ,maxerror, l, theta1,theta0, 0);
+        tmp = read_bit_fix_int<uint32_t>(tmpin ,maxerror, l, theta1,theta0);
         }
     }
     else{
-        tmp = (long long)(theta0+theta1*(double)l);
+        tmp = (long long)round(theta0+theta1*(double)l);
     }
 
     return tmp; 
@@ -192,7 +192,7 @@ uint32_t get_block_nums(){
       return 1;
 }    
 std::string name() const {
-    return "piecewise_fix_op_max"; 
+    return "piecewise_fix_op_max_round"; 
 }    
  void destroy(){} 
 };

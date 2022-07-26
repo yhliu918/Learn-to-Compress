@@ -21,34 +21,6 @@ int random(int m)
 }
 
 template <typename T>
-static std::vector<T> load_data_binary(const std::string& filename,
-    bool print = true) {
-    std::vector<T> data;
-
-    std::ifstream in(filename, std::ios::binary);
-    if (!in.is_open()) {
-        std::cerr << "unable to open " << filename << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    // Read size.
-    uint64_t size;
-    in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    data.resize(size);
-    // Read values.
-    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
-    in.close();
-    // std::ofstream out("/home/lyh/Learn-to-Compress/integer_data/wiki_200M_uint64.txt",std::ios::out);
-    // std::ios::sync_with_stdio(false);
-    // for (auto i = 0; i < size; i++) {
-    //   out << data[i] << std::endl;
-    // }
-
-
-    return data;
-}
-
-
-template <typename T>
 static std::vector<T> load_data(const std::string& filename) {
     std::vector<T> data;
     std::ifstream srcFile(filename, std::ios::in);
@@ -72,8 +44,8 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge<leco_type> codec;
-    std::string method = "leco_cost";
+    Delta_cost_merge<leco_type> codec;
+    std::string method = "delta_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int delta = atoi(argv[3]);
