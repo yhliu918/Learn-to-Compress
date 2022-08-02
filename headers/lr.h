@@ -70,35 +70,34 @@ bool agree(double x, double y){
 };
     
 
-struct lr_int{
+struct lr_int{//theta0+theta1*x
+    double theta0;
+    double theta1;
+
     
-int theta0 = 0;
-int theta1 = 0;
-    
-void caltheta(uint32_t x[], uint32_t y[], int m){
+void caltheta(uint32_t *y, int m){
 
     double sumx = 0;
     double sumy = 0;
     double sumxy = 0;
     double sumxx = 0;
     for(int i=0;i<m;i++){
-        sumx = sumx + x[i];
-        sumy = sumy + y[i];
-        sumxx = sumxx+x[i]*x[i];
-        sumxy = sumxy+x[i]*y[i];
+        sumx = sumx + (double)i;
+        sumy = sumy + (double)y[i];
+        sumxx = sumxx+(double)i*i;
+        sumxy = sumxy+(double)i*y[i];
     }
     
     double ccc= sumxy * m - sumx * sumy;
     double xxx = sumxx * m - sumx * sumx;
 
     theta1 = ccc/xxx;
-    double theta1_d = ccc/xxx;
-    theta0 = (sumy - theta1_d * sumx)/(double)m;
+    theta0 = (sumy - theta1 * sumx)/(double)m;
     
 }
-    
-    
+
 };
+    
 
 
 template <typename T>

@@ -46,17 +46,17 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     //double *keys_sample = new double [length];
     //double *indexes_sample = new double[length];
     uint8_t *out = res;
-    std::vector<double> indexes;
-    std::vector<double> keys;
-    for(uint32_t i = 0; i < length; i++){
-        indexes.emplace_back((double) i);
-        keys.emplace_back((double) in[i]);
-    }
+    // std::vector<double> indexes;
+    // std::vector<double> keys;
+    // for(uint32_t i = 0; i < length; i++){
+    //     indexes.emplace_back((double) i);
+    //     keys.emplace_back((double) in[i]);
+    // }
     int *delta = new int[length];
 
-    lr mylr;
+    lr_int mylr;
     //mylr.caltheta_LOO(indexes,keys,length);
-    mylr.caltheta(indexes,keys,length);
+    mylr.caltheta(in,length);
     
     
     

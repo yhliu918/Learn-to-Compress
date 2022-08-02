@@ -4,6 +4,7 @@
 #include "lr.h"
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
+#include "piecewise_cost_integer_template.h"
 #include "piecewise_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_double.h"
 #include "piecewise_cost_merge_hc_integer_template.h"
@@ -11,7 +12,6 @@
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
-#include "piecewise_cost_merge_integer_template_test.h"
 
 typedef uint32_t leco_type;
 
@@ -19,34 +19,6 @@ int random(int m)
 {
     return rand() % m;
 }
-
-template <typename T>
-static std::vector<T> load_data_binary(const std::string& filename,
-    bool print = true) {
-    std::vector<T> data;
-
-    std::ifstream in(filename, std::ios::binary);
-    if (!in.is_open()) {
-        std::cerr << "unable to open " << filename << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    // Read size.
-    uint64_t size;
-    in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    data.resize(size);
-    // Read values.
-    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
-    in.close();
-    // std::ofstream out("/home/lyh/Learn-to-Compress/integer_data/wiki_200M_uint64.txt",std::ios::out);
-    // std::ios::sync_with_stdio(false);
-    // for (auto i = 0; i < size; i++) {
-    //   out << data[i] << std::endl;
-    // }
-
-
-    return data;
-}
-
 
 template <typename T>
 static std::vector<T> load_data(const std::string& filename) {
@@ -72,7 +44,7 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge_test<leco_type> codec;
+    Leco_cost_merge_double<leco_type> codec;
     std::string method = "leco_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);

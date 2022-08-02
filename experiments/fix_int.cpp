@@ -61,6 +61,7 @@ int main(int argc, const char* argv[])
     std::vector<uint8_t *> block_start_vec;
     std::vector<int> start_index;
     int totalsize = 0;
+    double start = getNow();
     for (int i = 0; i < blocks; i++)
     {
         int block_length = block_size;
@@ -76,6 +77,9 @@ int main(int argc, const char* argv[])
         block_start_vec.push_back(descriptor);
         totalsize += (res - descriptor);
     }
+    double end = getNow();
+    double compress_time = end - start;
+    double compress_throughput = N*sizeof(uint32_t) / (compress_time*1000000000);
 
     double origin_size = (sizeof(uint32_t) * N * 1.0);
     double total_model_size = model_size * blocks;
@@ -87,7 +91,7 @@ int main(int argc, const char* argv[])
     std::vector<uint32_t> recover(data.size());
     double totaltime = 0.0; 
     // std::cout << "decompress all!" << std::endl;
-    double start = getNow();
+    start = getNow();
     for (int i = 0; i < blocks; i++)
     {
         int block_length = block_size;
@@ -112,7 +116,7 @@ int main(int argc, const char* argv[])
             break;
         }
     }
-    double end = getNow();
+    end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / data.size() * 1000000000;
 
@@ -154,7 +158,7 @@ int main(int argc, const char* argv[])
 
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 
-    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<std::endl;
+    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<" "<<compress_throughput<<std::endl;
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)
     {

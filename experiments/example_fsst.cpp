@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
     std::vector<std::string> string_vec_base(string_vec);
     int N = string_vec.size();
     int block_size = N;
-    std::cout << "vector size = " << string_vec.size() << std::endl;
+    // std::cout << "vector size = " << string_vec.size() << std::endl;
 
     int blocks = N / block_size;
     while (block_size * blocks < N)
@@ -92,7 +92,7 @@ int main(int argc, const char* argv[])
             if (i == delta_blocks - 1) {
                 block_length = N - (delta_blocks - 1) * delta_block_size;
             }
-            uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t));
+            uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t)*2);
             uint8_t *res = descriptor;
             res = delta_codec.encodeArray8(offset.data() + (i * delta_block_size), block_length, descriptor, i);
             descriptor = (uint8_t *)realloc(descriptor, (res - descriptor));
@@ -111,20 +111,21 @@ int main(int argc, const char* argv[])
     }
     double no_pad_compressrate_with_ind = (totalsize_with_index)*100.0/(totalsize_without_padding*1.0);
 
-    std::cout << N << std::endl;
-    std::cout << "compressed size " << totalsize << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate << std::endl;
-    std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate_with_ind << std::endl;
+    // std::cout << N << std::endl;
+    // std::cout << "compressed size " << totalsize << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate << std::endl;
+    // std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate_with_ind << std::endl;
+
 
     std::vector<int> ra_pos;
-    int repeat = 10;
+    int repeat = 100;
     for(int i=0;i<N*repeat;i++){
-        ra_pos.push_back(random(N));
+        ra_pos.push_back(random(delta_block_size*(N/delta_block_size)));
         // ra_pos.push_back(i);
     }
 
     bool flag = true;
     double totaltime = 0.0;
-    std::cout << "random access decompress!" << std::endl;
+    // std::cout << "random access decompress!" << std::endl;
     double randomaccesstime = 0.0;
     double start = getNow();
     std::vector<uint32_t> buffer(N);
@@ -137,6 +138,7 @@ int main(int argc, const char* argv[])
             
             uint32_t offset_val = 0;
             uint32_t offset_val2 = 0;
+
             out = delta_codec.decodeArray8(delta_descriptor_of_each_block[(int)(index) / delta_block_size], delta_block_size,out, N);
             offset_val = out[(index) % delta_block_size];
             
@@ -177,10 +179,12 @@ int main(int argc, const char* argv[])
     }
     double end = getNow();
     randomaccesstime += (end - start)/repeat;
+    double ra_ns = randomaccesstime / N * 1000000000;
 
-    std::cout << "random decoding time per int: " << std::setprecision(8)
-        << randomaccesstime / N * 1000000000 << " ns" << std::endl;
+    // std::cout << "random decoding time per int: " << std::setprecision(8)
+    //     << randomaccesstime / N * 1000000000 << " ns" << std::endl;
 
+    std::cout<<source_file<<" "<<delta_block_size<<" "<<no_pad_compressrate<<" "<<no_pad_compressrate_with_ind<<" "<<ra_ns<<std::endl;
 
     // int sample_size = 1000;
     // start = getNow();
@@ -189,6 +193,7 @@ int main(int argc, const char* argv[])
     // double ourbinarytime = end - start;
     // std::cout << "binary time per time: " << std::setprecision(8)
     //           << ourbinarytime / sample_size * 1000000000 << " ns" << std::endl;
-
+    free(out);
+    free(out2);
     // ProfilerStop();
 }

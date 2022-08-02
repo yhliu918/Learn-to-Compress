@@ -44,16 +44,16 @@ int random(int m){
 uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nvalue) {
 
     uint8_t *out = res;
-    std::vector<double> indexes;
-    std::vector<double> keys;
-    for(uint32_t i = 0; i < length; i++){
-        indexes.emplace_back((double) i);
-        keys.emplace_back((double) in[i]);
-    }
+    // std::vector<double> indexes;
+    // std::vector<double> keys;
+    // for(uint32_t i = 0; i < length; i++){
+    //     indexes.emplace_back((double) i);
+    //     keys.emplace_back((double) in[i]);
+    // }
     int *delta = new int[length];
 
-    lr mylr;
-    mylr.caltheta(indexes,keys,length);
+    lr_int mylr;
+    mylr.caltheta(in,length);
     
     
     double theta0 = mylr.theta0;

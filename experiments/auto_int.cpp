@@ -27,6 +27,7 @@ int main(int argc, const char* argv[]) {
   std::string method = std::string(argv[1]);
   std::string source_file = std::string(argv[2]);
   int delta = atoi(argv[3]);
+  int model_size = atoi(argv[4]);
 
   // We pick a CODEC
   IntegerCODEC& codec = *CODECFactory::getFromName(method);
@@ -56,9 +57,9 @@ int main(int argc, const char* argv[]) {
     std::cout << "Empty vector" << std::endl;
     return 0;
   }
-  std::cout << "vector size = " << data.size() << std::endl;
-  std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-    << std::endl;
+  // std::cout << "vector size = " << data.size() << std::endl;
+  // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
+  //   << std::endl;
 
 
   int blocks = 1;
@@ -81,20 +82,22 @@ int main(int argc, const char* argv[]) {
     totalsize += codec.get_block_nums();
     
   }
+
   
-  double compressrate = (totalsize) * 100.0 / (4 * N * 1.0);
-  std::cout << "compressed size " << totalsize << " uncompressed size " << 4 * N << std::endl;
-  std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
+  double origin_size = (sizeof(uint32_t) * N * 1.0);
+  double compressrate = (totalsize)*100.0 / origin_size;
+  // std::cout << "compressed size " << totalsize << " uncompressed size " << 4 * N << std::endl;
+  // std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
   bool flag = true;
 
-  //std::vector<uint32_t> recover(data.size());
+  std::vector<uint32_t> recover(data.size());
   double totaltime = 0.0;
-  /*
-  std::cout<<"decompress all!"<<std::endl;
+  
+  // std::cout<<"decompress all!"<<std::endl;
    double start = getNow();
   for(int i=0;i<blocks;i++){
 
-      codec.decodeArray8(res, block_size, recover+i*block_size, i);
+      codec.decodeArray8(res, block_size, recover.data()+i*block_size, i);
 
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
@@ -113,22 +116,24 @@ int main(int argc, const char* argv[]) {
   }
       double end = getNow();
       totaltime += (end - start);
+  double da_ns = totaltime / data.size() * 1000000000;
 
-std::cout << "all decoding time per int: " << std::setprecision(8)
-     << totaltime / data.size() * 1000000000 << "ns" << std::endl;
-std::cout << "all decoding speed: " << std::setprecision(10)
-     << data.size()/(totaltime*1000) <<  std::endl;
-*/
-  std::cout << "random access decompress!" << std::endl;
+// std::cout << "all decoding time per int: " << std::setprecision(8)
+//      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
+// std::cout << "all decoding speed: " << std::setprecision(10)
+//      << data.size()/(totaltime*1000) <<  std::endl;
 
+  // std::cout << "random access decompress!" << std::endl;
+  std::vector<uint32_t> ra_pos;
+  for(int i=0;i<N;i++){
+    ra_pos.push_back(random(N));
+  }
   double randomaccesstime = 0.0;
-  double start = getNow();
+  start = getNow();
   uint32_t mark = 0;
   uint32_t* placeholder = NULL;
 
-  for (int i = 0;i < N;i++) {
-    int index = random(N);
-    // int index = i; 
+  for (auto index: ra_pos) {
 
 
     uint32_t tmpvalue = codec.randomdecodeArray8(res, index % block_size, placeholder, index / block_size);
@@ -146,13 +151,15 @@ std::cout << "all decoding speed: " << std::setprecision(10)
     }
 
   }
-  double end = getNow();
+  end = getNow();
   randomaccesstime += (end - start);
+  double ra_ns = randomaccesstime / N * 1000000000;
 
-  std::cout << "random decoding time per int: " << std::setprecision(8)
-    << randomaccesstime / data.size() * 1000000000 << " ns" << std::endl;
-  std::cout << "random decoding speed: " << std::setprecision(10)
-    << data.size() / (randomaccesstime * 1000) << std::endl;
+  std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<da_ns<<" "<<ra_ns<<std::endl;
+  // std::cout << "random decoding time per int: " << std::setprecision(8)
+  //   << randomaccesstime / data.size() * 1000000000 << " ns" << std::endl;
+  // std::cout << "random decoding speed: " << std::setprecision(10)
+  //   << data.size() / (randomaccesstime * 1000) << std::endl;
 
   codec.destroy();
   // free(&codec);

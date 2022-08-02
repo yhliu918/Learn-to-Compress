@@ -15,6 +15,7 @@
 #include "FOR_my.h"
 #include "combinedcodec.h"
 #include "piecewise.h"
+#include "piecewise_fiting.h"
 #include "piecewise_fix.h"
 #include "piecewise_cost.h"
 #include "piecewise_cost_float.h"
@@ -103,6 +104,7 @@ static inline CodecMap initializefactory() {
   map["delta_my"] = new delta_my();
   map["delta"] = new delta();
   map["piecewise"]= new piecewise();
+  map["piecewise_fiting"]= new piecewise_fiting();
   map["piecewise_cost"]= new piecewiseCost();
   map["piecewise_cost_float"]= new piecewiseCost_float();
   map["piecewise_cost_dp"]= new piecewiseDp();

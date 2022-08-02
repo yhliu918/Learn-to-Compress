@@ -1,0 +1,9 @@
+Elias-Fano,linear_200M_uint32.txt,1,23.9364,0,23.9364,8.82815,85.879
+Elias-Fano,normal_200M_uint32.txt,1,24.1458,0,24.1458,8.55075,70.5509
+Elias-Fano,books_200M_uint32.txt,1,23.938,0,23.938,8.33762,66.309
+Elias-Fano,fb/fb-289000.txt,1,36.3049,0,36.3049,9.46745,12.6675
+Elias-Fano,wf/wiki.txt,1,28.9077,0,28.9077,7.66718,7.29956
+Elias-Fano,wf/newman.txt,1,26.8164,0,26.8164,7.78493,7.28763
+Elias-Fano,unigram_freq_count.txt,1,53.153,0,53.153,7.93882,8.13624
+Elias-Fano,hu_freq.txt,1,14.1409,0,14.1409,7.70107,6.21867
+Elias-Fano,house_price.txt,1,42.1523,0,42.1523,8.33035,9.14097
