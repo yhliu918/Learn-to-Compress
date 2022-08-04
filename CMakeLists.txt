@@ -22,7 +22,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/fsst)
 # .c/cpp document
 aux_source_directory(./experiments SRC_LIST)
-add_library(lib ${SRC_LIST})
+add_library(leco ${SRC_LIST})
 #  .so/.a
 # make executable doc
 add_executable(fix_int experiments/fix_int.cpp)

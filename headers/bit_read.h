@@ -9,9 +9,9 @@
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
-#include <popcount.h>
+#include "popcount.h"
 #include <queue>
-#include <rank.h>
+#include "rank.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
