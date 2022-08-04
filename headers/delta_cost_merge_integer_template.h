@@ -598,7 +598,7 @@ namespace Codecset {
 
         }
 
-        uint32_t* decodeArray8(const size_t length, T* out, size_t nvalue) {
+        T* decodeArray8(const size_t length, T* out, size_t nvalue) {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index_total.push_back(length);

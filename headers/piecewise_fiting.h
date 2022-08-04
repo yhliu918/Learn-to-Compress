@@ -76,8 +76,8 @@ namespace Codecset {
 
             lr mylr;
             mylr.caltheta(indexes, keys, length);
-            float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double final_slope = mylr.theta1;
+            double theta0 = mylr.theta0;
 
             uint32_t final_max_error = 0;
             int* delta_final = new int[end_index - origin_index + 1];
@@ -242,8 +242,8 @@ namespace Codecset {
             uint32_t* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index.push_back(length);
-            float theta0;
-            float theta1;
+            double theta0;
+            double theta1;
             uint8_t maxerror;
             for (int i = 0;i < block_start_vec.size();i++) {
                 int segment_length = segment_index[i + 1] - segment_index[i];
@@ -300,8 +300,8 @@ namespace Codecset {
         uint8_t* this_block = block_start_vec[lower_bound(l, length)];
 
         uint8_t* tmpin = this_block;
-        float theta0;
-        float theta1;
+        double theta0;
+        double theta1;
         uint8_t maxerror;
         uint32_t start_ind;
         uint32_t tmp = 0;

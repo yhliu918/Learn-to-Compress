@@ -13,8 +13,9 @@ using namespace Codecset;
 
 // email: 46-123
 //uuid: 46-90
-int max_ascii = 122;
-int min_ascii = 97;
+// words: 97 - 122
+int max_ascii = 90;
+int min_ascii = 27;
 template <typename T>
 void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_ind, int block_length, int padding_length, char padding_char, std::vector<uint8_t*>& descriptor_of_each_block, std::string* common_prefix, int common_prefix_length, uint8_t encoding_type, uint64_t& totalsize_without_padding, uint64_t& totalsize_with_padding, uint64_t& totalsize) {
     Leco_string_subset<T> codec;
