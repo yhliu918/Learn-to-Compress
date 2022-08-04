@@ -71,6 +71,38 @@ namespace Codecset
             return out;
         }
 
+        T* decodeArray8(uint8_t* in, const size_t length, T* out, size_t nvalue) {
+            T* res = out;
+            uint8_t maxerror;
+            uint8_t* tmpin = in;
+            memcpy(&maxerror, tmpin, 1);
+            tmpin++;
+            if(maxerror>= sizeof(T)*8-1){
+                memcpy(out, tmpin, length*sizeof(uint32_t));
+                return out;
+            }
+            T base = 0;
+            memcpy(&base, tmpin, sizeof(base));
+            tmpin += sizeof(base);
+            T max = 0;
+            memcpy(&max, tmpin, sizeof(max));
+            tmpin += sizeof(max);
+
+            if (maxerror) {
+
+                read_all_bit_FOR<T>(tmpin, 0, length, maxerror, base, out);
+
+            }
+            else {
+                for (int i = 0;i < length;i++) {
+                    out[i] = base;
+                }
+            }
+
+            return out;
+        }
+
+
 
         T randomdecodeArray8(uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
         {

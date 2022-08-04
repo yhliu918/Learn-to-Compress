@@ -620,7 +620,7 @@ namespace Codecset {
 
         }
 
-        uint32_t* decodeArray8(const size_t length, T* out, size_t nvalue) {
+        T* decodeArray8(const size_t length, T* out, size_t nvalue) {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index_total.push_back(length);
@@ -658,7 +658,7 @@ namespace Codecset {
                 tmpin += sizeof(theta1);
                 if (maxerror) {
                     if (maxerror >= sizeof(T) * 8 - 1) {
-                        read_all_default(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
+                        // read_all_default(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
                     }
                     else {
                         read_all_bit_fix_round<T>(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);

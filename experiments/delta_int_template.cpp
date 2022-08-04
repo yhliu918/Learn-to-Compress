@@ -13,7 +13,7 @@
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
 
-typedef uint32_t leco_type;
+typedef uint64_t leco_type;
 
 int random(int m)
 {
@@ -106,7 +106,7 @@ int main(int argc, const char* argv[])
     double compressrate = (totalsize) * 100.0 / origin_size;
 
     bool flag = true;
-    std::vector<uint32_t> recover(data.size());
+    std::vector<leco_type> recover(data.size());
     double totaltime = 0.0;
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
