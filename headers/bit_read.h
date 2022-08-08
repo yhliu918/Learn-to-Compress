@@ -947,7 +947,7 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
 
 
 template <typename T>
-void read_all_bit_FOR(uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
+void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
 {
   int left = 0;
   uint128_t decode = 0;
@@ -981,7 +981,7 @@ void read_all_bit_FOR(uint8_t* in, int start_byte, int numbers, uint8_t l,T base
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
     }
-    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    const uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
     decode += ((uint128_t)tmp_64 << left);
     // decode = decode<<64 + tmp_64;
     start++;

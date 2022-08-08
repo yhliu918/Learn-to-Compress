@@ -6,6 +6,7 @@
 #include "codecs.h"
 #include "bit_write.h"
 #include "bit_read.h"
+#include "lr.h"
 #define INF 0x7f7fffff
 
 namespace Codecset
@@ -14,7 +15,7 @@ namespace Codecset
     class FOR_int
     {
     public:
-        uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
+        uint8_t *encodeArray8_int(const T *data, const size_t length, uint8_t *res, size_t nvalue)
         {
             uint8_t *out = res;
 
@@ -71,10 +72,10 @@ namespace Codecset
             return out;
         }
 
-        T* decodeArray8(uint8_t* in, const size_t length, T* out, size_t nvalue) {
+        T* decodeArray8(const uint8_t* in, const size_t length, T* out, size_t nvalue) {
             T* res = out;
             uint8_t maxerror;
-            uint8_t* tmpin = in;
+            const uint8_t* tmpin = in;
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
             if(maxerror>= sizeof(T)*8-1){
