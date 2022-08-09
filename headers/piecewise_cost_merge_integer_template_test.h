@@ -10,8 +10,10 @@
 #include "caltime.h"
 #include "lr.h"
 #define INF 0x7f7fffff
+#include "stx-btree/btree.h"
+#include "stx-btree/btree_map.h"
+#include "ALEX/alex.h"
 
-// not working yet
 namespace Codecset {
     template <typename T>
     class Leco_cost_merge_test
@@ -26,13 +28,13 @@ namespace Codecset {
         std::vector<uint32_t> segment_index_total;
         std::vector<uint32_t> segment_length_total;
 
-
         uint64_t total_byte_total = 0;
         uint64_t total_byte = 0;
         int overhead = 0;
         T* array;
         int block_num;
         int block_size;
+        int segment_index_total_idx = 0;
 
         //start_index + bit + theta0 + theta1 + numbers + delta
         void init(int blocks, int blocksize, uint64_t delta) {
@@ -41,6 +43,9 @@ namespace Codecset {
             overhead = delta; // add some punishing item
 
         }
+
+        // stx::btree_map<int, int> btree_total;
+        alex::Alex<int, int> alex_tree;
 
         uint32_t lower_bound(uint64_t v, uint32_t len, std::vector<uint32_t>& index)
         {
@@ -56,6 +61,32 @@ namespace Codecset {
             }
             return y;
 
+        }
+
+
+
+        int binarySearch2(int l, int r, int32_t x, std::vector<uint32_t>& a) {
+            int d = r - l;
+            int half = d >> 1;
+            while (half > 0) {
+                int m = l + half;
+                l = (a[m] <= x) ? m : l;
+                d -= half;
+                half = d >> 1;
+            }
+            return l;
+        }
+
+        int simdSearch(int l, int r, int32_t x,  std::vector<uint32_t>& a) {
+            __m256i reg2 = _mm256_set1_epi32(x);
+            for (int i = l; i < r; i += 8) {
+                __m256i reg1 = _mm256_load_si256((__m256i*) & a[i]);
+                __m256i cmp = _mm256_cmpeq_epi32(reg1, reg2);
+                unsigned bitmask = _mm256_movemask_epi8(cmp);
+                if (bitmask > 0)
+                    return i + (__builtin_ctz(bitmask) >> 2);
+            }
+            return -1;
         }
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
@@ -447,9 +478,21 @@ namespace Codecset {
             for (auto item : block_start_vec) {
                 block_start_vec_total.push_back(item);
             }
+            // std::cout<<segment_index.size()<<std::endl;
             for (auto item : segment_index) {
                 segment_index_total.push_back(item);
+                // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
+                // std::cout<<item<<" "<<segment_index_total_idx<<std::endl;
+                auto tmp = alex_tree.insert(item, segment_index_total_idx);
+                segment_index_total_idx++;
             }
+
+            if(nvalue == block_num - 1){
+                // auto tmp = btree_total.insert(std::make_pair(block_num * block_size, segment_index_total_idx));
+                // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
+                auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
+            }
+
             for (auto item : segment_length) {
                 segment_length_total.push_back(item);
             }
@@ -458,11 +501,6 @@ namespace Codecset {
             segment_index.clear();
             segment_length.clear();
             total_byte = 0;
-
-
-
-
-
 
             return res;
 
@@ -706,8 +744,24 @@ namespace Codecset {
 
         T randomdecodeArray8(uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
 
+
             uint32_t length = segment_index_total.size();
-            uint8_t* this_block = block_start_vec_total[lower_bound(to_find, length, segment_index_total)];
+
+            // use btree to find the segment
+            // auto it = btree_total.upper_bound(to_find);
+            // int segment_num = it.data();
+            // uint8_t* this_block = block_start_vec_total[segment_num-1];
+
+            // use ALEX 
+            auto it = alex_tree.upper_bound(to_find);
+            int segment_id = it.payload() - 1;
+
+            // normal binary search
+            // int segment_id = lower_bound(to_find, length, segment_index_total);
+            // int segment_id = binarySearch2(0, length-1, to_find, segment_index_total);
+
+
+            uint8_t* this_block = block_start_vec_total[segment_id];
 
             uint8_t* tmpin = this_block;
 

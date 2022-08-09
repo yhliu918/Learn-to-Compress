@@ -10,8 +10,8 @@
 #include "caltime.h"
 #include "lr.h"
 #define INF 0x7f7fffff
+#include "ALEX/alex.h"
 
-// not working yet
 namespace Codecset {
     template <typename T>
     class Leco_cost_merge_double
@@ -33,6 +33,7 @@ namespace Codecset {
         T* array;
         int block_num;
         int block_size;
+        int segment_index_total_idx = 0;
 
         //start_index + bit + theta0 + theta1 + numbers + delta
         void init(int blocks, int blocksize, uint64_t delta) {
@@ -42,6 +43,7 @@ namespace Codecset {
 
         }
 
+        alex::Alex<int, int> alex_tree;
         uint32_t lower_bound(uint64_t v, uint32_t len, std::vector<uint32_t>& index)
         {
             uint32_t m;
@@ -433,9 +435,17 @@ namespace Codecset {
             for (auto item : block_start_vec) {
                 block_start_vec_total.push_back(item);
             }
+
             for (auto item : segment_index) {
                 segment_index_total.push_back(item);
+                auto tmp = alex_tree.insert(item, segment_index_total_idx);
+                segment_index_total_idx++;
             }
+
+            if(nvalue == block_num - 1){
+                auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
+            }
+
             for (auto item : segment_length) {
                 segment_length_total.push_back(item);
             }
@@ -680,7 +690,12 @@ namespace Codecset {
         T randomdecodeArray8(uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
 
             uint32_t length = segment_index_total.size();
-            uint8_t* this_block = block_start_vec_total[lower_bound(to_find, length, segment_index_total)];
+
+            auto it = alex_tree.upper_bound(to_find);
+            int segment_id = it.payload() - 1;
+            uint8_t* this_block = block_start_vec_total[segment_id];
+            
+            // uint8_t* this_block = block_start_vec_total[lower_bound(to_find, length, segment_index_total)];
 
             uint8_t* tmpin = this_block;
 

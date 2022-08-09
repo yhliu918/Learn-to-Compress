@@ -99,8 +99,10 @@ namespace Codecset {
                     final_max_error = tmp_error;
                 }
             }
-            uint32_t delta_final_max_bit = bits_int_T<uint32_t>(final_max_error) + 1;
-
+            uint32_t delta_final_max_bit = 0;
+            if(final_max_error){
+                delta_final_max_bit= bits_int_T<uint32_t>(final_max_error) + 1;
+            }
             
             
             if (delta_final_max_bit>=32){
@@ -313,10 +315,11 @@ namespace Codecset {
             memcpy(&theta1, tmpin, 4);
             tmpin += 4;
             //std::cout<< "indexing "<<l<<std::endl;
-            if( maxerror==32){
-                tmp = read_bit_default(tmpin,maxerror, l - start_ind, theta1, theta0, maxerror);
-            } else{
+            if(maxerror){
                 tmp = read_bit_fix_float_T(tmpin, maxerror, l - start_ind, theta1, theta0, 0);
+            } 
+            else{
+                tmp = (theta0+theta1 * (double)(l - start_ind));
             }
             
             // tmp = read_bit(tmpin ,maxerror , l-start_ind,theta1,theta0,0);

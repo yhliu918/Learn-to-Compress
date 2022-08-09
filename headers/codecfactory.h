@@ -22,6 +22,7 @@
 #include "piecewise_cost_lookahead.h"
 #include "piecewise_cost_dp.h"
 #include "piecewise_fix_op.h"
+#include "piecewise_fix_op_lp.h"
 #include "piecewise_fix_op_minimize_maxerror.h"
 #include "piecewise_fix_op_minimize_maxerror_round.h"
 #include "piecewise_fix_op_round.h"
@@ -112,6 +113,7 @@ static inline CodecMap initializefactory() {
   map["piecewise_double"]= new piecewise_double();
   map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_fix_op"]= new piecewise_fix_op();
+  map["piecewise_fix_op_lp"]= new piecewise_fix_op_lp();
   map["piecewise_fix_op_max"]= new piecewise_fix_op_max();
   map["piecewise_fix_op_max_round"]= new piecewise_fix_op_max_round();
   map["piecewise_fix_op_round"]= new piecewise_fix_op_round();

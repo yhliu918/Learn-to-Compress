@@ -3,8 +3,8 @@ import sys
 
 datasets = ["linear_200M_uint32.txt","normal_200M_uint32.txt","books_200M_uint32.txt", "fb/fb-289000.txt", "wf/wiki.txt", "wf/newman.txt", "unigram_freq_count.txt", "hu_freq.txt", "house_price.txt", "movieid.txt"]
 # datasets = ["books_200M_uint32.txt", "fb/fb-289000.txt", "wf/wiki.txt", "wf/newman.txt", "unigram_freq_count.txt", "hu_freq.txt", "house_price.txt", "movieid.txt"]
-method = ["delta_int","leco_int"]
-# method = ["leco_int"]
+# method = ["delta_int","leco_int"]
+method = ["leco_int"]
 model_size = {
     "delta_int":4,
     "leco_int":8,
