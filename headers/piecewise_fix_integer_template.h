@@ -15,7 +15,7 @@ namespace Codecset
     class Leco_int
     {
     public:
-        uint8_t* encodeArray8_int(T* data, const size_t length, uint8_t* res, size_t nvalue)
+        uint8_t* encodeArray8_int(const T* data, const size_t length, uint8_t* res, size_t nvalue)
         {
             uint8_t* out = res;
             std::vector<double> indexes;
@@ -100,12 +100,12 @@ namespace Codecset
         }
 
 
-        T* decodeArray8(uint8_t *in, const size_t length, T* out, size_t nvalue) {
+        T* decodeArray8(const uint8_t *in, const size_t length, T* out, size_t nvalue) {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             double theta0;
             double theta1;
-            uint8_t* tmpin = in;
+            const uint8_t* tmpin = in;
 
             uint8_t maxerror = tmpin[0];
             tmpin++;
