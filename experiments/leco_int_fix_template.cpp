@@ -13,7 +13,7 @@
 #include "delta_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_test.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
@@ -80,7 +80,12 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    // std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data;
+    for(int i=0;i<1024*1024*15;i++)
+    {
+        data.push_back(i);
+    }
 
     int N = data.size();
 
@@ -143,6 +148,7 @@ int main(int argc, const char* argv[])
         {
             block_length = N - (blocks - 1) * block_size;
         }
+
         codec.decodeArray8(block_start_vec[i], block_length, recover.data() + i * block_size, i);
 
         for (int j = 0; j < block_length; j++)

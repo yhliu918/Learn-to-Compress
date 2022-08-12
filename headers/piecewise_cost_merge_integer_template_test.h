@@ -13,6 +13,7 @@
 #include "stx-btree/btree.h"
 #include "stx-btree/btree_map.h"
 #include "ALEX/alex.h"
+#include "art/art32.h"
 
 namespace Codecset {
     template <typename T>
@@ -27,6 +28,8 @@ namespace Codecset {
         std::vector<uint8_t*> block_start_vec_total;
         std::vector<uint32_t> segment_index_total;
         std::vector<uint32_t> segment_length_total;
+
+        std::vector<KeyValue<uint32_t>> art_build_vec;
 
         uint64_t total_byte_total = 0;
         uint64_t total_byte = 0;
@@ -45,7 +48,8 @@ namespace Codecset {
         }
 
         // stx::btree_map<int, int> btree_total;
-        alex::Alex<int, int> alex_tree;
+        // alex::Alex<int, int> alex_tree;
+        ART32 art;
 
         uint32_t lower_bound(uint64_t v, uint32_t len, std::vector<uint32_t>& index)
         {
@@ -481,16 +485,20 @@ namespace Codecset {
             // std::cout<<segment_index.size()<<std::endl;
             for (auto item : segment_index) {
                 segment_index_total.push_back(item);
-                // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
+                art_build_vec.push_back((KeyValue<uint32_t>){item, segment_index_total_idx});
                 // std::cout<<item<<" "<<segment_index_total_idx<<std::endl;
-                auto tmp = alex_tree.insert(item, segment_index_total_idx);
+                // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
+                // auto tmp = alex_tree.insert(item, segment_index_total_idx);
                 segment_index_total_idx++;
             }
 
             if(nvalue == block_num - 1){
                 // auto tmp = btree_total.insert(std::make_pair(block_num * block_size, segment_index_total_idx));
                 // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
-                auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
+                // auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
+                art_build_vec.push_back((KeyValue<uint32_t>){block_num * block_size, segment_index_total_idx});
+                // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
+                art.Build(art_build_vec);
             }
 
             for (auto item : segment_length) {
@@ -753,8 +761,16 @@ namespace Codecset {
             // uint8_t* this_block = block_start_vec_total[segment_num-1];
 
             // use ALEX 
-            auto it = alex_tree.upper_bound(to_find);
-            int segment_id = it.payload() - 1;
+            // auto it = alex_tree.upper_bound(to_find);
+            // int segment_id = it.payload() - 1;
+
+            // use ART
+            // s td::cout<<to_find<<std::endl;
+            int segment_id = art.upper_bound_new(to_find) - 1;
+            while(segment_index_total[segment_id] > to_find){
+                segment_id--;
+            }
+            // std::cout<<to_find<<" "<<segment_id<<std::endl;
 
             // normal binary search
             // int segment_id = lower_bound(to_find, length, segment_index_total);

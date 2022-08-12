@@ -69,6 +69,18 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             max_error = abs(tmp);
         }
     }
+
+    // int max_error =0;
+    // double pred = mylr.theta0;
+    // for(int i=0;i<(long long)length;i++){
+    //     int tmp = (long long) in[i] - (long long)(pred);
+    //     pred += mylr.theta1;
+    //     delta[i]=tmp;
+    //     if(abs(tmp)>max_error){
+    //         max_error = abs(tmp);
+    //     }
+    // }
+
     /*
     if(nvalue==0){
         std::cout<<std::setprecision(10)<<"Theta: "<<mylr.theta0<<" "<<mylr.theta1<<std::endl;
@@ -135,7 +147,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
             read_all_default(tmpin ,0,0, length, maxerror,theta1,theta0, out);
         }
         else{
-            
+            // read_all_bit_fix_add<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
             read_all_bit_fix<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
         }
     }

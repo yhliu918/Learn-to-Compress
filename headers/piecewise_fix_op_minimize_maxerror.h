@@ -59,6 +59,7 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
     double theta0 = mylr.theta0;
     float theta1 = mylr.theta1;
 
+    /*
     int max_error_delta = INT_MIN;
     int min_error_delta = INT_MAX;
     for(int i=0;i<(long long)length;i++){
@@ -80,6 +81,35 @@ uint8_t * encodeArray8(uint32_t *in, const size_t length,uint8_t *res, size_t nv
             max_error = abs(tmp);
         }
     }
+    */
+
+
+    int max_error_delta = INT_MIN;
+    int min_error_delta = INT_MAX;
+    double pred = theta0;
+    for(int i=0;i<(long long)length;i++){
+        int tmp = in[i] - (long long)(pred);
+        pred += theta1;
+        if(tmp>max_error_delta){
+            max_error_delta = tmp;
+        }
+        if(tmp<min_error_delta){
+            min_error_delta = tmp;
+        }
+    }
+    theta0+= (max_error_delta+min_error_delta)/2.0;
+    
+    int max_error = 0;
+    pred = theta0;
+    for(int i=0;i<(long long)length;i++){
+        int tmp = in[i] - (long long)(pred);
+        pred += theta1;
+        delta[i]=tmp;
+        if(abs(tmp)>max_error){
+            max_error = abs(tmp);
+        }
+    }
+
 
     int tmp_bit = 0;
     if(max_error){
@@ -131,7 +161,7 @@ uint32_t *decodeArray8( uint8_t *in, const size_t length, uint32_t *out, size_t 
         }
         else{
             
-            read_all_bit_fix<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
+            read_all_bit_fix_add<uint32_t>(tmpin ,0,0, length, maxerror,theta1,theta0, out);
         }
     }
     else{

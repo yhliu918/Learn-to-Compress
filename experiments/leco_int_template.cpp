@@ -13,7 +13,7 @@
 #include "delta_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_test.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
@@ -136,7 +136,7 @@ int main(int argc, const char* argv[])
     bool flag = true;
     std::vector<leco_type> recover(data.size());
     double totaltime = 0.0;
-    // std::cout << "decompress all!" << std::endl;
+    std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
     for (int j = 0; j < N; j++)
@@ -152,36 +152,38 @@ int main(int argc, const char* argv[])
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / data.size() * 1000000000;
+    recover.clear();
 
-    // std::cout << "random access decompress!" << std::endl;
-    std::vector<uint32_t> ra_pos;
+    std::cout << "random access decompress!" << std::endl;
+
     int repeat = 1;
+    std::vector<uint32_t> ra_pos;
     for(int i=0;i<N*repeat;i++){
         ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
     flag = true;
     double randomaccesstime = 0.0;
     start = getNow();
     leco_type mark = 0;
-    for (auto index: ra_pos)
+    for (auto index:ra_pos)
     {
-
         // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
 
         mark += tmpvalue;
 
-        if (data[index] != tmpvalue)
-        {
+        // if (data[index] != tmpvalue)
+        // {
 
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     flag = false;
+        //     std::cout << "something wrong! decompress failed" << std::endl;
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
     randomaccesstime += (end - start);

@@ -54,7 +54,8 @@ int main(int argc, const char* argv[])
     if (blocks * block_size < N)
     {
         blocks++;
-    } // handle with the last block, maybe < block_size
+    } 
+    // handle with the last block, maybe < block_size
     // std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
     int delta = 32;
     codec.init(blocks, block_size, delta);
