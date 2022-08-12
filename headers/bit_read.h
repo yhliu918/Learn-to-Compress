@@ -242,7 +242,7 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      int128_t decode_val = (long long)(start_key + (double)writeind * slope);
+      int64_t decode_val = (long long)(start_key + (double)writeind * slope);
       if (!sign)
       {
         decode_val = decode_val - tmpval;
