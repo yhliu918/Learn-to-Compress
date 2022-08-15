@@ -55,14 +55,25 @@ public:
     uint8_t key[4];
     swapBytes(lookup_key, key);
     std::vector<Node *> search_node;
-    Node* leaf = lookup_perfect_match(tree_, key, 4, 0, 4, search_node);
-    int depth = search_node.size();
-    Node* right_sib = *findChild_greater(search_node[depth - 1], key[depth]);
-    if (right_sib == nullNode) {
-      right_sib = *findChild_greater(search_node[depth - 2], key[depth-1]);
-      if(right_sib == nullNode){
-          right_sib = *findChild_greater(search_node[depth - 2], key[depth-1]);
+    bool flag = false;
+    unsigned depth = 0;
+    Node* leaf = lookup_perfect_match(tree_, key, 4, depth, 4, search_node, flag);
+    int length = search_node.size();
+    if(isLeaf(leaf)){
+      if(flag){
+        return getLeafValue(leaf);
       }
+      return getLeafValue(leaf)+1;
+    }
+    // if leaf and depth is right, need find the sibling node
+    // if leaf but depth is smaller, return this leaf
+
+    
+    Node* right_sib = *findChild_greater(search_node[length - 1], key[depth-1]);
+    while(right_sib==nullNode){
+      length--;
+      depth--;
+      right_sib = *findChild_greater(search_node[length - 1], key[depth-1]);
     }
     return getLeafValue(minimum(right_sib));
   }
@@ -250,8 +261,9 @@ private:
       unsigned bitfield = _mm_movemask_epi8(cmp) & ((1 << node->count) - 1);
       if (bitfield)
         return &node->child[ctz(bitfield)];
-      else
-        return &nullNode;
+      // for (unsigned i = 0; i < node->count; i++)
+      //   if (node->key[i] == keyByte) return &node->child[i];
+      return &nullNode;
     }
     case NodeType48: {
       Node48* node = static_cast<Node48*>(n);
@@ -288,16 +300,23 @@ private:
     case NodeType16: {
       Node16* node = static_cast<Node16*>(n);
       for (unsigned i = 0; i < node->count; i++)
-        if (node->key[i] > keyByte) return &node->child[i];
+        if (flipSign(node->key[i]) > keyByte) return &node->child[i];
       return &nullNode;
     }
     case NodeType48: {
       Node48* node = static_cast<Node48*>(n);
-      if (node->childIndex[keyByte] != emptyMarker) {
-        int tmp = node->childIndex[keyByte] + 1;
-        if (tmp < 48)
-          return &node->child[tmp];
+      if(keyByte <255){
+         keyByte++;
       }
+      else{
+        return &nullNode;
+      }
+      while(node->childIndex[keyByte] == emptyMarker && keyByte<255){
+        keyByte++;
+      }
+      int tmp = node->childIndex[keyByte];
+      if (tmp < 48)
+          return &node->child[tmp];
       return &nullNode;
     }
     case NodeType256: {
@@ -306,7 +325,10 @@ private:
       if(keyByte <255){
          keyByte++;
       }
-      while (keyByte < 256 && (size_t)(node->child[keyByte]) < 0x1) {
+      else{
+        return &nullNode;
+      }
+      while (keyByte < 255 && (size_t)(node->child[keyByte]) < 0x1) {
         keyByte++;
       }
       // if ((size_t)(node->child[keyByte]) >= 0xffff) {
@@ -458,32 +480,40 @@ private:
   }
 
 
-  Node* lookup_perfect_match(Node* node, uint8_t key[], unsigned keyLength, unsigned depth,
-    unsigned maxKeyLength, std::vector<Node*>& path) {
+  Node* lookup_perfect_match(Node* node, uint8_t key[], unsigned keyLength, unsigned& depth,
+    unsigned maxKeyLength, std::vector<Node*>& path, bool& flag) {
     // return the node which all prefix are matched
 
     bool skippedPrefix = false;  // Did we optimistically skip some prefix without checking it?
-    while (node != NULL) {
+    flag = false;
+    while (node != nullNode) {
       path.push_back(node);
       if (isLeaf(node)) {
         if (!skippedPrefix && depth == keyLength){
           path.pop_back();
+          // flag = true;
           return node;
         }  // No check required
           
 
         if (depth != keyLength) {
+          uint8_t leafKey[maxKeyLength];
+          loadKey(getLeafValue(node), leafKey);
+          for (unsigned i = (skippedPrefix ? 0 : depth); i < keyLength; i++){
+            if (leafKey[i] > key[i]){
+              path.pop_back();
+              flag = true;
+              return node;
+            }
+            if (leafKey[i] < key[i]){
+              path.pop_back();
+              return node;
+            }
+          }
+            
           // Check leaf
-        //  uint8_t leafKey[maxKeyLength];
-        //   loadKey(getLeafValue(node), leafKey);
-        //   for (unsigned i = (skippedPrefix ? 0 : depth); i < keyLength; i++){
-        //     if (leafKey[i] != key[i]){
-        //       path.pop_back();
-        //       return path[depth - 1];
-        //     } 
-        //   }
             path.pop_back();
-            return path[depth - 1];
+            return node;
         }
         
       }
@@ -504,8 +534,10 @@ private:
       node = *findChild(node, key[depth]);
       depth++;
     }
-    
-    return path[depth];
+
+    // path.pop_back();
+    return path[path.size()-1];
+
     
   }
 

@@ -173,17 +173,17 @@ int main(int argc, const char* argv[])
 
         mark += tmpvalue;
 
-        // if (data[index] != tmpvalue)
-        // {
+        if (data[index] != tmpvalue)
+        {
 
-        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-        //     flag = false;
-        //     std::cout << "something wrong! decompress failed" << std::endl;
-        // }
-        // if (!flag)
-        // {
-        //     break;
-        // }
+            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+            flag = false;
+            std::cout << "something wrong! decompress failed" << std::endl;
+        }
+        if (!flag)
+        {
+            break;
+        }
     }
     end = getNow();
     randomaccesstime += (end - start);

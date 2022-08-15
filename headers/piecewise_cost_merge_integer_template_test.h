@@ -486,7 +486,7 @@ namespace Codecset {
             for (auto item : segment_index) {
                 segment_index_total.push_back(item);
                 art_build_vec.push_back((KeyValue<uint32_t>){item, segment_index_total_idx});
-                // std::cout<<item<<" "<<segment_index_total_idx<<std::endl;
+                // std::cout<<item<<std::endl;
                 // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
                 // auto tmp = alex_tree.insert(item, segment_index_total_idx);
                 segment_index_total_idx++;
@@ -767,9 +767,7 @@ namespace Codecset {
             // use ART
             // s td::cout<<to_find<<std::endl;
             int segment_id = art.upper_bound_new(to_find) - 1;
-            while(segment_index_total[segment_id] > to_find){
-                segment_id--;
-            }
+
             // std::cout<<to_find<<" "<<segment_id<<std::endl;
 
             // normal binary search
