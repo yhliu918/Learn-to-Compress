@@ -51,34 +51,8 @@ public:
     return unique;
   }
 
-  uint64_t upper_bound_new(uint32_t lookup_key){
-    uint8_t key[4];
-    swapBytes(lookup_key, key);
-    std::vector<Node *> search_node;
-    bool flag = false;
-    unsigned depth = 0;
-    Node* leaf = lookup_perfect_match(tree_, key, 4, depth, 4, search_node, flag);
-    int length = search_node.size();
-    if(isLeaf(leaf)){
-      if(flag){
-        return getLeafValue(leaf);
-      }
-      return getLeafValue(leaf)+1;
-    }
-    // if leaf and depth is right, need find the sibling node
-    // if leaf but depth is smaller, return this leaf
 
-    
-    Node* right_sib = *findChild_greater(search_node[length - 1], key[depth-1]);
-    while(right_sib==nullNode){
-      length--;
-      depth--;
-      right_sib = *findChild_greater(search_node[length - 1], key[depth-1]);
-    }
-    return getLeafValue(minimum(right_sib));
-  }
 
-    
 private:
   static uint64_t allocated_byte_count;  // track bytes allocated
 
@@ -98,7 +72,7 @@ private:
   // header, if the path is longer it is loaded from the database on
   // demand
   static const unsigned maxPrefixLength = 4;
-
+public:
   // Shared header of all inner nodes
   struct Node {
     // length of the compressed path (prefix)
@@ -135,7 +109,7 @@ private:
       }
     }
   };
-
+private:
   // Node with up to 4 children
   struct Node4 : Node {
     uint8_t key[4];
@@ -194,6 +168,7 @@ private:
     return reinterpret_cast<uintptr_t>(node) >> 1;
   }
 
+
   inline bool isLeaf(Node* node) {
     // Is the node a leaf?
     return reinterpret_cast<uintptr_t>(node) & 1;
@@ -217,7 +192,7 @@ private:
   }
 
   // This address is used to communicate that search failed
-  Node* nullNode = NULL;
+  Node* nullNode = NULL; // make as static const?
 
 
 
@@ -244,17 +219,17 @@ private:
 #endif
   }
 
-  Node** findChild(Node* n, uint8_t keyByte) {
+  Node** findChild( Node* n, uint8_t keyByte) {
     // Find the next child for the keyByte
     switch (n->type) {
     case NodeType4: {
-      Node4* node = static_cast<Node4*>(n);
+      auto* node = static_cast<Node4*>(n);
       for (unsigned i = 0; i < node->count; i++)
         if (node->key[i] == keyByte) return &node->child[i];
       return &nullNode;
     }
     case NodeType16: {
-      Node16* node = static_cast<Node16*>(n);
+      auto* node = static_cast<Node16*>(n);
       __m128i cmp = _mm_cmpeq_epi8(
         _mm_set1_epi8(flipSign(keyByte)),
         _mm_loadu_si128(reinterpret_cast<__m128i*>(node->key)));
@@ -266,7 +241,7 @@ private:
       return &nullNode;
     }
     case NodeType48: {
-      Node48* node = static_cast<Node48*>(n);
+      auto* node = static_cast<Node48*>(n);
       if (node->childIndex[keyByte] != emptyMarker)
         return &node->child[node->childIndex[keyByte]];
       else
@@ -281,11 +256,10 @@ private:
       //   return &(node->child[keyByte]);
       // }
       return  &(node->child[keyByte]);
-
-
     }
     }
-    throw;  // Unreachable
+    __builtin_unreachable(); // Is it OK???
+    throw; // Unreachable
   }
 
   Node** findChild_greater(Node* n, uint8_t keyByte) {
@@ -299,6 +273,18 @@ private:
     }
     case NodeType16: {
       Node16* node = static_cast<Node16*>(n);
+      // __m128i buffer;
+      // memcpy( &buffer, node->key, 16);
+      // // xor with 0x80 to flip the sign bit
+      // buffer = _mm_xor_si128(buffer, _mm_set1_epi8(0x80));
+      // // compare with the keyByte
+      // __m128i cmp = _mm_cmpgt_epi8(
+      //   buffer,
+      //   _mm_set1_epi8(keyByte));
+
+      // unsigned bitfield = _mm_movemask_epi8(cmp) & ((1 << node->count) - 1);
+      // if (bitfield)
+      //   return &node->child[ctz(bitfield)];
       for (unsigned i = 0; i < node->count; i++)
         if (flipSign(node->key[i]) > keyByte) return &node->child[i];
       return &nullNode;
@@ -321,7 +307,7 @@ private:
     }
     case NodeType256: {
       Node256* node = static_cast<Node256*>(n);
-      
+
       if(keyByte <255){
          keyByte++;
       }
@@ -486,59 +472,67 @@ private:
 
     bool skippedPrefix = false;  // Did we optimistically skip some prefix without checking it?
     flag = false;
-    while (node != nullNode) {
-      path.push_back(node);
+    while (node/* != nullNode*/) {
       if (isLeaf(node)) {
-        if (!skippedPrefix && depth == keyLength){
-          path.pop_back();
-          // flag = true;
+        if (depth == keyLength && !skippedPrefix) {
           return node;
-        }  // No check required
-          
+        } // No check required
 
         if (depth != keyLength) {
           uint8_t leafKey[maxKeyLength];
           loadKey(getLeafValue(node), leafKey);
           for (unsigned i = (skippedPrefix ? 0 : depth); i < keyLength; i++){
             if (leafKey[i] > key[i]){
-              path.pop_back();
               flag = true;
               return node;
             }
             if (leafKey[i] < key[i]){
-              path.pop_back();
               return node;
             }
           }
-            
+
+          // const uint32_t leafKey = (*data_)[getLeafValue(node)].key;
+          // int cmp = memcmp(&leafKey, key, maxKeyLength);
+          // if (cmp > 0) {
+          //   path.pop_back();
+          //   flag = true;
+          //   return node;
+          // }
+          // if (cmp < 0) {
+          //   path.pop_back();
+          //   return node;
+          // }
+
           // Check leaf
-            path.pop_back();
+            // path.pop_back();
             return node;
         }
-        
-      }
 
+      }
+      // else not leaf, no return
       if (node->prefixLength) {
         if (node->prefixLength < maxPrefixLength) {
           for (unsigned pos = 0; pos < node->prefixLength; pos++)
             if (key[depth + pos] != node->prefix[pos]){
-              path.pop_back();
               return path[depth - 1];
-            } 
+            }
         }
         else
           skippedPrefix = true;
         depth += node->prefixLength;
       }
 
+      path.emplace_back(node);
       node = *findChild(node, key[depth]);
+      __builtin_prefetch(node,0,3);// addr, write?1:0, temporal locality?0~3
       depth++;
+      
     }
 
-    // path.pop_back();
+
     return path[path.size()-1];
 
-    
+
   }
 
 
@@ -962,7 +956,39 @@ private:
   }
 
   Node* tree_ = NULL;
-  const std::vector<KeyValue<uint32_t>>* data_;
+  const std::vector<KeyValue<uint32_t>> *data_;
+public:
+  uint64_t upper_bound_new(uint32_t lookup_key,
+                           std::vector<Node*>& search_node) {
+    uint8_t key[4];
+
+    swapBytes(lookup_key, key);
+    // std::vector<Node *> search_node;
+    // search_node.reserve(4);
+    search_node.resize(4);
+    bool flag = false;
+    unsigned depth = 0;
+    Node *leaf =
+        lookup_perfect_match(tree_, key, 4, depth, 4, search_node, flag);
+    int length = search_node.size();
+    if (isLeaf(leaf)) {
+      if (flag) {
+        return getLeafValue(leaf);
+      }
+      return getLeafValue(leaf) + 1;
+    }
+    // if leaf and depth is right, need find the sibling node
+    // if leaf but depth is smaller, return this leaf
+
+    Node *right_sib =
+        *findChild_greater(search_node[length - 1], key[depth - 1]);
+    while (right_sib == nullNode) {
+      length--;
+      depth--;
+      right_sib = *findChild_greater(search_node[length - 1], key[depth - 1]);
+    }
+    return getLeafValue(minimum(right_sib));
+  }
 };
 
 uint64_t ART32::allocated_byte_count;

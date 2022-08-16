@@ -30,6 +30,9 @@ namespace Codecset {
         std::vector<uint32_t> segment_length_total;
 
         std::vector<KeyValue<uint32_t>> art_build_vec;
+        std::vector<ART32::Node *> search_node;
+        
+
 
         uint64_t total_byte_total = 0;
         uint64_t total_byte = 0;
@@ -749,29 +752,35 @@ namespace Codecset {
             return out;
         }
 
+        int get_segment_id(int to_find) {
+            int segment_id = art.upper_bound_new(to_find, search_node) - 1;
+            // int segment_id = alex_tree.upper_bound(to_find).payload() -1;
+            __builtin_prefetch(block_start_vec_total.data()+segment_id, 0, 3);
+            return segment_id;
+        }
+        T randomdecodeArray8(int segment_id, uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
 
-        T randomdecodeArray8(uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
 
-
-            uint32_t length = segment_index_total.size();
+            // uint32_t length = segment_index_total.size();
 
             // use btree to find the segment
             // auto it = btree_total.upper_bound(to_find);
             // int segment_num = it.data();
             // uint8_t* this_block = block_start_vec_total[segment_num-1];
 
-            // use ALEX 
+            // use ALEX
             // auto it = alex_tree.upper_bound(to_find);
-            // int segment_id = it.payload() - 1;
+            //  segment_id = it.payload() - 1;
 
             // use ART
             // s td::cout<<to_find<<std::endl;
-            int segment_id = art.upper_bound_new(to_find) - 1;
+
+            // int segment_id = art.upper_bound_new(to_find, search_node) - 1;
 
             // std::cout<<to_find<<" "<<segment_id<<std::endl;
 
             // normal binary search
-            // int segment_id = lower_bound(to_find, length, segment_index_total);
+            // segment_id = lower_bound(to_find, length, segment_index_total);
             // int segment_id = binarySearch2(0, length-1, to_find, segment_index_total);
 
 
