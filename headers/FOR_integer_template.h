@@ -105,15 +105,15 @@ namespace Codecset
 
 
 
-        T randomdecodeArray8(uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
+        T randomdecodeArray8(const uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
         {
             
-            uint8_t *tmpin = in;
+            const uint8_t *tmpin = in;
             uint8_t maxbits;
             memcpy(&maxbits, tmpin, sizeof(uint8_t));
             tmpin += sizeof(uint8_t);
             if(maxbits==sizeof(T)*8){
-                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
+                T tmp_val = reinterpret_cast<const T *>(tmpin)[to_find];
                 return tmp_val;
             }
 
