@@ -18,6 +18,7 @@ namespace Codecset
         using IntegerCODEC::init;
         using IntegerCODEC::randomdecodeArray;
         using IntegerCODEC::randomdecodeArray8;
+        using IntegerCODEC::summation;
 
         int block_num;
         int block_size;

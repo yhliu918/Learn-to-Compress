@@ -22,6 +22,7 @@ namespace Codecset {
         using IntegerCODEC::decodeArray8;
         using IntegerCODEC::randomdecodeArray8;
         using IntegerCODEC::init;
+        using IntegerCODEC::summation;
 
         std::vector<uint8_t*> block_start_vec;
         std::vector<uint32_t> segment_index;

@@ -24,6 +24,7 @@ public:
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
   using IntegerCODEC::init;
+    using IntegerCODEC::summation;
 
 
   int block_num;
@@ -203,6 +204,9 @@ uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
     return (uint64_t)sum;
 }
 */
+uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+            return 0;
+        }
 
 uint32_t* encodeArray( uint32_t *in, const size_t length, uint32_t *out,
                    size_t nvalue) {

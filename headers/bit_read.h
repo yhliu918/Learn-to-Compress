@@ -238,7 +238,7 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
   {
     while (left >= l)
     {
-      int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
@@ -260,11 +260,9 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
       {
         decode = 0;
       }
-      // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
     }
     uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
     decode += ((uint128_t)tmp_64 << left);
-    // decode = decode<<64 + tmp_64;
     start++;
     left += sizeof(uint64_t) * 8;
   }
@@ -293,15 +291,11 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
   {
     while (left >= l)
     {
-      int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      int64_t decode_val = pred;
-      pred += slope;
-
-     
-      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
+      int64_t decode_val = (long long)pred;
       if (!sign)
       {
         decode_val = decode_val - tmpval;
@@ -310,6 +304,7 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
       {
         decode_val = decode_val + tmpval;
       }
+      pred += slope;
 
       *res = (T)decode_val;
       res++;
@@ -319,11 +314,9 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
       {
         decode = 0;
       }
-      // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
     }
     uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
     decode += ((uint128_t)tmp_64 << left);
-    // decode = decode<<64 + tmp_64;
     start++;
     left += sizeof(uint64_t) * 8;
   }
@@ -434,6 +427,58 @@ void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int nu
   }
 }
 
+template <typename T>
+int64_t sum_all_deltas(uint8_t* in,  int numbers, int l)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = 0;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+  int writeind = 0;
+  int64_t summation = 0;
+  while (start <= end)
+  {
+    while (left >= l)
+    {
+      
+      int128_t tmp = decode & (((T)1 << l) - 1);
+      bool sign = (tmp >> (l - 1)) & 1;
+      uint32_t tmpval = (tmp & (((int32_t)1 << (uint8_t)(l - 1)) - 1));
+      decode = (decode >> l);
+      if (!sign)
+      {
+        summation = summation - tmpval;
+        // tmpval = -tmpval;
+        // summation -= tmpval;
+      }
+      else{
+        summation = summation + tmpval;
+      }
+      writeind++;
+      if(writeind>=numbers){return summation;}
+      //  summation += tmpval;
+      //  std::cout<<"tmpval "<<tmpval<<"  summation "<<summation<<std::endl;
+      
+
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+  return summation;
+}
 
 
 
@@ -797,10 +842,13 @@ uint32_t read_bit_fix_T(uint8_t* in, int l, int to_find, double slope, double st
   {
     value = -value;
   }
-  uint32_t out = value + (long long)(start_key + (double)to_find * slope);
+  double pred = start_key + to_find * slope;
+  uint32_t out = value + (long long)pred;
+  // uint32_t out = value + (long long)(start_key + (double)to_find * slope);
   return out;
 
 }
+
 template <typename T>
 T read_bit_fix_int(uint8_t* in, uint8_t l, int to_find, double slope, double start_key)
 {

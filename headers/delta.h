@@ -18,6 +18,7 @@ namespace Codecset
         using IntegerCODEC::init;
         using IntegerCODEC::randomdecodeArray;
         using IntegerCODEC::randomdecodeArray8;
+        using IntegerCODEC::summation;
 
         int block_num;
         int block_size;
@@ -183,6 +184,9 @@ namespace Codecset
         }
         void destroy()
         {
+        }
+        uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+            return 0;
         }
         std::string name() const
         {

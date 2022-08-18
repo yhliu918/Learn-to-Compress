@@ -30,6 +30,7 @@ namespace Codecset {
         std::vector<uint32_t> segment_length_total;
 
         std::vector<KeyValue<uint32_t>> art_build_vec;
+        std::vector<std::pair<int, int>> alex_build_vec;
         std::vector<ART32::Node *> search_node;
         
 
@@ -51,7 +52,7 @@ namespace Codecset {
         }
 
         // stx::btree_map<int, int> btree_total;
-        // alex::Alex<int, int> alex_tree;
+        alex::Alex<int, int> alex_tree;
         ART32 art;
 
         uint32_t lower_bound(uint64_t v, uint32_t len, std::vector<uint32_t>& index)
@@ -492,6 +493,7 @@ namespace Codecset {
                 // std::cout<<item<<std::endl;
                 // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
                 // auto tmp = alex_tree.insert(item, segment_index_total_idx);
+                alex_build_vec.push_back(std::make_pair(item, segment_index_total_idx));
                 segment_index_total_idx++;
             }
 
@@ -500,8 +502,9 @@ namespace Codecset {
                 // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
                 // auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
                 art_build_vec.push_back((KeyValue<uint32_t>){block_num * block_size, segment_index_total_idx});
+                alex_build_vec.push_back(std::make_pair( block_num * block_size, segment_index_total_idx));
                 // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
-                art.Build(art_build_vec);
+                // art.Build(art_build_vec);
             }
 
             for (auto item : segment_length) {
@@ -753,8 +756,8 @@ namespace Codecset {
         }
 
         int get_segment_id(int to_find) {
-            int segment_id = art.upper_bound_new(to_find, search_node) - 1;
-            // int segment_id = alex_tree.upper_bound(to_find).payload() -1;
+            // int segment_id = art.upper_bound_new(to_find, search_node) - 1;
+            int segment_id = alex_tree.upper_bound(to_find).payload() -1;
             __builtin_prefetch(block_start_vec_total.data()+segment_id, 0, 3);
             return segment_id;
         }

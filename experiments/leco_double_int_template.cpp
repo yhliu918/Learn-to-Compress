@@ -13,7 +13,7 @@
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
@@ -126,38 +126,41 @@ int main(int argc, const char* argv[])
     double da_ns = totaltime / N * 1000000000;
 
     // std::cout << "random access decompress!" << std::endl;
-    std::vector<uint32_t> ra_pos;
     int repeat = 1;
+    std::vector<uint32_t> ra_pos;
+    ra_pos.reserve(N*repeat);
     for(int i=0;i<N*repeat;i++){
         ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
     flag = true;
     double randomaccesstime = 0.0;
+    codec.search_node.reserve(8);
     start = getNow();
     leco_type mark = 0;
-    for (auto index: ra_pos)
+    int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
+
+    for (int i=0;i<ra_pos.size();i++)
     {
+        auto index=ra_pos[i];
+        if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
 
         // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
-        leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
-
+        leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
         mark += tmpvalue;
-
-        if (data[index] != tmpvalue)
-        {
-
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        segment_id=next_segment_id;
+        // if (data[index] != tmpvalue)
+        // {
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     std::cout << "something wrong! decompress failed" << std::endl;
+        //     flag = false;
+        //     break;
+        // }
     }
+    
     end = getNow();
     randomaccesstime += (end - start);
-
+    std::cout<< mark << std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 
     

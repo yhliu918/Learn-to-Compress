@@ -11,7 +11,7 @@
 #include "lr.h"
 #define INF 0x7f7fffff
 #include "ALEX/alex.h"
-
+#include "art/art32.h"
 namespace Codecset {
     template <typename T>
     class Leco_cost_merge_double
@@ -26,6 +26,9 @@ namespace Codecset {
         std::vector<uint32_t> segment_index_total;
         std::vector<uint32_t> segment_length_total;
 
+        std::vector<KeyValue<uint32_t>> art_build_vec;
+        std::vector<ART32::Node *> search_node;
+        ART32 art;
 
         uint64_t total_byte_total = 0;
         uint64_t total_byte = 0;
@@ -435,15 +438,14 @@ namespace Codecset {
             for (auto item : block_start_vec) {
                 block_start_vec_total.push_back(item);
             }
-
             for (auto item : segment_index) {
                 segment_index_total.push_back(item);
-                auto tmp = alex_tree.insert(item, segment_index_total_idx);
+                art_build_vec.push_back((KeyValue<uint32_t>){item, segment_index_total_idx});
                 segment_index_total_idx++;
             }
-
             if(nvalue == block_num - 1){
-                auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
+                art_build_vec.push_back((KeyValue<uint32_t>){block_num * block_size, segment_index_total_idx});
+                art.Build(art_build_vec);
             }
 
             for (auto item : segment_length) {
@@ -684,17 +686,22 @@ namespace Codecset {
             return out;
         }
 
+        int get_segment_id(int to_find) {
+            int segment_id = art.upper_bound_new(to_find, search_node) - 1;
+            // int segment_id = alex_tree.upper_bound(to_find).payload() -1;
+            __builtin_prefetch(block_start_vec_total.data()+segment_id, 0, 3);
+            return segment_id;
+        }
 
 
+        T randomdecodeArray8(int segment_id, uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
 
-        T randomdecodeArray8(uint8_t* in, int to_find, uint32_t* out, size_t nvalue) {
+            // uint32_t length = segment_index_total.size();
 
-            uint32_t length = segment_index_total.size();
-
-            auto it = alex_tree.upper_bound(to_find);
-            int segment_id = it.payload() - 1;
+            // auto it = alex_tree.upper_bound(to_find);
+            // int segment_id = it.payload() - 1;
             uint8_t* this_block = block_start_vec_total[segment_id];
-            
+
             // uint8_t* this_block = block_start_vec_total[lower_bound(to_find, length, segment_index_total)];
 
             uint8_t* tmpin = this_block;
