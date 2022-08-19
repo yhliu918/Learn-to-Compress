@@ -1020,7 +1020,7 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
     while (left >= l)
     {
       
-      int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
