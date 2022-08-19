@@ -899,7 +899,7 @@ T read_bit_fix_int_wo_round(uint8_t* in, uint8_t l, int to_find, double slope, d
 
   bool sign = (decode >> (l - 1)) & 1;
   T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
-  int128_t out = (int128_t)(start_key + (double)to_find * slope);
+  int64_t out = (int128_t)(start_key + (double)to_find * slope);
   if (!sign)
   {
     out = out - value;

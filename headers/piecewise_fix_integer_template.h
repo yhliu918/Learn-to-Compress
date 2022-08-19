@@ -15,6 +15,14 @@ namespace Codecset
     class Leco_int
     {
     public:
+        std::vector<std::pair<int,int>> mul_add_diff_set;
+        int blocks;
+        int block_size;
+        
+        void init(int block, int block_s){
+            blocks = block;
+            block_size = block_s;
+        }
         uint8_t* encodeArray8_int(T* data, const size_t length, uint8_t* res, size_t nvalue)
         {
             uint8_t* out = res;
@@ -42,7 +50,6 @@ namespace Codecset
             std::vector<T> delta;
             std::vector<bool> signvec;
             T max_error = 0;
-
             for (auto i = 0; i < length; i++)
             {
                 T tmp_val;
@@ -65,7 +72,39 @@ namespace Codecset
                 }
             }
 
+            // double pred = theta0;
+            // T max_error = 0;
+            // for (auto i = 0; i < length; i++)
+            // {
+            //     T pred_mul = (theta0 + theta1 * (double)i);
+            //     T pred_add = pred;
+            //     if(pred_mul> pred_add){
+            //         mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,pred_mul - pred_add));
+            //     }
+            //     if(pred_mul< pred_add){
+            //         mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,-(int)(pred_add - pred_mul)));
+            //     }
+            //     pred +=theta1;
 
+            //     T tmp_val;
+            //     if (data[i] > pred_mul)
+            //     {
+            //         tmp_val = data[i] - pred_mul;
+            //         signvec.emplace_back(true); // means positive
+            //     }
+            //     else
+            //     {
+            //         tmp_val = pred_mul - data[i];
+            //         signvec.emplace_back(false); // means negative
+            //     }
+
+            //     delta.emplace_back(tmp_val);
+
+            //     if (tmp_val > max_error)
+            //     {
+            //         max_error = tmp_val;
+            //     }
+            // }
 
             uint8_t max_bit = 0;
             if (max_error)
@@ -138,6 +177,7 @@ namespace Codecset
                     // read_all_default(tmpin, 0, 0, length, maxerror, theta1, theta0, res);
                 }
                 else {
+                    // read_all_bit_fix_add<T>(tmpin, 0, 0, length, maxerror, theta1, theta0, res);
                     read_all_bit_fix<T>(tmpin, 0, 0, length, maxerror, theta1, theta0, res);
                 }
             }
@@ -145,6 +185,11 @@ namespace Codecset
                 for (int j = 0;j < length;j++) {
                     res[j] = (long long)(theta0 + theta1 * (double)j);
                 }
+                // double pred = theta0;
+                // for (int i = 0;i < length;i++) {
+                //     res[i] = (long long)pred;
+                //     pred += theta1;
+                // }
             }
 
             return out;

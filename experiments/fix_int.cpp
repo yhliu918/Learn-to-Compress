@@ -117,20 +117,20 @@ int main(int argc, const char *argv[])
         {
             recover[index] -= 1;
         }
-        for (int j = 0; j < N; j++)
-        {
-            if (data[j ] != recover[j ])
-            {
-                std::cout<< " num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-                std::cout << "something wrong! decompress failed" << std::endl;
-                flag = false;
-                break;
-            }
-        }
-        if (!flag)
-        {
-            break;
-        }
+        // for (int j = 0; j < N; j++)
+        // {
+        //     if (data[j ] != recover[j ])
+        //     {
+        //         std::cout<< " num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+        //         std::cout << "something wrong! decompress failed" << std::endl;
+        //         flag = false;
+        //         break;
+        //     }
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
 
@@ -155,20 +155,22 @@ int main(int argc, const char *argv[])
         uint32_t tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, buffer.data(), N);
         mark += tmpvalue;
 
-        if (data[index] != tmpvalue)
-        {
+        // if (data[index] != tmpvalue)
+        // {
 
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     flag = false;
+        //     std::cout << "something wrong! decompress failed" << std::endl;
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
     randomaccesstime += (end - start);
+    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/fix_log", std::ios::app);
+    outfile<<mark<<std::endl;
 
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 

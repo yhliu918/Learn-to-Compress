@@ -14,6 +14,14 @@ namespace Codecset
     class FOR_int
     {
     public:
+        std::vector<std::pair<int,int>> mul_add_diff_set;
+        int blocks;
+        int block_size;
+        
+        void init(int block, int block_s){
+            blocks = block;
+            block_size = block_s;
+        }
         uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
         {
             uint8_t *out = res;
