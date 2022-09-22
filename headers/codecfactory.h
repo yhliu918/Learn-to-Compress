@@ -44,7 +44,6 @@
 #include "variablebyte.h"
 #include "snappy.h"
 #include "delta_my.h"
-#include "delta.h"
 #include "piecewise_fix_delta.h"
 
 

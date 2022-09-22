@@ -238,11 +238,13 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
   {
     while (left >= l)
     {
+      // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)(start_key + (double)writeind * slope);
+      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
       if (!sign)
       {
         decode_val = decode_val - tmpval;
@@ -268,6 +270,58 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
   }
 }
 
+
+template <typename T>
+void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  T* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  while (start <= end)
+  {
+    while (left >= l)
+    {
+      // int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
+      bool sign = (tmp >> (l - 1)) & 1;
+      T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
+      decode = (decode >> l);
+      uint64_t decode_val = (start_key + (double)writeind * slope);
+      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
+      if (!sign)
+      {
+        decode_val = decode_val - tmpval;
+      }
+      else
+      {
+        decode_val = decode_val + tmpval;
+      }
+
+      *res = (T)decode_val;
+      res++;
+      writeind++;
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+}
 
 
 template <typename T>
@@ -395,11 +449,11 @@ void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int nu
   {
     while (left >= l)
     {
-      int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      int128_t decode_val = (long long)round(start_key + (double)writeind * slope);
+      uint64_t decode_val = round(start_key + (double)writeind * slope);
       if (!sign)
       {
         decode_val = decode_val - tmpval;
@@ -899,7 +953,7 @@ T read_bit_fix_int_wo_round(uint8_t* in, uint8_t l, int to_find, double slope, d
 
   bool sign = (decode >> (l - 1)) & 1;
   T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
-  int64_t out = (int128_t)(start_key + (double)to_find * slope);
+  int128_t out = (start_key + (double)to_find * slope);
   if (!sign)
   {
     out = out - value;

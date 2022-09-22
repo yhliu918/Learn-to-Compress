@@ -4,21 +4,20 @@
 #include "lr.h"
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
-#include "piecewise_cost_merge_integer_template_double.h"
+#include "piecewise_cost_integer_template.h"
+#include "piecewise_cost_merge_integer_template_double_wo_round.h"
+#include "piecewise_cost_merge_integer_template_double_link.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
-#include "piecewise_cost_merge_integer_template_test.h"
-#include "piecewise_cost_merge_integer_template_link.h"
 
-typedef uint32_t leco_type;
+typedef uint64_t leco_type;
 
 int random(int m)
 {
     return rand() % m;
 }
-
 template <typename T>
 static std::vector<T> load_data_binary(const std::string& filename,
     bool print = true) {
@@ -39,7 +38,6 @@ static std::vector<T> load_data_binary(const std::string& filename,
 
     return data;
 }
-
 
 template <typename T>
 static std::vector<T> load_data(const std::string& filename) {
@@ -65,18 +63,26 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge_test_link<leco_type> codec;
+    Leco_cost_merge_double_wo_round<leco_type> codec;
     std::string method = "leco_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int delta = atoi(argv[3]);
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
-
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
-    // std::vector<leco_type> data = load_data_binary<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
-
+    std::vector<leco_type> data;
+    if(source_file == "poisson_randomdie.txt"){
+        data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    }
+    else{
+        data = load_data_binary<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    }
+    
     int N = data.size();
+
+    // std::cout << "vector size = " << data.size() << std::endl;
+    // std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
+    //     << std::endl;
 
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
@@ -85,6 +91,8 @@ int main(int argc, const char* argv[])
         blocks++;
     } // handle with the last block, maybe < block_size
 
+    // if using auto segmentation codecs
+    // int delta = 32;
     codec.init(blocks, block_size, delta);
 
 
@@ -101,7 +109,10 @@ int main(int argc, const char* argv[])
         }
         uint8_t* descriptor = (uint8_t*)malloc(block_length * sizeof(leco_type) * 4);
         uint8_t* res = descriptor;
+        // if adaptive segment
         res = codec.encodeArray8_int(data.data(), block_length, descriptor, i);
+        // if fixed length segment
+        // res = codec.encodeArray8_int(data.data()+(i*block_size), block_length, descriptor, i);
         uint32_t segment_size = res - descriptor;
         descriptor = (uint8_t*)realloc(descriptor, segment_size);
         block_start_vec.push_back(descriptor);
@@ -114,7 +125,6 @@ int main(int argc, const char* argv[])
     double cr_through = N * sizeof(leco_type) / ((end_cr-start_cr) * 1000000000);
 
 
-    
     blocks = codec.get_total_blocks();
     double origin_size = (sizeof(leco_type) * N * 1.0);
     double total_model_size = model_size * blocks;
@@ -122,38 +132,27 @@ int main(int argc, const char* argv[])
     double cr_model = total_model_size * 100.0 / origin_size;
     double compressrate = (totalsize) * 100.0 / origin_size;
 
-    // int index_size = codec.alex_tree.data_size();
-    // double index_cr = index_size* 100.0/origin_size;
-    // std::cout<<"alex index cr "<<index_cr<<std::endl;
-    // index_size = codec.art.size();
-    // index_cr = index_size* 100.0/origin_size;
-    // std::cout<<"art index cr "<<index_cr<<std::endl;
-
-
-
     bool flag = true;
     std::vector<leco_type> recover(data.size());
     double totaltime = 0.0;
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    for (int j = 0; j < N; j++)
-    {
-        if (data[j] != recover[j])
-        {
-            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-            std::cout << "something wrong! decompress failed" << std::endl;
-            flag = false;
-            break;
-        }
-    }
+    // for (int j = 0; j < N; j++)
+    // {
+    //     if (data[j] != recover[j])
+    //     {
+    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+    //         std::cout << "something wrong! decompress failed" << std::endl;
+    //         flag = false;
+    //         break;
+    //     }
+    // }
     double end = getNow();
     totaltime += (end - start);
-    double da_ns = totaltime / data.size() * 1000000000;
-    recover.clear();
+    double da_ns = totaltime / N * 1000000000;
 
     // std::cout << "random access decompress!" << std::endl;
-
     int repeat = 1;
     std::vector<uint32_t> ra_pos;
     ra_pos.reserve(N*repeat);
@@ -165,40 +164,37 @@ int main(int argc, const char* argv[])
     double randomaccesstime = 0.0;
     codec.search_node.reserve(8);
     start = getNow();
-    // double start2 = getNow();
+
     // codec.art.Build(codec.art_build_vec);
-    codec.alex_tree.bulk_load(codec.alex_build_vec.data(), codec.alex_build_vec.size());
-    // double end2 = getNow();
     leco_type mark = 0;
     int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
 
     for (int i=0;i<ra_pos.size();i++)
     {
         auto index=ra_pos[i];
-
         if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
+
+        // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
         leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
         mark += tmpvalue;
         segment_id=next_segment_id;
-        if (data[index] != tmpvalue)
-        {
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            std::cout << "something wrong! random access failed" << std::endl;
-            flag = false;
-            break;
-        }
+        // if (data[index] != tmpvalue)
+        // {
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     std::cout << "something wrong! random access failed" << std::endl;
+        //     flag = false;
+        //     break;
+        // }
     }
     
-
     end = getNow();
     randomaccesstime += (end - start);
-    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/auto_log", std::ios::app);
-    outfile<<mark<<std::endl;
+    std::cout<< mark << std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
-    // std::cout<<(end2 - start2)* 1000000000<<std::endl;
 
-
+    
     std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<" "<<cr_through<<std::endl;
+
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)
     {

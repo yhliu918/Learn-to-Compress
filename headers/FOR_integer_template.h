@@ -86,7 +86,7 @@ namespace Codecset
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
             if(maxerror>= sizeof(T)*8-1){
-                memcpy(out, tmpin, length*sizeof(uint32_t));
+                memcpy(out, tmpin, length*sizeof(T));
                 return out;
             }
             T base = 0;

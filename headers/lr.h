@@ -99,6 +99,35 @@ void caltheta(uint32_t *y, int m){
 };
     
 
+template <typename T>
+struct lr_int_T{//theta0+theta1*x
+    double theta0;
+    double theta1;
+
+    
+void caltheta(T *y, int m){
+
+    double sumx = 0;
+    double sumy = 0;
+    double sumxy = 0;
+    double sumxx = 0;
+    for(int i=0;i<m;i++){
+        sumx = sumx + (double)i;
+        sumy = sumy + (double)y[i];
+        sumxx = sumxx+(double)i*i;
+        sumxy = sumxy+(double)i*y[i];
+    }
+    
+    double ccc= sumxy * m - sumx * sumy;
+    double xxx = sumxx * m - sumx * sumx;
+
+    theta1 = ccc/xxx;
+    theta0 = (sumy - theta1 * sumx)/(double)m;
+    
+}
+
+};
+    
 
 template <typename T>
 inline uint32_t bits_int_T(T v)
