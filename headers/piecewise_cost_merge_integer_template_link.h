@@ -524,11 +524,20 @@ namespace Codecset {
             }
 
             int segment_number = (int)segment_index.size();
-            segment_index.push_back(block_size * nvalue + length);
-            for (int i = 0;i < segment_number;i++) {
+            if(segment_number<=1){
+                segment_index.clear();
+                segment_index.push_back(block_size * nvalue);
+                segment_index.push_back(block_size * nvalue + length);
+                newsegment(block_size * nvalue, block_size * nvalue+length - 1);
+            }
+            else{
+                segment_index.push_back(block_size * nvalue + length);
+                for (int i = 0;i < segment_number;i++) {
                 // std::cout<<segment_index[i]<<std::endl;
                 newsegment(segment_index[i], segment_index[i + 1] - 1);
+                }
             }
+            
             segment_index.pop_back();
 
             end_timer = getNow();

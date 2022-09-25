@@ -73,23 +73,11 @@ namespace Codecset {
                 }
             }
 
-            // int max_error =0;
-            // double pred = theta0;
-            // for(int i=0;i<(long long)length;i++){
-            //     int tmp = (long long) in[i] - (long long)pred;
-            //     pred += theta1;
-            //     delta[i]=tmp;
-            //     if(abs(tmp)>max_error){
-            //         max_error = abs(tmp);
-            //     }
-            // }
-
             int tmp_bit = 0;
             if (max_error) {
                 tmp_bit = bits(max_error) + 1;
             }
 
-            //std::cout<<"bit_length: "<<tmp_bit<<std::endl;
             out[0] = (uint8_t)tmp_bit;
             out++;
             memcpy(out, &theta0, sizeof(theta0));
