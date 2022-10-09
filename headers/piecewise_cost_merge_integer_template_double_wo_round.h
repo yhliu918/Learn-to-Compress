@@ -441,6 +441,9 @@ namespace Codecset {
                 segment_index.push_back(current->start_index );
                 current = current->next;
             }
+            if(current->next == &tail){
+                segment_index.push_back(current->start_index);
+            }
 
             int segment_total = segment_index.size();
             segment_index.push_back(nvalue * block_size + length);
