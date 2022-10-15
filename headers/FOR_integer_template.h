@@ -6,6 +6,7 @@
 #include "codecs.h"
 #include "bit_write.h"
 #include "bit_read.h"
+#include "lr.h"
 #define INF 0x7f7fffff
 
 namespace Codecset
@@ -22,7 +23,7 @@ namespace Codecset
             blocks = block;
             block_size = block_s;
         }
-        uint8_t *encodeArray8_int(T *data, const size_t length, uint8_t *res, size_t nvalue)
+        uint8_t *encodeArray8_int(const T *data, const size_t length, uint8_t *res, size_t nvalue)
         {
             uint8_t *out = res;
 
@@ -79,10 +80,10 @@ namespace Codecset
             return out;
         }
 
-        T* decodeArray8(uint8_t* in, const size_t length, T* out, size_t nvalue) {
+        T* decodeArray8(const uint8_t* in, const size_t length, T* out, size_t nvalue) {
             T* res = out;
             uint8_t maxerror;
-            uint8_t* tmpin = in;
+            const uint8_t* tmpin = in;
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
             if(maxerror>= sizeof(T)*8-1){
@@ -112,15 +113,15 @@ namespace Codecset
 
 
 
-        T randomdecodeArray8(uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
+        T randomdecodeArray8(const uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
         {
             
-            uint8_t *tmpin = in;
+            const uint8_t *tmpin = in;
             uint8_t maxbits;
             memcpy(&maxbits, tmpin, sizeof(uint8_t));
             tmpin += sizeof(uint8_t);
             if(maxbits==sizeof(T)*8){
-                T tmp_val = reinterpret_cast<T *>(tmpin)[to_find];
+                T tmp_val = reinterpret_cast<const T *>(tmpin)[to_find];
                 return tmp_val;
             }
 

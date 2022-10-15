@@ -9,9 +9,9 @@
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
-#include <popcount.h>
+#include "popcount.h"
 #include <queue>
-#include <rank.h>
+#include "rank.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -219,7 +219,7 @@ void read_all_bit_fix32(uint32_t* in, int start_byte, int start_index, int numbe
 }
 
 template <typename T>
-void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
+void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
 {
   int left = 0;
   uint128_t decode = 0;
@@ -263,7 +263,7 @@ void read_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers,
         decode = 0;
       }
     }
-    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
     decode += ((uint128_t)tmp_64 << left);
     start++;
     left += sizeof(uint64_t) * 8;
@@ -938,7 +938,7 @@ T read_bit_fix_int(uint8_t* in, uint8_t l, int to_find, double slope, double sta
 
 
 template <typename T>
-T read_bit_fix_int_wo_round(uint8_t* in, uint8_t l, int to_find, double slope, double start_key)
+T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double slope, double start_key)
 {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
@@ -946,7 +946,7 @@ T read_bit_fix_int_wo_round(uint8_t* in, uint8_t l, int to_find, double slope, d
   uint64_t occupy = start_bit;
   uint64_t total = 0;
 
-  uint128_t decode = (reinterpret_cast<uint128_t*>(in + start_byte))[0];
+  uint128_t decode = (reinterpret_cast<const uint128_t*>(in + start_byte))[0];
   // memcpy(&decode, in+start_byte, sizeof(uint64_t));
   decode >>= start_bit;
   uint64_t decode_64 = decode & (((T)1 << l) - 1);
@@ -1006,7 +1006,7 @@ T read_bit_fix_int_float(uint8_t* in, uint8_t l, int to_find, float slope, float
 
 
 template <typename T>
-T read_FOR_int(uint8_t* in, uint8_t l, int to_find)
+T read_FOR_int(const uint8_t* in, uint8_t l, int to_find)
 {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
@@ -1014,7 +1014,7 @@ T read_FOR_int(uint8_t* in, uint8_t l, int to_find)
   uint64_t occupy = start_bit;
   uint64_t total = 0;
 
-  uint128_t decode = (reinterpret_cast<uint128_t*>(in + start_byte))[0];
+  uint128_t decode = (reinterpret_cast<const uint128_t*>(in + start_byte))[0];
   // memcpy(&decode, in+start_byte, sizeof(uint64_t));
   decode >>= start_bit;
   decode &= (((T)1 << l) - 1);
@@ -1110,7 +1110,7 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
 
 
 template <typename T>
-void read_all_bit_FOR(uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
+void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
 {
   int left = 0;
   uint128_t decode = 0;
@@ -1144,7 +1144,7 @@ void read_all_bit_FOR(uint8_t* in, int start_byte, int numbers, uint8_t l,T base
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
     }
-    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    const uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
     decode += ((uint128_t)tmp_64 << left);
     // decode = decode<<64 + tmp_64;
     start++;

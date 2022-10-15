@@ -7,6 +7,9 @@ GAP = 2000000
 #     2000000
 RAND_SENSOR_DIE=500
 NUM_SENSOR = 2000
+# parquet param, commented off
+# NUM_EVENT_PER_SENSOR = 114296
+# OUTFILE_PATH = "../data/poisson_timestamps_EVENT_50000_SENSOR_2000_randomdie_OUTER_1000s_INNER_2ms_200M.csv"
 NUM_EVENT_PER_SENSOR = 50000
 
 OUTFILE_PATH = "../integer_data/poisson_timestamps_EVENT_50000_SENSOR_2000_randomdie_OUTER_1000s_INNER_2ms_100M.csv"

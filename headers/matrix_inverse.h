@@ -57,7 +57,7 @@ void LUP_Descomposition(double A[N_size*N_size],double L[N_size*N_size],double U
     }
     for(int i=0;i<N_size-1;i++)
     {
-        double p=0.0d;
+        double p=0.0;
         for(int j=i;j<N_size;j++)
         {
             if(abs(A[j*N_size+i])>p)
@@ -77,7 +77,7 @@ void LUP_Descomposition(double A[N_size*N_size],double L[N_size*N_size],double U
         P[i]=P[row];
         P[row]=tmp;
 
-        double tmp2=0.0d;
+        double tmp2=0.0;
         for(int j=0;j<N_size;j++)
         {
             //交换A[i][j]和 A[row][j]
@@ -87,7 +87,7 @@ void LUP_Descomposition(double A[N_size*N_size],double L[N_size*N_size],double U
         }
 
         //以下同LU分解
-        double u=A[i*N_size+i],l=0.0d;
+        double u=A[i*N_size+i],l=0.0;
         for(int j=i+1;j<N_size;j++)
         {
             l=A[j*N_size+i]/u;
