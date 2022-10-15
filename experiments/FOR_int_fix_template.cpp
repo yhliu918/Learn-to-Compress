@@ -63,7 +63,7 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_int<leco_type> codec;
+    FOR_int<leco_type> codec;
     std::string method = "Leco_fix";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
@@ -78,6 +78,7 @@ int main(int argc, const char* argv[])
     else{
         data = load_data<leco_type>("../integer_data/" + source_file);
     }
+
     int N = data.size();
 
     int block_size = data.size() / blocks;
