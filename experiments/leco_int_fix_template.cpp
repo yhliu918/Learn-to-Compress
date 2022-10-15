@@ -4,9 +4,7 @@
 #include "lr.h"
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
-#include "piecewise_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_double.h"
-#include "piecewise_cost_merge_hc_integer_template.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
@@ -20,6 +18,26 @@ int random(int m)
     return rand() % m;
 }
 
+template <typename T>
+static std::vector<T> load_data_binary(const std::string& filename,
+    bool print = true) {
+    std::vector<T> data;
+
+    std::ifstream in(filename, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "unable to open " << filename << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    // Read size.
+    uint64_t size;
+    in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    data.resize(size);
+    // Read values.
+    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
+    in.close();
+
+    return data;
+}
 
 template <typename T>
 static std::vector<T> load_data(const std::string& filename) {
@@ -49,11 +67,17 @@ int main(int argc, const char* argv[])
     std::string method = "Leco_fix";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
-    int delta = atoi(argv[3]);
-    int model_size = atoi(argv[4]);
+    int model_size = atoi(argv[3]);
+    bool binary = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data;
+    if(binary){
+        data = load_data_binary<leco_type>("../integer_data/" + source_file);
+    }
+    else{
+        data = load_data<leco_type>("../integer_data/" + source_file);
+    }
     int N = data.size();
 
     int block_size = data.size() / blocks;
@@ -119,7 +143,7 @@ int main(int argc, const char* argv[])
         //     if (data[j ] != recover[j ])
         //     {
         //         std::cout<< " num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-        //         std::cout << "something wrong! decompress failed" << std::endl;
+        //         std::cout << "something wrong! decompress all failed" << std::endl;
         //         flag = false;
         //         break;
         //     }
@@ -154,7 +178,7 @@ int main(int argc, const char* argv[])
 
         //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
         //     flag = false;
-        //     std::cout << "something wrong! decompress failed" << std::endl;
+        //     std::cout << "something wrong! random access failed" << std::endl;
         // }
         // if (!flag)
         // {
@@ -163,7 +187,7 @@ int main(int argc, const char* argv[])
     }
     end = getNow();
     randomaccesstime += (end - start);
-    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/fix_log", std::ios::app);
+    std::ofstream outfile("fix_log", std::ios::app);
     outfile<<mark<<std::endl;
 
     double ra_ns = randomaccesstime / (N * repeat) * 1000000000;

@@ -71,14 +71,9 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data = load_data<leco_type>("../integer_data/" + source_file);
 
     int N = data.size();
-
-    // std::cout << "vector size = " << data.size() << std::endl;
-    // std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
-    //     << std::endl;
-
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -133,16 +128,16 @@ int main(int argc, const char* argv[])
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    for (int j = 0; j < N; j++)
-    {
-        if (data[j] != recover[j])
-        {
-            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-            std::cout << "something wrong! decompress failed" << std::endl;
-            flag = false;
-            break;
-        }
-    }
+    // for (int j = 0; j < N; j++)
+    // {
+    //     if (data[j] != recover[j])
+    //     {
+    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+    //         std::cout << "something wrong! decompress failed" << std::endl;
+    //         flag = false;
+    //         break;
+    //     }
+    // }
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / N * 1000000000;
@@ -160,7 +155,7 @@ int main(int argc, const char* argv[])
     codec.search_node.reserve(8);
     start = getNow();
 
-    // codec.art.Build(codec.art_build_vec);
+    codec.art.Build(codec.art_build_vec);
     leco_type mark = 0;
     int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
 
@@ -173,13 +168,13 @@ int main(int argc, const char* argv[])
         leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
         mark += tmpvalue;
         segment_id=next_segment_id;
-        if (data[index] != tmpvalue)
-        {
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            std::cout << "something wrong! random access failed" << std::endl;
-            flag = false;
-            break;
-        }
+        // if (data[index] != tmpvalue)
+        // {
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     std::cout << "something wrong! random access failed" << std::endl;
+        //     flag = false;
+        //     break;
+        // }
     }
     
     end = getNow();

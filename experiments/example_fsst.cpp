@@ -21,9 +21,6 @@ int main(int argc, const char* argv[])
     std::vector<std::string> string_vec;
     char padding_char = 0;
     std::ifstream srcFile(source_file, std::ios::in);
-    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/mail_server_host_reverse_min_10_max_26_key.txt", std::ios::in);
-    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/poisson_20000_sep_key.txt", std::ios::in);
-    // std::ifstream srcFile("/home/lyh/Learn-to-Compress/string_data/string_linear_1M.txt", std::ios::in);
     if (!srcFile)
     {
         std::cout << "error opening source file." << std::endl;
@@ -110,11 +107,6 @@ int main(int argc, const char* argv[])
         totalsize_with_index = totalsize_delta_offset+totalsize;
     }
     double no_pad_compressrate_with_ind = (totalsize_with_index)*100.0/(totalsize_without_padding*1.0);
-
-    // std::cout << N << std::endl;
-    // std::cout << "compressed size " << totalsize << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate << std::endl;
-    // std::cout << "compressed size " << totalsize_with_index << " with padding uncompressed size " << totalsize_without_padding << " with padding cr%: " << std::setprecision(4) << no_pad_compressrate_with_ind << std::endl;
-
 
     std::vector<int> ra_pos;
     int repeat = 100;

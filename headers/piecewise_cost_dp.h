@@ -280,7 +280,7 @@ namespace Codecset {
                 segment_index_total.push_back(item+nvalue*block_size);
                 // std::cout<<item+nvalue*block_size<<" ";
             }
-            // segment_index_total.push_back(nvalue*block_size+length);
+            segment_index_total.push_back(nvalue*block_size+length);
             uint64_t min_cost = total_byte;
             total_seg += segment_start_index[length-1].size() - 1 ;
             double compressrate = (min_cost) * 100.0 / (4 * block_size * 1.0);

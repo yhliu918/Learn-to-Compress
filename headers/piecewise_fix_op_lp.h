@@ -24,7 +24,7 @@ namespace Codecset {
 
         int block_num;
         int block_size;
-        std::string filename = "newman.log";
+        std::string filename = "fb_part.log";
         std::vector<float> theta0_vec;
         std::vector<float> theta1_vec;
         //double * models;

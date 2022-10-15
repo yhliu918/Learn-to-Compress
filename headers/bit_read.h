@@ -949,11 +949,12 @@ T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double sl
   uint128_t decode = (reinterpret_cast<const uint128_t*>(in + start_byte))[0];
   // memcpy(&decode, in+start_byte, sizeof(uint64_t));
   decode >>= start_bit;
-  decode &= (((T)1 << l) - 1);
+  uint64_t decode_64 = decode & (((T)1 << l) - 1);
+  // decode &= (((T)1 << l) - 1);
 
-  bool sign = (decode >> (l - 1)) & 1;
-  T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
-  int128_t out = (start_key + (double)to_find * slope);
+  bool sign = (decode_64 >> (l - 1)) & 1;
+  T value = (decode_64 & (((T)1 << (uint8_t)(l - 1)) - 1));
+  int64_t out = (start_key + (double)to_find * slope);
   if (!sign)
   {
     out = out - value;
@@ -966,6 +967,7 @@ T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double sl
   return (T)out;
 
 }
+
 
 
 template <typename T>

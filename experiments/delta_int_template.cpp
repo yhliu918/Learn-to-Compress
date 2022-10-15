@@ -5,13 +5,12 @@
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
 #include "piecewise_cost_integer_template.h"
-#include "piecewise_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_double.h"
-#include "piecewise_cost_merge_hc_integer_template.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
+#include "delta_cost_merge_integer_template_link.h"
 
 typedef uint32_t leco_type;
 
@@ -41,25 +40,48 @@ static std::vector<T> load_data(const std::string& filename) {
     return data;
 }
 
+template <typename T>
+static std::vector<T> load_data_binary(const std::string& filename,
+    bool print = true) {
+    std::vector<T> data;
+
+    std::ifstream in(filename, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "unable to open " << filename << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    // Read size.
+    uint64_t size;
+    in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    data.resize(size);
+    // Read values.
+    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
+    in.close();
+
+    return data;
+}
+
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Delta_cost_merge<leco_type> codec;
+    Delta_cost_merge_link<leco_type> codec;
     std::string method = "delta_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int delta = atoi(argv[3]);
     int model_size = atoi(argv[4]);
+    int binary = atoi(argv[5]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data;
+    if(!binary){
+        data = load_data<leco_type>("../integer_data/" + source_file);
+    }
+    else{
+        data = load_data_binary<leco_type>("../integer_data/" + source_file);
+    }
 
     int N = data.size();
-
-    // std::cout << "vector size = " << data.size() << std::endl;
-    // std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
-    //     << std::endl;
-
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -73,7 +95,7 @@ int main(int argc, const char* argv[])
 
 
     std::vector<uint8_t*> block_start_vec;
-
+    double start_cr = getNow();
     uint64_t totalsize = 0;
     for (int i = 0; i < blocks; i++)
     {
@@ -97,6 +119,8 @@ int main(int argc, const char* argv[])
     if (totalsize == 0) {
         totalsize = codec.get_total_byte();
     }
+    double end_cr = getNow();
+    double cr_through = N * sizeof(leco_type) / ((end_cr-start_cr) * 1000000000);
 
     blocks = codec.get_total_blocks();
     double origin_size = (sizeof(leco_type) * N * 1.0);
@@ -111,16 +135,16 @@ int main(int argc, const char* argv[])
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    for (int j = 0; j < N; j++)
-    {
-        if (data[j] != recover[j])
-        {
-            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-            std::cout << "something wrong! decompress failed" << std::endl;
-            flag = false;
-            break;
-        }
-    }
+    // for (int j = 0; j < N; j++)
+    // {
+    //     if (data[j] != recover[j])
+    //     {
+    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+    //         std::cout << "something wrong! decompress failed" << std::endl;
+    //         flag = false;
+    //         break;
+    //     }
+    // }
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / data.size() * 1000000000;
@@ -137,12 +161,9 @@ int main(int argc, const char* argv[])
     leco_type mark = 0;
     for (auto index: ra_pos)
     {
-
-        // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
-
-        mark += tmpvalue;
-        // assert(tmpvalue == data[index]);
+        // mark += tmpvalue;
+        assert(tmpvalue == data[index]);
 
         // if (data[index] != tmpvalue)
         // {
@@ -158,11 +179,11 @@ int main(int argc, const char* argv[])
     }
     end = getNow();
     randomaccesstime += (end - start);
-    std::cout<<mark<<std::endl;
+    // std::cout<<mark<<std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 
     
-    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<std::endl;
+    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<" "<<cr_through<<std::endl;
 
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)

@@ -14,8 +14,8 @@ using namespace Codecset;
 // email: 46-123
 //uuid: 46-90
 // words: 97 - 122
-int max_ascii = 90;
-int min_ascii = 27;
+int max_ascii = 122;
+int min_ascii = 97;
 template <typename T>
 void EncodingOneDataSegment(std::vector<std::string>& data_vec_tmp, int start_ind, int block_length, int padding_length, char padding_char, std::vector<uint8_t*>& descriptor_of_each_block, std::string* common_prefix, int common_prefix_length, uint8_t encoding_type, uint64_t& totalsize_without_padding, uint64_t& totalsize_with_padding, uint64_t& totalsize) {
     Leco_string_subset<T> codec;
@@ -52,9 +52,6 @@ int main(int argc, const char* argv[])
     std::vector<std::string> string_vec;
     char padding_char = min_ascii;
     std::ifstream srcFile(source_file, std::ios::in);
-    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/mail_server_host_reverse_min_10_max_26_key.txt", std::ios::in);
-    // std::ifstream srcFile("/home/lyh/rocksdb/dump_data/poisson_20000_sep_key.txt", std::ios::in);
-    // std::ifstream srcFile("/home/lyh/Learn-to-Compress/string_data/string_linear_1M.txt", std::ios::in);
     if (!srcFile)
     {
         std::cout << "error opening source file." << std::endl;

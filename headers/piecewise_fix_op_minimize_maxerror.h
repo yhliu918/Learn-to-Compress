@@ -87,6 +87,7 @@ namespace Codecset {
                     max_error = abs(tmp);
                 }
             }
+            // std::cout<<nvalue*block_size<<" "<<nvalue*block_size+length-1<<" "<<theta0<<" "<<theta1<<std::endl;
 
 
 

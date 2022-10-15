@@ -251,12 +251,6 @@ namespace Codecset {
                     min_second_delta = abs(delta_second_layer[i]);
                 }
             }
-            /*
-            for (int i = 0;i < length - 1;i++) {
-                std::cout << (int64_t)delta_first_layer[i] << " ";
-            }
-            std::cout << std::endl;
-            */
 
             std::vector<uint32_t> segment_index_new;
             std::vector<uint32_t> key_to_seg;
@@ -283,21 +277,6 @@ namespace Codecset {
             segment_index_new.push_back(length - 2);
             key_to_seg.push_back(seg);
 
-            // for (int i = 0;i < length - 2;i++) {
-            //     std::cout << (int64_t)delta_second_layer[i] << " ";
-            // }
-            // std::cout << std::endl;
-
-            // std::cout << "********" << 0 << "********" << std::endl;
-            // for (auto item : segment_index_new) {
-            //     std::cout << item << " ";
-            // }
-            // std::cout << std::endl;
-            // for (auto item : key_to_seg) {
-            //         std::cout << item << " ";
-            //     }
-            // std::cout << std::endl;
-
 
             for (int i = 0;i <= max_second_delta * 2;i++) {
                 int aim_delta = i / 2 + 1;
@@ -316,7 +295,7 @@ namespace Codecset {
                             int start_index = segment_index_new[segment_id + 1];
                             int end_index = segment_index_new[segment_id + 2] - 1;
                             cost_add = (end_index - start_index + 1) * abs(aim_delta);
-                            if (cost_add < cost_decline) {
+                            if (cost_add < overhead) {
                                 // merge two segments
                                 if (end_index <= length) {
                                     delta_second_layer[end_index] += aim_delta;
@@ -338,7 +317,7 @@ namespace Codecset {
                             int start_index = segment_index_new[segment_id];
                             int end_index = segment_index_new[segment_id + 1] - 1;
                             cost_add = (end_index - start_index + 1) * abs(aim_delta);
-                            if (cost_add < cost_decline) {
+                            if (cost_add < overhead) {
                                 // merge two segments
                                 if (start_index - 1 >= 0) {
                                     delta_second_layer[start_index - 1] += aim_delta;
@@ -696,6 +675,7 @@ namespace Codecset {
             return tmp_val;
 
         }
+        
         uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
 
             return 0;
