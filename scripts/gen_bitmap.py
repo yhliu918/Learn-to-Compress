@@ -53,18 +53,11 @@ def myThread(divide_base, num_cluster, prob_, NUM_KEYS):
         sum_prob += factor
         factor *= divide_base
     keys_list.append(np.random.choice([0, 1], size=NUM_KEYS//num_cluster, p=[1.0-prob_*(num_cluster - sum_prob), prob_*(num_cluster - sum_prob)]))
-    # keys1 = np.random.choice([0, 1], size=NUM_KEYS//2, p=[1.0-prob_*factor, prob_*factor])
-    # keys2 = np.random.choice([0, 1], size=NUM_KEYS//2, p=[1.0-prob_*(2 - factor), prob_* (2 - factor)])
     for i in range(NUM_KEYS//num_cluster):
         for j in keys_list:
             if j[i] == 1:
                 count += 1
-        # if keys1[i] == 1:
-        #     count+=1
-        # if keys2[i] == 1:
-        #     count+=1
     print(count)
-    # keys = np.concatenate((keys1, keys2))
     keys = np.concatenate(tuple(keys_list))
     keys = keys.astype(np.uint32)
     np.savetxt(file_name, keys,fmt='%d')
@@ -82,7 +75,7 @@ def cluster():
         t.join()
 
 
-def cluster_lyh():
+def cluster_v0():
     for NUM_KEYS in NUM_KEYS_list:
         selectivity_ = prob
         cluster_ = [10]
@@ -119,4 +112,4 @@ def cluster_lyh():
 
 if __name__ == "__main__":
     cluster()
-    # cluster_lyh()
+    # cluster_v0()
