@@ -18,12 +18,11 @@ make -j16
 
 Data sets used in the Evaluation part can be downloaded using `./script/download_dataset.sh`.
 
-house_price and movie_id need to be manually downloaded from the following urls:
-
+`house_price` and `movie_id` need to be manually downloaded from the following urls:
+```
 https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset?select=realtor-dataset-100k.csv
-
 https://www.kaggle.com/datasets/grouplens/movielens-20m-dataset?select=rating.csv
-
+```
 You can download and generate the data sets and store them in a directory `integer_data` under the project root directory.
 
 ### Microbenchmark
