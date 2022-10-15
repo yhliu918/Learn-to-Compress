@@ -42,8 +42,6 @@ target_link_libraries(leco_lp_cost docs Snappy::snappy gmp gmpxx )
 
 add_executable(delta_int experiments/delta_int_template.cpp)
 target_link_libraries(delta_int docs Snappy::snappy gmp gmpxx )
-add_executable(leco_string experiments/example_fix_padding_template.cpp)
-target_link_libraries(leco_string docs Snappy::snappy gmp gmpxx )
 add_executable(leco_string_subset experiments/leco_string_subset.cpp)
 target_link_libraries(leco_string_subset docs Snappy::snappy gmp gmpxx )
 add_executable(leco_string_subset_shift experiments/leco_string_subset_shift.cpp)
