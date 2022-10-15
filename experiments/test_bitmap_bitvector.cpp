@@ -39,7 +39,7 @@ int main()
   for (int j = 0; j < (int)file_system.size(); j++)
   {
     std::vector<uint32_t> bitmap;
-    std::ifstream bitFile("/home/zxy/Learn-to-Compress-0510/data/bitmap_random/" + file_system[j], std::ios::in);
+    std::ifstream bitFile("../data/bitmap_random/" + file_system[j], std::ios::in);
     std::cout << "../data/bitmap_random/" + file_system[j] << std::endl;
     int k = 0;
     std::vector<uint32_t> bit_pos;
