@@ -1,6 +1,6 @@
 
-#ifndef PIECEWISEFIXOP_LP_H_
-#define PIECEWISEFIXOP_LP_H_
+#ifndef PIECEWISEFIXOP_LP_COST_H_
+#define PIECEWISEFIXOP_LP_COST_H_
 
 #include "common.h"
 #include "codecs.h"
@@ -11,7 +11,7 @@
 
 namespace Codecset {
 
-    class piecewise_fix_op_lp : public IntegerCODEC {
+    class piecewise_fix_op_lp_cost : public IntegerCODEC {
     public:
         using IntegerCODEC::encodeArray;
         using IntegerCODEC::decodeArray;
@@ -24,30 +24,30 @@ namespace Codecset {
 
         int block_num;
         int block_size;
-        std::string filename = "fb_part.log";
-        std::vector<float> theta0_vec;
-        std::vector<float> theta1_vec;
-        //double * models;
+        std::vector<double> theta0_vec;
+        std::vector<double> theta1_vec;
+        std::string filename = "/home/lyh/Learn-to-Compress/scripts/leco_lp_cost/house_price.log";
 
         void init(int blocks, int blocksize, int extra) {
             block_num = blocks;
             block_size = blocksize;
-            std::ifstream srcFile("/home/lyh/Learn-to-Compress/scripts/" + filename, std::ios::in);
+
+            std::ifstream srcFile(filename, std::ios::in);
             while (srcFile.good())
             {
-                float tmp0;
+                int tmp;
+                int tmp0;
                 float tmp1;
-                
-                srcFile >> tmp0 >> tmp1;
-                theta0_vec.push_back(tmp0);
-                theta1_vec.push_back(tmp1);   
+                float tmp2;
+                srcFile >> tmp >> tmp0 >> tmp >> tmp1 >> tmp2;
+                theta0_vec.push_back(tmp1);
+                theta1_vec.push_back(tmp2);
                 if (!srcFile.good())
                 {
                     break;
                 }
             }
             srcFile.close();
-            //models = new double [block_num*2];
         }
 
         int random(int m) {
@@ -61,7 +61,7 @@ namespace Codecset {
             int max_error = 0;
             float theta0 = theta0_vec[nvalue];
             float theta1 = theta1_vec[nvalue];
-            if(theta1<0.00001)
+            if (theta1 < 0.0001)
             {
                 theta1 = 0.0;
             }
@@ -184,7 +184,7 @@ namespace Codecset {
             return (uint64_t)sum;
         }
         */
-       uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
+        uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
             return 0;
         }
         uint32_t* encodeArray(uint32_t* in, const size_t length, uint32_t* out,
