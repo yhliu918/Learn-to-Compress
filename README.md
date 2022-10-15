@@ -1,11 +1,8 @@
 # Leco: Learn-to-Compress
 
 ### Requirements:
-```
-Boost
-gmp
-Eigen3
-```
+Ubuntu 20.04.4 LTS
+
 To install dependencies, run the following script:
 ```
 sudo bash ./scripts/setup.sh
@@ -19,7 +16,7 @@ cmake ..
 make -j16
 ```
 
-Data sets used in the Evaluation part can be downloaded using `./script/download.sh`.
+Data sets used in the Evaluation part can be downloaded using `./script/download_dataset.sh`.
 
 house_price and movie_id need to be manually downloaded from the following urls:
 
