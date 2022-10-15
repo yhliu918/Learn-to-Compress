@@ -22,7 +22,7 @@ int main(int argc, const char* argv[]) {
   IntegerCODEC& codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file, std::ios::in);
+  std::ifstream srcFile("../integer_data/"+source_file, std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
@@ -46,10 +46,6 @@ int main(int argc, const char* argv[]) {
     std::cout << "Empty vector" << std::endl;
     return 0;
   }
-  // std::cout << "vector size = " << data.size() << std::endl;
-  // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-  //   << std::endl;
-
 
   
   int blocks_real = N;

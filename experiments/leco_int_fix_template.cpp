@@ -71,8 +71,7 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    // std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
-    std::vector<leco_type> data = load_data_binary<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data = load_data_binary<leco_type>("../integer_data/" + source_file);
     int N = data.size();
 
     int block_size = data.size() / blocks;
@@ -133,20 +132,20 @@ int main(int argc, const char* argv[])
         {
             recover[index.first] += index.second;
         }
-        for (int j = 0; j < N; j++)
-        {
-            if (data[j ] != recover[j ])
-            {
-                std::cout<< " num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-                std::cout << "something wrong! decompress all failed" << std::endl;
-                flag = false;
-                break;
-            }
-        }
-        if (!flag)
-        {
-            break;
-        }
+        // for (int j = 0; j < N; j++)
+        // {
+        //     if (data[j ] != recover[j ])
+        //     {
+        //         std::cout<< " num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+        //         std::cout << "something wrong! decompress all failed" << std::endl;
+        //         flag = false;
+        //         break;
+        //     }
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     double end = getNow();
     totaltime += (end - start);
@@ -168,21 +167,21 @@ int main(int argc, const char* argv[])
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
         mark += tmpvalue;
 
-        if (data[index] != tmpvalue)
-        {
+        // if (data[index] != tmpvalue)
+        // {
 
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! random access failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     flag = false;
+        //     std::cout << "something wrong! random access failed" << std::endl;
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
     randomaccesstime += (end - start);
-    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/fix_log", std::ios::app);
+    std::ofstream outfile("fix_log", std::ios::app);
     outfile<<mark<<std::endl;
 
     double ra_ns = randomaccesstime / (N * repeat) * 1000000000;

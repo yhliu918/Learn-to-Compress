@@ -73,17 +73,13 @@ int main(int argc, const char* argv[])
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
     std::vector<leco_type> data;
     if(!binary){
-        data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+        data = load_data<leco_type>("../integer_data/" + source_file);
     }
     else{
-        data = load_data_binary<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+        data = load_data_binary<leco_type>("../integer_data/" + source_file);
     }
     
     int N = data.size();
-
-    // std::cout << "vector size = " << data.size() << std::endl;
-    // std::cout << "vector size = " << data.size() * sizeof(leco_type) / 1024.0 << "KB"
-    //     << std::endl;
 
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;

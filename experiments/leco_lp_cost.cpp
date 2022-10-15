@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
   IntegerCODEC& codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file+".txt", std::ios::in);
+  std::ifstream srcFile("../integer_data/"+source_file+".txt", std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
@@ -67,7 +67,7 @@ int main(int argc, const char* argv[]) {
   std::vector<int> start_index;
   std::vector<double> theta0;
   std::vector<double> theta1;
-  parse_segment_info("/home/lyh/Learn-to-Compress/scripts/leco_lp_cost/"+source_file+".log", start_index, theta0, theta1);
+  parse_segment_info("../scripts/leco_lp_cost/"+source_file+".log", start_index, theta0, theta1);
   start_index.push_back(N);
   int blocks = start_index.size() - 1;
   int block_size = data.size() / blocks;

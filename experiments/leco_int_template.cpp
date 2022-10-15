@@ -73,8 +73,7 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
-    // std::vector<leco_type> data = load_data_binary<leco_type>("/home/lyh/Learn-to-Compress/integer_data/" + source_file);
+    std::vector<leco_type> data = load_data<leco_type>("../integer_data/" + source_file);
 
     int N = data.size();
 
@@ -136,7 +135,7 @@ int main(int argc, const char* argv[])
     double totaltime = 0.0;
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
-    // codec.decodeArray8(N, recover.data(), N);
+    codec.decodeArray8(N, recover.data(), N);
     // for (int j = 0; j < N; j++)
     // {
     //     if (data[j] != recover[j])
@@ -167,32 +166,32 @@ int main(int argc, const char* argv[])
     start = getNow();
     // double start2 = getNow();
     // codec.art.Build(codec.art_build_vec);
-    // codec.alex_tree.bulk_load(codec.alex_build_vec.data(), codec.alex_build_vec.size());
-    // // double end2 = getNow();
+    codec.alex_tree.bulk_load(codec.alex_build_vec.data(), codec.alex_build_vec.size());
+    // double end2 = getNow();
     leco_type mark = 0;
-    // int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
+    int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
 
-    // for (int i=0;i<ra_pos.size();i++)
-    // {
-    //     auto index=ra_pos[i];
+    for (int i=0;i<ra_pos.size();i++)
+    {
+        auto index=ra_pos[i];
 
-    //     if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
-    //     leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
-    //     mark += tmpvalue;
-    //     segment_id=next_segment_id;
-    //     if (data[index] != tmpvalue)
-    //     {
-    //         std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-    //         std::cout << "something wrong! random access failed" << std::endl;
-    //         flag = false;
-    //         break;
-    //     }
-    // }
+        if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
+        leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
+        mark += tmpvalue;
+        segment_id=next_segment_id;
+        // if (data[index] != tmpvalue)
+        // {
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     std::cout << "something wrong! random access failed" << std::endl;
+        //     flag = false;
+        //     break;
+        // }
+    }
     
 
     end = getNow();
     randomaccesstime += (end - start);
-    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/auto_log", std::ios::app);
+    std::ofstream outfile("auto_log", std::ios::app);
     outfile<<mark<<std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
     // std::cout<<(end2 - start2)* 1000000000<<std::endl;

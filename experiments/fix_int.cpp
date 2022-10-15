@@ -18,8 +18,8 @@ int main(int argc, const char *argv[])
     IntegerCODEC &codec = *CODECFactory::getFromName(method);
 
     std::vector<uint32_t> data;
-    std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/" + source_file, std::ios::in);
-    // std::ifstream srcFile("/home/lyh/postingList_10M.txt", std::ios::in);
+    std::ifstream srcFile("../integer_data/" + source_file, std::ios::in);
+
     if (!srcFile)
     {
 
@@ -167,7 +167,7 @@ int main(int argc, const char *argv[])
     }
     end = getNow();
     randomaccesstime += (end - start);
-    std::ofstream outfile("/home/lyh/Learn-to-Compress/build/fix_log", std::ios::app);
+    std::ofstream outfile("fix_log", std::ios::app);
     outfile<<mark<<std::endl;
 
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;

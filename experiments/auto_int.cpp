@@ -22,7 +22,7 @@ int main(int argc, const char* argv[]) {
   IntegerCODEC& codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file, std::ios::in);
+  std::ifstream srcFile("../integer_data/"+source_file, std::ios::in);
   if (!srcFile) {
     std::cout << "error opening source file." << std::endl;
     return 0;
@@ -72,10 +72,8 @@ int main(int argc, const char* argv[]) {
   
   double origin_size = (sizeof(uint32_t) * N * 1.0);
   double compressrate = (totalsize)*100.0 / origin_size;
-  // std::cout << "compressed size " << totalsize << " uncompressed size " << 4 * N << std::endl;
-  // std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
-  bool flag = true;
 
+  bool flag = true;
   std::vector<uint32_t> recover(data.size());
   double totaltime = 0.0;
   
@@ -84,7 +82,6 @@ int main(int argc, const char* argv[]) {
   for(int i=0;i<blocks;i++){
 
       codec.decodeArray8(res, block_size, recover.data()+i*block_size, i);
-
       for(int j=0;j<block_size;j++){
         if(data[j+i*block_size]!=recover[j+i*block_size]){
           std::cout<<"block: "<<i<<" num: "<<j<< " true is: "<<data[j+i*block_size]<<" predict is: "<<recover[j+i*block_size]<<std::endl;
@@ -104,12 +101,6 @@ int main(int argc, const char* argv[]) {
       totaltime += (end - start);
   double da_ns = totaltime / data.size() * 1000000000;
 
-// std::cout << "all decoding time per int: " << std::setprecision(8)
-//      << totaltime / data.size() * 1000000000 << "ns" << std::endl;
-// std::cout << "all decoding speed: " << std::setprecision(10)
-//      << data.size()/(totaltime*1000) <<  std::endl;
-
-  // std::cout << "random access decompress!" << std::endl;
   std::vector<uint32_t> ra_pos;
   for(int i=0;i<N;i++){
     ra_pos.push_back(random(N));
@@ -142,13 +133,10 @@ int main(int argc, const char* argv[]) {
   double ra_ns = randomaccesstime / N * 1000000000;
 
   std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<da_ns<<" "<<ra_ns<<std::endl;
-  // std::cout << "random decoding time per int: " << std::setprecision(8)
-  //   << randomaccesstime / data.size() * 1000000000 << " ns" << std::endl;
-  // std::cout << "random decoding speed: " << std::setprecision(10)
-  //   << data.size() / (randomaccesstime * 1000) << std::endl;
+
 
   codec.destroy();
-  // free(&codec);
+
 
 
 
