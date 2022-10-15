@@ -13,7 +13,7 @@
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
@@ -142,22 +142,23 @@ int main(int argc, const char* argv[])
         leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
 
         mark += tmpvalue;
+        // assert(tmpvalue == data[index]);
 
-        if (data[index] != tmpvalue)
-        {
+        // if (data[index] != tmpvalue)
+        // {
 
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     flag = false;
+        //     std::cout << "something wrong! decompress failed" << std::endl;
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
     randomaccesstime += (end - start);
-
+    std::cout<<mark<<std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 
     

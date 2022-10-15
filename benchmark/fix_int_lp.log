@@ -1,0 +1,9 @@
+piecewise_fix_op_lp,fb-289000.txt,1000,40.6522,0.692042,39.9602
+piecewise_fix_op_lp,newman.txt,1000,6.77908,0.858369,3.32897
+piecewise_fix_op_lp,movieid.txt,100002,43.4306,1.00001,42.4306
+piecewise_fix_op_lp,house_price.txt,1000,19.7018,2,17.7018
+
+piecewise_fix_op_lp_cost,fb-289000.txt,2017,38.6585,1.39654,37.2619
+piecewise_fix_op_lp_cost,newman.txt,1143,3.41695,0.981974,2.43498
+piecewise_fix_op_lp_cost,house_price.txt,1709,4.2835,3.42,0.8635
+piecewise_fix_op_lp_cost,movieid.txt,290833,33.2288,2.90829,30.3205

@@ -5,19 +5,38 @@
 #include "piecewise_fix_integer_template.h"
 #include "piecewise_fix_integer_template_float.h"
 #include "piecewise_cost_integer_template.h"
-#include "piecewise_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_double.h"
-#include "piecewise_cost_merge_hc_integer_template.h"
+#include "piecewise_cost_merge_integer_template_double_link.h"
 #include "FOR_integer_template.h"
 #include "delta_integer_template.h"
 #include "delta_cost_integer_template.h"
 #include "delta_cost_merge_integer_template.h"
 
-typedef uint64_t leco_type;
+typedef uint32_t leco_type;
 
 int random(int m)
 {
     return rand() % m;
+}
+template <typename T>
+static std::vector<T> load_data_binary(const std::string& filename,
+    bool print = true) {
+    std::vector<T> data;
+
+    std::ifstream in(filename, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "unable to open " << filename << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    // Read size.
+    uint64_t size;
+    in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    data.resize(size);
+    // Read values.
+    in.read(reinterpret_cast<char*>(data.data()), size * sizeof(T));
+    in.close();
+
+    return data;
 }
 
 template <typename T>
@@ -44,7 +63,7 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge_double<leco_type> codec;
+    Leco_cost_merge_double_link<leco_type> codec;
     std::string method = "leco_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
@@ -73,7 +92,7 @@ int main(int argc, const char* argv[])
 
 
     std::vector<uint8_t*> block_start_vec;
-
+    double start_cr = getNow();
     uint64_t totalsize = 0;
     for (int i = 0; i < blocks; i++)
     {
@@ -97,6 +116,9 @@ int main(int argc, const char* argv[])
     if (totalsize == 0) {
         totalsize = codec.get_total_byte();
     }
+    double end_cr = getNow();
+    double cr_through = N * sizeof(leco_type) / ((end_cr-start_cr) * 1000000000);
+
 
     blocks = codec.get_total_blocks();
     double origin_size = (sizeof(leco_type) * N * 1.0);
@@ -111,57 +133,62 @@ int main(int argc, const char* argv[])
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    // for (int j = 0; j < N; j++)
-    // {
-    //     if (data[j] != recover[j])
-    //     {
-    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-    //         std::cout << "something wrong! decompress failed" << std::endl;
-    //         flag = false;
-    //         break;
-    //     }
-    // }
+    for (int j = 0; j < N; j++)
+    {
+        if (data[j] != recover[j])
+        {
+            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+            std::cout << "something wrong! decompress failed" << std::endl;
+            flag = false;
+            break;
+        }
+    }
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / N * 1000000000;
 
     // std::cout << "random access decompress!" << std::endl;
-    std::vector<uint32_t> ra_pos;
     int repeat = 1;
+    std::vector<uint32_t> ra_pos;
+    ra_pos.reserve(N*repeat);
     for(int i=0;i<N*repeat;i++){
         ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
     flag = true;
     double randomaccesstime = 0.0;
+    codec.search_node.reserve(8);
     start = getNow();
+
+    // codec.art.Build(codec.art_build_vec);
     leco_type mark = 0;
-    for (auto index: ra_pos)
+    int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
+
+    for (int i=0;i<ra_pos.size();i++)
     {
+        auto index=ra_pos[i];
+        if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
 
         // leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index % block_size, NULL, N);
-        leco_type tmpvalue = codec.randomdecodeArray8(block_start_vec[(int)index / block_size], index, NULL, N);
-
+        leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
         mark += tmpvalue;
-
+        segment_id=next_segment_id;
         if (data[index] != tmpvalue)
         {
-
             std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+            std::cout << "something wrong! random access failed" << std::endl;
             flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
             break;
         }
     }
+    
     end = getNow();
     randomaccesstime += (end - start);
-
+    std::cout<< mark << std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
 
     
-    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<std::endl;
+    std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<" "<<cr_through<<std::endl;
 
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)
