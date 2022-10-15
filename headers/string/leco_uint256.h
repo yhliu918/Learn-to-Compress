@@ -303,7 +303,12 @@ public:
     return divmod(*this, rhs).first;
   }
 
-
+  template <typename T, typename = typename std::enable_if<
+    std::is_integral<T>::value, T>::type>
+  leco_uint256 operator/(const T& rhs) const
+  {
+    return *this / leco_uint256(rhs);
+  }
 
   leco_uint256 operator*(const leco_uint256& rhs) const
   {
