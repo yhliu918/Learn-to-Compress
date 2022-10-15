@@ -1,0 +1,4 @@
+piecewise_cost_dp fb/fb-289000.txt 145 38.61 0.02722
+piecewise_cost_dp wf/wiki.txt 1038 0.5757 1.849
+piecewise_cost_dp house_price.txt 20 5.791 0.5198
+piecewise_cost_dp movieid.txt 100000 33.689 0.08989

@@ -24,6 +24,7 @@ public:
   using IntegerCODEC::decodeArray8;
   using IntegerCODEC::randomdecodeArray8;
   using IntegerCODEC::init;
+  using IntegerCODEC::summation;
 
 
   int block_num;
