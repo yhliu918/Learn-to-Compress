@@ -28,16 +28,16 @@ int main(int argc, const char* argv[]) {
     return 0;
   }
   int counter = 0;
-  // int cut = 20000;
+  int cut = 0;
   while (srcFile.good()) {
-    // if(counter==cut){
-    //   break;
-    // } 
+    
     counter++;
     uint32_t next;
     srcFile >> next;
     if (!srcFile.good()) { break; }
-    data.push_back(next);
+    if(counter>cut){
+      data.push_back(next);
+    } 
 
   }
   srcFile.close();
@@ -65,10 +65,10 @@ int main(int argc, const char* argv[]) {
     if(i==blocks-1){
       block_length = N - i*block_size;
     }
-    res = codec.encodeArray8(data.data() + (i * block_size), block_size, res, block_length);
-    totalsize += codec.get_block_nums();
+    res = codec.encodeArray8(data.data() + (i * block_size), block_length, res, i);
     
   }
+  totalsize = codec.get_block_nums();
 
   
   double origin_size = (sizeof(uint32_t) * N * 1.0);
@@ -122,8 +122,7 @@ int main(int argc, const char* argv[]) {
 
   for (auto index: ra_pos) {
 
-
-    uint32_t tmpvalue = codec.randomdecodeArray8(res, index % block_size, placeholder, index / block_size);
+    uint32_t tmpvalue = codec.randomdecodeArray8(res, index, placeholder, index / block_size);
     mark += tmpvalue;
 
     if(data[index]!=tmpvalue){

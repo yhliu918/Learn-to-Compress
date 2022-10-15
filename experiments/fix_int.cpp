@@ -45,9 +45,7 @@ int main(int argc, const char *argv[])
         std::cout << "Empty vector" << std::endl;
         return 0;
     }
-    // std::cout << "vector size = " << data.size() << std::endl;
-    // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-    //           << std::endl;
+    
 
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
@@ -55,13 +53,12 @@ int main(int argc, const char *argv[])
     {
         blocks++;
     }
-    // handle with the last block, maybe < block_size
-    // std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
     int delta = 32;
     codec.init(blocks, block_size, delta);
     std::vector<uint8_t *> block_start_vec;
     std::vector<int> start_index;
     
+
     int totalsize = 0;
     double start = getNow();
     for (int i = 0; i < blocks; i++)
@@ -82,6 +79,7 @@ int main(int argc, const char *argv[])
     }
     double end = getNow();
     double compress_time = end - start;
+
     double compress_throughput = N * sizeof(uint32_t) / (compress_time * 1000000000);
 
     double origin_size = (sizeof(uint32_t) * N * 1.0);

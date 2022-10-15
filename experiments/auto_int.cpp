@@ -1,14 +1,3 @@
-//
-// A simple example to get you started with the library.
-// You can compile and run this example like so:
-//
-//   make example
-//   ./example
-//
-//  Warning: If your compiler does not fully support C++11, some of
-//  this example may require changes.
-//
-
 #include "../headers/common.h"
 #include "../headers/codecfactory.h"
 #include "../headers/caltime.h"
@@ -57,15 +46,12 @@ int main(int argc, const char* argv[]) {
     std::cout << "Empty vector" << std::endl;
     return 0;
   }
-  // std::cout << "vector size = " << data.size() << std::endl;
-  // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-  //   << std::endl;
 
 
   int blocks = 1;
   int blocks_real = N;
   int block_size = data.size() / blocks;
-  // int delta = (1<<30);
+
 
 
   codec.init(blocks, block_size, delta);
