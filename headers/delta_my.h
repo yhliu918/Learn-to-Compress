@@ -18,6 +18,7 @@ namespace Codecset
         using IntegerCODEC::init;
         using IntegerCODEC::randomdecodeArray;
         using IntegerCODEC::randomdecodeArray8;
+        using IntegerCODEC::summation;
 
         int block_num;
         int block_size;
@@ -87,45 +88,49 @@ namespace Codecset
 
         uint32_t *decodeArray8(uint8_t *in, const size_t length, uint32_t *out, size_t nvalue)
         {
-            uint8_t maxerror = in[0];
-            in++;
-            uint32_t code = in[0];
-            code += (in[1]<<8);
-            code += (in[2]<<16);
-            code += (in[3]<<24);
-            in+=4;
-            int *delta = new int[length];
-            if(maxerror==0){
-                for(uint32_t i=0;i<length;i++){
-                    out[i] = code;
+            uint32_t* res = out;
+            //start_index + bit + theta0 + theta1 + numbers + delta
+            uint8_t* tmpin = in;
+            uint8_t maxerror = tmpin[0];
+            tmpin++;
+            uint32_t base;
+            memcpy(&base, tmpin, sizeof(base));
+            tmpin += sizeof(uint32_t);
+            if (maxerror) {
+                res[0] = base;
+                read_all_bit_Delta<uint32_t>(tmpin, 0, length - 1, maxerror, base, res + 1);
+            }
+            else {
+                for (int j = 0;j < length;j++) {
+                    res[j] = base;
                 }
-                return out;
             }
-            if(maxerror>=32){
-                
-                read_all_default(in ,0,0, length, maxerror,0,0, out);
-                return out;
-            }
-            else{
-        
-                read_all_bit_only(in ,length-1, maxerror, &delta[1]);
-            }
-            int delta_up_till_now=0;
-            out[0]=code;
-            for(uint32_t i=1;i<length;i++){
-                delta_up_till_now+=delta[i];
-                out[i] = code+delta_up_till_now;
 
-            }
-            free(delta);
             return out;
 
         }
         uint32_t randomdecodeArray8(uint8_t *in, const size_t l, uint32_t *out, size_t nvalue)
         {
-            out = decodeArray8(in, block_size, out,nvalue);
+            uint8_t* tmpin = in;
+            uint8_t maxbits;
+            memcpy(&maxbits, tmpin, sizeof(uint8_t));
+            tmpin += sizeof(uint8_t);
 
-            return out[l];
+            if (maxbits == sizeof(uint32_t) * 8) {
+                uint32_t tmp_val = reinterpret_cast<uint32_t*>(tmpin)[l];
+                return tmp_val;
+            }
+
+            uint32_t base;
+            memcpy(&base, tmpin, sizeof(base));
+            tmpin += sizeof(base);
+
+            uint32_t tmp_val = base;
+            if (maxbits) {
+                tmp_val = read_Delta_int(tmpin, maxbits, l, base);
+            }
+            return tmp_val;
+
         }
         uint64_t summation( uint8_t *in, const size_t l, size_t nvalue){
     

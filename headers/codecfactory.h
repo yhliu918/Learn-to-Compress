@@ -22,6 +22,8 @@
 #include "piecewise_cost_lookahead.h"
 #include "piecewise_cost_dp.h"
 #include "piecewise_fix_op.h"
+#include "piecewise_fix_op_lp.h"
+#include "piecewise_fix_op_lp_cost.h"
 #include "piecewise_fix_op_minimize_maxerror.h"
 #include "piecewise_fix_op_minimize_maxerror_round.h"
 #include "piecewise_fix_op_round.h"
@@ -43,7 +45,6 @@
 #include "variablebyte.h"
 #include "snappy.h"
 #include "delta_my.h"
-#include "delta.h"
 #include "piecewise_fix_delta.h"
 
 
@@ -102,37 +103,18 @@ static inline CodecMap initializefactory() {
   map["FOR_my"]= new FOR_my();
   map["rle"]= new rle();
   map["delta_my"] = new delta_my();
-  map["delta"] = new delta();
-  map["piecewise"]= new piecewise();
   map["piecewise_fiting"]= new piecewise_fiting();
   map["piecewise_cost"]= new piecewiseCost();
   map["piecewise_cost_float"]= new piecewiseCost_float();
   map["piecewise_cost_dp"]= new piecewiseDp();
-  map["piecewise_cost_ahead"]= new piecewiseCostAhead();
-  map["piecewise_double"]= new piecewise_double();
-  map["piecewise_fix"]= new piecewise_fix();
   map["piecewise_fix_op"]= new piecewise_fix_op();
+  map["piecewise_fix_op_lp"]= new piecewise_fix_op_lp();
+  map["piecewise_fix_op_lp_cost"]= new piecewise_fix_op_lp_cost();
   map["piecewise_fix_op_max"]= new piecewise_fix_op_max();
   map["piecewise_fix_op_max_round"]= new piecewise_fix_op_max_round();
   map["piecewise_fix_op_round"]= new piecewise_fix_op_round();
   map["piecewise_fix_op_float"]= new piecewise_fix_op_float();
   map["piecewise_fix_merge"]= new piecewise_fix_merge();
-  map["piecewise_fix_pack"]= new piecewise_fix_pack();
-  map["nonlinear_fix"]= new nonlinear_fix();
-  //map["spline_fix"]= new spline_fix();
-  map["ransac_fix"]= new ransac_fix();
-  map["ransac_outlier_detect"]= new ransac_outlier_detect();
-  map["piecewise_ransac"]= new piecewise_ransac();
-  map["piecewise_outlier_detect"] = new piecewise_outlier_detect();
-  map["piecewise_fanout"]= new piecewise_fanout();
-  map["piecewise_multi_fanout"]= new piecewise_multi_fanout();
-  map["piecewise_varilength"] = new piecewise_varilength();
-  map["piecewise_for"] = new Codecset::CombinedCodec<piecewise_fix, FOR>();
-  map["piecewise_delta"] = new Codecset::CombinedCodec< piecewise_fix,delta_my>();
-  map["delta_for"] = new Codecset::CombinedCodec<delta, FOR>();
-  
-  //map["BP32"] = new CompositeCodec<BP32, VariableByte>;
-  //map["VariableByte"] = new Codecset::VariableByte();
   map["MaskVByte"] = new Codecset::MaskVByte();
   //map["snappy"] = new Codecset::JustSnappy();
   map["copy"] = new Codecset::JustCopy();

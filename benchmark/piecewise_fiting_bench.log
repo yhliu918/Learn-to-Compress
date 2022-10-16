@@ -1,0 +1,11 @@
+method,dataset,blocks,cr,da_ns,ra_ns
+piecewise_fiting,linear_200M_uint32.txt,6,8.47989,3.27839,77.9022
+piecewise_fiting,normal_200M_uint32.txt,44717,21.1009,4.96681,285.911
+piecewise_fiting,books_200M_uint32.txt,1291356,27.663,6.46899,521.512
+piecewise_fiting,fb-289000.txt,877,41.8412,4.59843,61.4394
+piecewise_fiting,wf/wiki.txt,13295,2.08135,1.72406,85.8198
+piecewise_fiting,wf/newman.txt,3140,14.3504,5.05079,41.317
+piecewise_fiting,unigram_freq_count.txt,12395,34.3299,6.58481,86.6661
+piecewise_fiting,hu_freq.txt,2425,0.741342,2.90761,36.9709
+piecewise_fiting,house_price.txt,1940,6.305,1.54972,63.87
+piecewise_fiting,movieid.txt,388457,43.0724,7.41705,390.558

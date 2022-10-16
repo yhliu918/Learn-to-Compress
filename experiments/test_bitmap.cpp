@@ -18,7 +18,7 @@ int main(int argc, const char *argv[])
   IntegerCODEC &codec = *CODECFactory::getFromName(method);
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/" + source_file, std::ios::in);
+  std::ifstream srcFile("../integer_data/" + source_file, std::ios::in);
   if (!srcFile)
   {
     std::cout << "error opening source file." << std::endl;
@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
   srcFile.close();
   int N = data.size();
   std::vector<uint32_t> bitmap;
-  std::ifstream bitFile("/home/zxy/Learn-to-Compress-0510/data/bitmap_random/" + bitmap_name, std::ios::in);
+  std::ifstream bitFile("../data/bitmap_random/" + bitmap_name, std::ios::in);
   std::cout << "../data/bitmap_random/" + bitmap_name << std::endl;
   int k = 0;
   std::vector<uint32_t> bit_pos;

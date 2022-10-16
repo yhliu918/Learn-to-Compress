@@ -4,248 +4,6 @@
 #include "../common.h"
 #include <boost/multiprecision/gmp.hpp>
 
-long_int convertToLongInt(std::string letter)
-{
-  std::string s2 = "";
-  long_int result = 0;
-  int shift = (letter.size() - 1) * 8;
-
-  for (auto i = 0; i < letter.size(); i++)
-  {
-    char x = letter.at(i);
-    result += long_int(x) << shift;
-    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
-    shift -= 8;
-  }
-  return result;
-}
-
-template <typename T>
-inline T convertToASCII(std::string& letter)
-{
-  std::string s2 = "";
-  T result = 0;
-  int shift = (letter.size() - 1) * 8;
-
-  for (auto x:letter)
-  {
-    result += T(x) << (uint8_t)shift;
-    shift -= 8;
-  }
-  return result;
-}
-
-long_int convertToLongInt_subset(int min_ascii, int max_ascii, std::string letter)
-{
-  int set_size = max_ascii - min_ascii + 1;
-  std::string s2 = "";
-  long_int result = 0;
-  for (auto i = 0; i < letter.size(); i++)
-  {
-    char x = letter.at(i);
-
-    if(long_int(x)-min_ascii<long_int(set_size-1)){
-      result *= set_size;
-      result += (long_int(x)-min_ascii);
-    }
-    else{
-      result *= set_size;
-      result += (long_int(set_size-1));
-    }
-    
-    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
-  }
-  return result;
-}
-
-
-template <typename T>
-inline T convertToASCII_subset(int min_ascii, int max_ascii,std::string& letter)
-{
-  int set_size = max_ascii - min_ascii + 1;
-  std::string s2 = "";
-  T result = 0;
-
-  for (auto x:letter)
-  {
-    result *=set_size;
-    result += std::min(T(x)-min_ascii, T(set_size-1));
-  }
-  return result;
-}
-
-
-uint128_t convertTo128(std::string letter)
-{
-  std::string s2 = "";
-  uint128_t result = 0;
-  int shift = (letter.size() - 1) * 8;
-
-  for (auto i = 0; i < letter.size(); i++)
-  {
-    char x = letter.at(i);
-    result += uint128_t(x) << shift;
-    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
-    shift -= 8;
-  }
-
-  return result;
-}
-
-void convertToASCII_mpz(std::string letter, mpz_t *result)
-{
-  mpz_t tmp;
-  mpz_init(tmp);
-
-  int shift = (letter.size() - 1) * 8;
-
-  for (auto i = 0; i < letter.size(); i++)
-  {
-    int x = letter.at(i);
-    // covert int x to mpz_t
-    mpz_set_ui(tmp, x);
-    mpz_mul_2exp(tmp, tmp, shift);
-    mpz_add(*result, *result, tmp);
-    // std::cout<<x<<" "<<*result<<std::endl;
-    shift -= 8;
-  }
-
-  mpz_clear(tmp);
-}
-
-// std::string convertToString(long_int* record){
-//   //std::cout<<sizeof(record)<<std::endl;
-//   std::string val = "";
-//   int k = 0;
-//   int len = (mpz_sizeinbase(record->backend().data(), 2) + 63) /64 ;
-//   // int len = (byte_len+7)/8;
-//   while(len){
-//     //get the lowest 64 bits of the record
-//     uint64_t result = record->backend().data()->_mp_d[k];
-//     std::string s = std::string(reinterpret_cast<char*>(&result));
-//     s = s.substr(0,8);
-//     reverse(s.begin(), s.end());
-//     val = s + val;
-//     k++;
-//     len--;
-//   }
-
-//     return val;
-
-// }
-
-std::string convertToString_long_int(long_int *record)
-{
-  // std::cout<<sizeof(record)<<std::endl;
-  std::string val;
-  int k = 0;
-  int len = (mpz_sizeinbase(record->backend().data(), 2) + 63) / 64;
-  int str_len = len * 8;
-  val.resize(str_len);
-  char *input = reinterpret_cast<char *>(&(record->backend().data()->_mp_d[0]));
-  int i = 0;
-  for (int j = 0; j < 8; ++j)
-  {
-    if (input[str_len - 1 - j] != 0)
-      val[i++] = input[str_len - 1 - j];
-  }
-  for (int j = 8; j < str_len; ++j)
-  {
-    val[i++] = input[str_len - 1 - j];
-  }
-  val.resize(i);
-  return val;
-}
-
-// template <typename T>
-// std::string convertToString(T *record)
-// {
-//   // std::cout<<sizeof(record)<<std::endl;
-//   std::string val;
-//   int k = 0;
-//   int str_len = sizeof(T) * 8;
-//   val.resize(str_len);
-//   char *input = reinterpret_cast<char *>(record);
-//   int i = 0;
-//   for (int j = 0; j < 8; ++j)
-//   {
-//     if (input[str_len - 1 - j] != 0)
-//       val[i++] = input[str_len - 1 - j];
-//   }
-//   for (int j = 8; j < str_len; ++j)
-//   {
-//     val[i++] = input[str_len - 1 - j];
-//   }
-//   val.resize(i);
-//   return val;
-// }
-
-template <typename T>
-inline std::string convertToString(T *record, int str_len)
-{
-  // std::cout<<sizeof(record)<<std::endl;
-  const char * res = reinterpret_cast<const char *>(record);
-  std::string val = std::string(res , str_len);
-  reverse(val.begin(), val.end());
-  //std::string ret(val.rbegin(),val.rend());
-  return val;
-
-}
-
-template <typename T>
-inline std::string convertToString_subset(int min_ascii, int max_ascii,T *record, int str_len)
-{
-  // std::cout<<sizeof(record)<<std::endl;
-  int set_size = max_ascii - min_ascii + 1;
-  char* res = new char[str_len];
-  int i = str_len;
-  while((*record)>0){
-    i--;
-    T result = (*record)/set_size;
-		uint32_t m = (*record) - result*set_size;
-    res[i]= (char)(m+min_ascii);
-		(*record)=result;
-
-	}
-  while(i){
-    i--;
-    res[i]= (char)(min_ascii);
-  }
-  std::string val = std::string(res , str_len);
-  // reverse(val.begin(), val.end());
-  //std::string ret(val.rbegin(),val.rend());
-  return val;
-
-}
-
-
-std::string convertToString_mpz(mpz_t *record)
-{
-  // std::cout<<sizeof(record)<<std::endl;
-  std::string val = "";
-  int len = (mpz_sizeinbase(*record, 2) + 63) / 64;
-  while (len)
-  {
-    // copy the value of record to uint64 result
-    uint64_t result = 0;
-    mpz_export(&result, NULL, -1, sizeof(uint64_t), 0, 0, *record);
-    // std::cout<<result<<std::endl;
-
-    std::string s = std::string(reinterpret_cast<char *>(&result));
-    s = s.substr(0, 8);
-    reverse(s.begin(), s.end());
-    val = s + val;
-    mpz_div_2exp(*record, *record, 64);
-    len--;
-  }
-
-  return val;
-}
-
-int random(int m)
-{
-    return rand() % m;
-}
 
 template <typename T>
 inline uint32_t bits_T(T v)
@@ -299,6 +57,221 @@ inline uint32_t bits_T(T v)
   }
   
   return r;
+}
+
+
+
+long_int convertToLongInt(std::string letter)
+{
+  std::string s2 = "";
+  long_int result = 0;
+  int shift = (letter.size() - 1) * 8;
+
+  for (auto i = 0; i < letter.size(); i++)
+  {
+    char x = letter.at(i);
+    result += long_int(x) << shift;
+    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
+    shift -= 8;
+  }
+  return result;
+}
+
+template <typename T>
+inline T convertToASCII(std::string& letter)
+{
+  std::string s2 = "";
+  T result = 0;
+  int shift = (letter.size() - 1) * 8;
+
+  for (auto x:letter)
+  {
+    result += T(x) << (uint8_t)shift;
+    shift -= 8;
+  }
+  return result;
+}
+
+
+// *******************  SUBSET  *******************
+long_int convertToLongInt_subset(int min_ascii, int max_ascii, std::string letter)
+{
+  int set_size = max_ascii - min_ascii + 1;
+  std::string s2 = "";
+  long_int result = 0;
+  for (auto i = 0; i < letter.size(); i++)
+  {
+    char x = letter.at(i);
+
+    if(long_int(x)-min_ascii<long_int(set_size-1)){
+      result *= set_size;
+      result += (long_int(x)-min_ascii);
+    }
+    else{
+      result *= set_size;
+      result += (long_int(set_size-1));
+    }
+    
+    // std::cout<<x<<" "<<long_int(x)<<" "<<(long_int(x)<<shift)<<" "<<result<<std::endl;
+  }
+  return result;
+}
+
+
+template <typename T>
+inline T convertToASCII_subset(int min_ascii, int max_ascii,std::string& letter)
+{
+  int set_size = max_ascii - min_ascii + 1;
+  std::string s2 = "";
+  T result = 0;
+
+  for (auto x:letter)
+  {
+    result *=set_size;
+    result += std::min(T(x)-min_ascii, T(set_size-1));
+  }
+  return result;
+}
+
+
+template <typename T>
+inline std::string convertToString_subset(int min_ascii, int max_ascii,T *record, int str_len)
+{
+  // std::cout<<sizeof(record)<<std::endl;
+  int set_size = max_ascii - min_ascii + 1;
+  char* res = new char[str_len];
+  int i = str_len;
+  while((*record)>0){
+    i--;
+    T result = (*record)/set_size;
+		uint32_t m = (*record) - result*set_size;
+    res[i]= (char)(m+min_ascii);
+		(*record)=result;
+
+	}
+  while(i){
+    i--;
+    res[i]= (char)(min_ascii);
+  }
+  std::string val = std::string(res , str_len);
+  return val;
+
+}
+
+
+// *******************  SUBSET_SHIFT  *******************
+
+
+template <typename T>
+inline std::string convertToString_subset_shift(int min_ascii, int max_ascii,T *record, int str_len)
+{
+  int set_size = max_ascii - min_ascii + 1;
+  int shift_size = bits_T<uint32_t>(set_size) -1;
+  char* res = new char[str_len];
+  int shift = (str_len-1) * shift_size;
+  uint32_t mask = (1<<shift_size)-1;
+  int i = str_len;
+  while(i){
+    i--;
+    res[i]= (uint32_t)((*record) & mask) + min_ascii;
+    (*record) >>= shift_size;
+  }
+
+  std::string val = std::string(res , str_len);
+  return val;
+
+}
+
+
+
+
+
+void convertToASCII_mpz(std::string letter, mpz_t *result)
+{
+  mpz_t tmp;
+  mpz_init(tmp);
+
+  int shift = (letter.size() - 1) * 8;
+
+  for (auto i = 0; i < letter.size(); i++)
+  {
+    int x = letter.at(i);
+    // covert int x to mpz_t
+    mpz_set_ui(tmp, x);
+    mpz_mul_2exp(tmp, tmp, shift);
+    mpz_add(*result, *result, tmp);
+    // std::cout<<x<<" "<<*result<<std::endl;
+    shift -= 8;
+  }
+
+  mpz_clear(tmp);
+}
+
+
+std::string convertToString_long_int(long_int *record)
+{
+  // std::cout<<sizeof(record)<<std::endl;
+  std::string val;
+  int k = 0;
+  int len = (mpz_sizeinbase(record->backend().data(), 2) + 63) / 64;
+  int str_len = len * 8;
+  val.resize(str_len);
+  char *input = reinterpret_cast<char *>(&(record->backend().data()->_mp_d[0]));
+  int i = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    if (input[str_len - 1 - j] != 0)
+      val[i++] = input[str_len - 1 - j];
+  }
+  for (int j = 8; j < str_len; ++j)
+  {
+    val[i++] = input[str_len - 1 - j];
+  }
+  val.resize(i);
+  return val;
+}
+
+
+template <typename T>
+inline std::string convertToString(T *record, int str_len)
+{
+  // std::cout<<sizeof(record)<<std::endl;
+  const char * res = reinterpret_cast<const char *>(record);
+  std::string val = std::string(res , str_len);
+  reverse(val.begin(), val.end());
+  //std::string ret(val.rbegin(),val.rend());
+  return val;
+
+}
+
+
+
+std::string convertToString_mpz(mpz_t *record)
+{
+  // std::cout<<sizeof(record)<<std::endl;
+  std::string val = "";
+  int len = (mpz_sizeinbase(*record, 2) + 63) / 64;
+  while (len)
+  {
+    // copy the value of record to uint64 result
+    uint64_t result = 0;
+    mpz_export(&result, NULL, -1, sizeof(uint64_t), 0, 0, *record);
+    // std::cout<<result<<std::endl;
+
+    std::string s = std::string(reinterpret_cast<char *>(&result));
+    s = s.substr(0, 8);
+    reverse(s.begin(), s.end());
+    val = s + val;
+    mpz_div_2exp(*record, *record, 64);
+    len--;
+  }
+
+  return val;
+}
+
+int random(int m)
+{
+    return rand() % m;
 }
 
 
@@ -417,47 +390,6 @@ uint32_t bits_mpz(mpz_t *v)
     r += 2;
   }
   if (mpz_cmp(*v, imm_1) >= 0)
-  {
-    r += 1;
-  }
-  return r;
-}
-
-uint32_t bits_128(uint128_t v)
-{
-  uint32_t r(0);
-
-  if (v >= ((uint128_t)1 << 63))
-  {
-    v >>= 64;
-    r += 64;
-  }
-  if (v >= ((uint128_t)1 << 31))
-  {
-    v >>= 32;
-    r += 32;
-  }
-  if (v >= ((uint128_t)1 << 15))
-  {
-    v >>= 16;
-    r += 16;
-  }
-  if (v >= ((uint128_t)1 << 7))
-  {
-    v >>= 8;
-    r += 8;
-  }
-  if (v >= ((uint128_t)1 << 3))
-  {
-    v >>= 4;
-    r += 4;
-  }
-  if (v >= ((uint128_t)1 << 1))
-  {
-    v >>= 2;
-    r += 2;
-  }
-  if (v >= (uint128_t)1)
   {
     r += 1;
   }
