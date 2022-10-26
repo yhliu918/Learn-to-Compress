@@ -8,3 +8,4 @@ string_data
 scripts/leco_scripts/*
 scripts/drafts/*
 scripts/paper_scripts/.ipynb_checkpoints/*
+*.pdf

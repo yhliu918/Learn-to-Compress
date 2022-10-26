@@ -13,7 +13,7 @@ import sys, os
 
 def calculate_lp(filename,dataset_name, blocks):
     data = []
-    with open('/home/lyh/Learn-to-Compress/integer_data/'+filename,'r') as ff:
+    with open('../integer_data/'+filename,'r') as ff:
         for lines in ff:
             if len(lines) > 1:
                 data.append(int(lines[:-1]))
@@ -21,7 +21,7 @@ def calculate_lp(filename,dataset_name, blocks):
     N = len(data)
 
     block_start_idx = []
-    with open('/home/lyh/Learn-to-Compress/build/leco_lp/'+dataset_name+'_segment.txt','r') as ff:
+    with open('../build/leco_lp/'+dataset_name+'_segment.txt','r') as ff:
         for lines in ff:
             if len(lines) > 1:
                 block_start_idx.append(int(lines[:-1]))

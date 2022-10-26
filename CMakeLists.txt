@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(example
     DESCRIPTION  "C++ library to compress with learned methods"
-    HOMEPAGE_URL "https://github.com/yhliu918/Learn-to-Compress"
 )
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)

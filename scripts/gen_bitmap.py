@@ -85,7 +85,7 @@ def cluster_v0():
                 if cluster > selectivity*NUM_KEYS:
                     continue
                 
-                file_name = f"../data/bitmap_lyh/bitmap_random_{selectivity}_{NUM_KEYS}.txt"
+                file_name = f"../data/bitmap/bitmap_random_{selectivity}_{NUM_KEYS}.txt"
                 print(file_name)
                 if not os.path.exists(file_name):
                     start_ind = []
