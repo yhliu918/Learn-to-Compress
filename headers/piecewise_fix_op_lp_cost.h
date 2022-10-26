@@ -26,7 +26,7 @@ namespace Codecset {
         int block_size;
         std::vector<double> theta0_vec;
         std::vector<double> theta1_vec;
-        std::string filename = "/home/lyh/Learn-to-Compress/scripts/leco_lp_cost/house_price.log";
+        std::string filename = "../scripts/leco_lp_cost/house_price.log";
 
         void init(int blocks, int blocksize, int extra) {
             block_num = blocks;

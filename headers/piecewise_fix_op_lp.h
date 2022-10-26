@@ -32,7 +32,7 @@ namespace Codecset {
         void init(int blocks, int blocksize, int extra) {
             block_num = blocks;
             block_size = blocksize;
-            std::ifstream srcFile("/home/lyh/Learn-to-Compress/scripts/" + filename, std::ios::in);
+            std::ifstream srcFile("../scripts/" + filename, std::ios::in);
             while (srcFile.good())
             {
                 float tmp0;

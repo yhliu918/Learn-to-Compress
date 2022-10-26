@@ -52,10 +52,10 @@ int main(int argc, const char* argv[])
 {
     std::string source_file = std::string(argv[1]);
     // We pick a CODEC
-    std::vector<data_type> data = load_data_binary<data_type>("/home/lyh/Learn-to-Compress/integer_data/"+source_file);
+    std::vector<data_type> data = load_data_binary<data_type>("../integer_data/"+source_file);
 
     // std::vector<uint32_t> data;
-    // std::ifstream srcFile("/home/lyh/Learn-to-Compress/integer_data/"+source_file, std::ios::in);
+    // std::ifstream srcFile("../integer_data/"+source_file, std::ios::in);
     // if (!srcFile.is_open())
     // {
     //     std::cout << "error opening source file." << std::endl;

@@ -13,7 +13,7 @@ import sys, os
 
 def calculate_lp(filename, blocks):
     data = []
-    with open('/home/lyh/Learn-to-Compress/integer_data/'+filename,'r') as ff:
+    with open('../integer_data/'+filename,'r') as ff:
         for lines in ff:
             if len(lines) > 1:
                 data.append(int(lines[:-1]))
