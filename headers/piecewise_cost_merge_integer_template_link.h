@@ -172,6 +172,9 @@ namespace Codecset {
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
 
+            // if(origin_index<=2778286 && 2778286<=end_index){
+            //     std::cout<<"hello"<<std::endl;
+            // }
             if (origin_index == end_index) {
                 return newsegment_1(origin_index, origin_index);
             }
@@ -240,6 +243,9 @@ namespace Codecset {
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
             out[0] = (uint8_t)delta_final_max_bit;
+            if(abs(final_slope) >= 0.00000001){ 
+                out[0] += (1<<7); // if first bit of out[0] is 1 means have slope, else slope = 0
+            }
             out++;
 
             if (delta_final_max_bit == sizeof(T) * 8) {
@@ -260,10 +266,10 @@ namespace Codecset {
 
             memcpy(out, &theta0, sizeof(theta0));
             out += sizeof(theta0);
-
-            memcpy(out, &final_slope, sizeof(final_slope));
-            out += sizeof(final_slope);
-
+            if(abs(final_slope) >= 0.00000001){ 
+                memcpy(out, &final_slope, sizeof(final_slope));
+                out += sizeof(final_slope);
+            }
 
             if (delta_final_max_bit) {
                 out = write_delta_int_T(delta_final, signvec, out, delta_final_max_bit, (end_index - origin_index + 1));
@@ -285,7 +291,7 @@ namespace Codecset {
             uint8_t* out = descriptor;
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
-            out[0] = (uint8_t)126; // this means that this segment only has two points
+            out[0] = (uint8_t)254; // this means that this segment only has two points
             out++;
             memcpy(out, &array[origin_index], sizeof(T));
             out += sizeof(T);
@@ -307,7 +313,7 @@ namespace Codecset {
             uint8_t* out = descriptor;
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
-            out[0] = (uint8_t)127; // this means that this segment only has one point
+            out[0] = (uint8_t)255; // this means that this segment only has one point
             out++;
             memcpy(out, &array[origin_index], sizeof(T));
             out += sizeof(T);
@@ -338,9 +344,9 @@ namespace Codecset {
             Segment<int64_t>* current = &head;
             int min_second_bit = 10000;
             int max_second_bit = -1;
-            int64_t delta_prev = array[nvalue * block_size + 1] - array[nvalue * block_size];
+            int64_t delta_prev = int64_t(array[nvalue * block_size + 1]) - int64_t(array[nvalue * block_size]);
             for (int i = nvalue * block_size + 1;i < nvalue * block_size + length - 1;i++) {
-                int64_t delta = array[i + 1] - array[i];
+                int64_t delta = int64_t(array[i + 1]) - int64_t(array[i]);
                 int second_delta_bit = cal_bits(delta_prev, delta);
                 if (second_delta_bit < min_second_bit) {
                     min_second_bit = second_delta_bit;
@@ -673,8 +679,8 @@ namespace Codecset {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index_total.push_back(length);
-            float theta0;
-            float theta1;
+            float theta0 = 0;
+            float theta1 = 0;
             uint8_t maxerror;
             for (int i = 0;i < block_start_vec_total.size();i++) {
                 int segment_length = segment_index_total[i + 1] - segment_index_total[i];
@@ -682,14 +688,14 @@ namespace Codecset {
                 tmpin += sizeof(uint32_t);
                 maxerror = tmpin[0];
                 tmpin++;
-                if (maxerror == 127) {
+                if (maxerror == 255) {
                     T tmp_val;
                     memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                     res[0] = tmp_val;
                     res++;
                     continue;
                 }
-                if (maxerror == 126) {
+                if (maxerror == 254) {
                     T tmp_val;
                     memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                     res[0] = tmp_val;
@@ -699,19 +705,23 @@ namespace Codecset {
                     res++;
                     continue;
                 }
-
-
+                if(maxerror==sizeof(T)*8){
+                    memcpy(res, tmpin, sizeof(T)*segment_length);
+                    res+=segment_length;
+                    continue;
+                }
+                
                 memcpy(&theta0, tmpin, sizeof(theta0));
                 tmpin += sizeof(theta0);
-                memcpy(&theta1, tmpin, sizeof(theta1));
-                tmpin += sizeof(theta1);
+                theta1 = 0;
+                if((maxerror>>7) == 1){
+                    memcpy(&theta1, tmpin, sizeof(theta1));
+                    tmpin += sizeof(theta1);
+                    maxerror -= 128;
+                } 
                 if (maxerror) {
-                    if (maxerror >= sizeof(T) * 8 - 1) {
-                        // read_all_default(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
-                    }
-                    else {
-                        read_all_bit_fix<T>(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
-                    }
+                    read_all_bit_fix<T>(tmpin, 0, 0, segment_length, maxerror, theta1, theta0, res);
+                    
                 }
                 else {
                     for (int j = 0;j < segment_length;j++) {
@@ -769,16 +779,16 @@ namespace Codecset {
             memcpy(&maxerror, tmpin, 1);
             tmpin++;
             if (maxerror == sizeof(T) * 8) {
-                T tmp_val = reinterpret_cast<T*>(tmpin)[to_find];
+                T tmp_val = reinterpret_cast<T*>(tmpin)[to_find-start_ind];
                 return tmp_val;
             }
 
             T tmp_val = 0;
-            if (maxerror == 127) {
+            if (maxerror == 255) {
                 memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                 return tmp_val;
             }
-            if (maxerror == 126) {
+            if (maxerror == 254) {
                 if (to_find - start_ind == 0) {
                     memcpy(&tmp_val, tmpin, sizeof(tmp_val));
                 }
@@ -789,13 +799,17 @@ namespace Codecset {
                 return tmp_val;
             }
 
+
             float theta0;
             memcpy(&theta0, tmpin, sizeof(theta0));
             tmpin += sizeof(theta0);
 
-            float theta1;
-            memcpy(&theta1, tmpin, sizeof(theta1));
-            tmpin += sizeof(theta1);
+            float theta1=0;
+            if((maxerror>>7) == 1){
+                memcpy(&theta1, tmpin, sizeof(theta1));
+                tmpin += sizeof(theta1);
+                maxerror -= 128;
+            } 
 
 
             if (maxerror) {
@@ -836,8 +850,8 @@ namespace Codecset {
             return total_byte_total;
         }
         uint32_t get_total_blocks() {
-            std::cout << "split time " << split_time << std::endl;
-            std::cout << "merge time " << merge_time << std::endl;
+            // std::cout << "split time " << split_time << std::endl;
+            // std::cout << "merge time " << merge_time << std::endl;
             return block_start_vec_total.size();
         }
 

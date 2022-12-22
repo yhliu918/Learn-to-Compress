@@ -73,7 +73,7 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>("../integer_data/" + source_file);
+    std::vector<leco_type> data = load_data<leco_type>(  source_file);
 
     int N = data.size();
 

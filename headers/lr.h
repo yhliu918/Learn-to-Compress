@@ -117,9 +117,12 @@ struct lr_int{//theta0+theta1*x
 template <typename T,
           typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
 inline uint32_t bits_int_T(T v) {
-  assert(v > 0);
+  if(v<0){
+    v=-v;
+  }
   if (v == 0) return 0;
 #if defined(__clang__) || defined(__GNUC__)
+  // std::cout<<__builtin_clzll(v)<<" "<<64 - __builtin_clzll(v)<<std::endl;
   return 64 - __builtin_clzll(v);
 #else
   assert(false);
@@ -129,6 +132,9 @@ template <typename T, typename std::enable_if<std::is_same<__uint128_t, T>::valu
                                                   std::is_same<leco_uint256, T>::value,
                                               bool>::type = true>
 inline uint32_t bits_int_T(T v) {
+  if(v<0){
+    v = -v;
+  }
   uint32_t r(0);
   constexpr int length = sizeof(T) * 8;
   if constexpr (length > 255) {

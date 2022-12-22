@@ -179,7 +179,9 @@ namespace Codecset {
             if (max_error)
             {
                 max_bit = bits_int_T(max_error) + 1;
+                // std::cout<<origin_index<<" "<<end_index<<" "<<unsigned(max_bit)<<std::endl;
             }
+            
 
             if (max_bit > sizeof(T) * 8) {
                 max_bit = sizeof(T) * 8;
@@ -219,6 +221,7 @@ namespace Codecset {
             segment_index_total.push_back(origin_index);
             segment_length_total.push_back(segment_size);
             total_byte_total += segment_size;
+            // std::cout<<origin_index<<" "<<total_byte_total<<std::endl;
         }
 
         void newsegment_2(uint32_t origin_index, uint32_t end_index) {
@@ -272,7 +275,13 @@ namespace Codecset {
             int max_second_bit = -1;
             int64_t delta_prev_bit = bits_int_T(array[nvalue * block_size + 1] - array[nvalue * block_size]);
             for (int i = nvalue * block_size + 1;i < nvalue * block_size + length - 1;i++) {
-                int64_t delta_bit = bits_int_T(array[i + 1] - array[i]);
+                int64_t delta_bit = 0;
+                if(array[i+1]<array[i]){
+                    delta_bit = bits_int_T(array[i] - array[i + 1]);
+                }
+                else{
+                    delta_bit = bits_int_T(array[i + 1] - array[i]);
+                }
                 int second_delta_bit = delta_bit - delta_prev_bit;
                 if (second_delta_bit < min_second_bit) {
                     min_second_bit = second_delta_bit;
@@ -397,11 +406,12 @@ namespace Codecset {
 
             current = (&head)->next;
             while (current->next != &tail) {
-              
+                // std::cout<<current->start_index<<std::endl;
                 segment_index.push_back(current->start_index );
                 current = current->next;
             }
             if(current->next == &tail){
+                // std::cout<<current->start_index<<std::endl;
                 segment_index.push_back(current->start_index);
             }
 
@@ -550,6 +560,11 @@ namespace Codecset {
                     res++;
                     continue;
                 }
+                if(maxerror==sizeof(T)*8){
+                    memcpy(res, tmpin, sizeof(T)*segment_length);
+                    res+=segment_length;
+                    continue;
+                }
 
                 T base;
                 memcpy(&base, tmpin, sizeof(T));
@@ -600,7 +615,7 @@ namespace Codecset {
             }
 
             if (maxbits == sizeof(T) * 8) {
-                T tmp_val = reinterpret_cast<T*>(tmpin)[to_find];
+                T tmp_val = reinterpret_cast<T*>(tmpin)[to_find-start_ind];
                 return tmp_val;
             }
 
@@ -641,8 +656,8 @@ namespace Codecset {
             return total_byte_total;
         }
         uint32_t get_total_blocks() {
-            std::cout << "split time " << split_time << std::endl;
-            std::cout << "merge time " << merge_time << std::endl;
+            // std::cout << "split time " << split_time << std::endl;
+            // std::cout << "merge time " << merge_time << std::endl;
             return block_start_vec_total.size();
         }
 
