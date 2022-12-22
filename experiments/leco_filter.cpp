@@ -6,7 +6,7 @@ int random(int m)
 {
     return rand() % m;
 }
-int filter_range(uint8_t* in, const size_t length, int filter) { 
+int filter_range(uint8_t* in, const size_t length, int filter, uint32_t* out) { 
     // only consider > filter, return [return_value, end] for demo
     double theta0;
     float theta1;
@@ -24,13 +24,13 @@ int filter_range(uint8_t* in, const size_t length, int filter) {
         return length;
     }
     else{
+        
         if (maxerror) {
             read_all_bit_fix_add_range<uint32_t>(tmpin ,0, thre, length, maxerror,theta1,theta0, out);
         }
         else{
             double pred = theta0 + theta1*thre;
             for (int i = 0;i < length;i++) {
-                out[i] = (long long)pred;
                 pred += theta1;
             }
         }
@@ -132,7 +132,7 @@ int main(int argc, const char *argv[])
                 block_length = N - (blocks - 1) * block_size;
             }
 
-            int lower_bound = filter_range(block_start_vec[i], block_length, filter);
+            int lower_bound = filter_range(block_start_vec[i], block_length, filter, recover.data());
 
         }
     }

@@ -27,6 +27,8 @@ target_link_libraries(leco Snappy::snappy gmp gmpxx fsst)
 # make executable doc
 add_executable(fix_int experiments/fix_int.cpp)
 target_link_libraries(fix_int docs Snappy::snappy gmp gmpxx )
+add_executable(leco_filter experiments/leco_filter.cpp)
+target_link_libraries(leco_filter docs Snappy::snappy gmp gmpxx )
 add_executable(auto_int experiments/auto_int.cpp)
 target_link_libraries(auto_int docs Snappy::snappy gmp gmpxx )
 add_executable(leco_int experiments/leco_int_template.cpp)
