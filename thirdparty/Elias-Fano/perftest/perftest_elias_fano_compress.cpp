@@ -47,45 +47,51 @@ static std::vector<T> load_data_binary(const std::string& filename,
     return data;
 }
 
+template <typename T>
+static std::vector<T> load_data(const std::string& filename) {
+    std::vector<T> data;
+    std::ifstream srcFile(filename, std::ios::in);
+    if (!srcFile) {
+        std::cout << "error opening source file." << std::endl;
+        return data;
+    }
+
+    while (srcFile.good()) {
+        T next;
+        srcFile >> next;
+        if (!srcFile.good()) { break; }
+        data.emplace_back(next);
+
+    }
+    srcFile.close();
+
+    return data;
+}
+
 
 int main(int argc, const char* argv[])
 {
     std::string source_file = std::string(argv[1]);
+    int blocks = atoi(argv[2]);
+    int binary = atoi(argv[3]);
     // We pick a CODEC
-    std::vector<data_type> data = load_data_binary<data_type>("../integer_data/"+source_file);
+    // std::vector<data_type> data = load_data_binary<data_type>("/root/Learn-to-Compress/data/"+source_file);
 
-    // std::vector<uint32_t> data;
-    // std::ifstream srcFile("../integer_data/"+source_file, std::ios::in);
-    // if (!srcFile.is_open())
-    // {
-    //     std::cout << "error opening source file." << std::endl;
-    //     return 0;
-    // }
-    // while (srcFile.good())
-    // {
 
-    //     uint32_t next;
-    //     srcFile >> next;
-    //     // std::cout<<next<<std::endl;
-    //     if (!srcFile.good())
-    //     {
-    //         break;
-    //     }
-    //     data.push_back(next);
-    // }
-    // srcFile.close();
+    std::vector<data_type> data;
+    if(!binary){
+        data = load_data<data_type>("" + source_file);
+    }
+    else{
+        data = load_data_binary<data_type>("/root/Learn-to-Compress/data/" + source_file);
+    }
 
     int N = data.size();
-    if (data.size() == 0)
-    {
-        std::cout << "Empty vector" << std::endl;
-        return 0;
-    }
     // std::cout << "vector size = " << data.size() << std::endl;
     // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
     //           << std::endl;
 
-    int blocks = 1;
+    // int blocks = 1;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -94,33 +100,29 @@ int main(int argc, const char* argv[])
     } // handle with the last block, maybe < block_size
     // std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
     int block_length = block_size;
-    uint64_t max_element = data[N-1];
-    // std::vector<succinct::elias_fano *> elias_fano_builders;
+    
+    std::vector<succinct::elias_fano*>  elias_fanos;
     uint64_t totalsize = 0;
-    // for(int i=0;i<blocks;i++)
-    // {
-    //     if (i == blocks - 1)
-    //     {
-    //         block_length = N - (blocks - 1) * block_size;
-    //     }
-    //     succinct::elias_fano::elias_fano_builder bvb(max_element, block_length);
-    //     for(int j=0;j<block_length;j++)
-    //     {
-    //         bvb.push_back(data[i*block_size+j]);
-    //     } 
-    //     succinct::elias_fano ef(&bvb);
-    //     totalsize +=succinct::mapper::size_tree_of(ef)->size;
-    //     std::cout<<totalsize<<std::endl;
-    //     elias_fano_builders.push_back(new succinct::elias_fano(&bvb));
-    // }
     double start_cr = getNow();
-    succinct::elias_fano::elias_fano_builder bvb(max_element, block_length);
-    for(int j=0;j<N;j++)
+    for(int i=0;i<blocks;i++)
     {
-        bvb.push_back(data[j]);
-    } 
-    succinct::elias_fano ef(&bvb);
-    totalsize +=succinct::mapper::size_tree_of(ef)->size;
+        if (i == blocks - 1)
+        {
+            block_length = N - (blocks - 1) * block_size;
+        }
+        uint64_t max_element = data[i*block_size+block_length -1];
+        // std::cout<<max_element<<std::endl;
+        succinct::elias_fano::elias_fano_builder* tmp_bvb_size = new succinct::elias_fano::elias_fano_builder(max_element, block_length);
+        for(int j=0;j<block_length;j++)
+        {
+            (*tmp_bvb_size).push_back(data[i*block_size+j]);
+        } 
+        succinct::elias_fano* ef = new succinct::elias_fano(tmp_bvb_size);
+        elias_fanos.emplace_back(ef);
+        totalsize +=succinct::mapper::size_tree_of(*ef)->size;
+    
+    }
+    
     double end_cr = getNow();
     double compress_time = end_cr - start_cr;
     double compress_throughput = N*sizeof(data_type) / (compress_time*1000000000);
@@ -131,11 +133,20 @@ int main(int argc, const char* argv[])
     // std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
     double decode_all_time = 0;
     double start = getNow();
-    succinct::elias_fano::select_enumerator it(ef, 0);
-    uint64_t mark_da = 0;
-	for (size_t i = 0; i < N; ++i) {
-	    mark_da+=it.next();
-	}
+    block_length = block_size;
+    for(int i=0;i<blocks;i++){
+        // succinct::elias_fano ef = *(elias_fano_builders[i]);
+        if (i == blocks - 1)
+        {
+            block_length = N - (blocks - 1) * block_size;
+        }
+        succinct::elias_fano::select_enumerator it(*elias_fanos[i], 0);
+        uint64_t mark_da = 0;
+        for (size_t i = 0; i < block_length; ++i) {
+            mark_da+=it.next();
+        }
+    }
+    
     double end = getNow();
 
     decode_all_time = end - start;
@@ -163,25 +174,28 @@ int main(int argc, const char* argv[])
         
         // int index = i;
         // uint32_t tmpvalue = (*elias_fano_builders[index/block_size]).select(index%block_size);
-        uint32_t tmpvalue = ef.select(index);
+        // succinct::elias_fano ef(elias_fano_builders[index/block_size]);
+        data_type tmpvalue = elias_fanos[index/block_size]->select(index%block_size);
 
         mark += tmpvalue;
 
-        // if (data[index] != tmpvalue)
-        // {
+        if (data[index] != tmpvalue)
+        {
 
-        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-        //     flag = false;
-        //     std::cout << "something wrong! decompress failed" << std::endl;
-        // }
-        // if (!flag)
-        // {
-        //     break;
-        // }
+            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+            flag = false;
+            std::cout << "something wrong! decompress failed" << std::endl;
+        }
+        if (!flag)
+        {
+            break;
+        }
     }
     end = getNow();
     randomaccesstime += (end - start);
     double ra_ns = randomaccesstime / N * 1000000000;
+    std::ofstream outfile("fix_log", std::ios::app);
+    outfile<<mark<<std::endl;
 
     std::cout<<"Elias-Fano"<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<0<<" "<<compressrate<<" "<<da_ns<<" "<<ra_ns<<" "<<compress_throughput<<std::endl;
 
