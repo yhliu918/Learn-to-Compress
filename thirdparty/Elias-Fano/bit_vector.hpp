@@ -36,6 +36,11 @@ namespace succinct {
                 }
             }
         }
+        bit_vector_builder(bit_vector_builder& other){
+            m_bits.swap(other.m_bits);
+            std::swap(m_size, other.m_size);
+            std::swap(m_cur_word, other.m_cur_word);
+        }
 
         void reserve(uint64_t size) {
             m_bits.reserve(detail::words_for(size));
@@ -178,6 +183,11 @@ namespace succinct {
             m_bits.swap(other.m_bits);
             std::swap(m_size, other.m_size);
             std::swap(m_cur_word, other.m_cur_word);
+        }
+        void copy(bit_vector_builder& other){
+            m_bits.assign(other.m_bits.begin(), other.m_bits.end());
+            m_size = other.m_size;
+            m_cur_word = other.m_cur_word;
         }
 
     private:
@@ -347,6 +357,32 @@ namespace succinct {
         mapper::mappable_vector<uint64_t> const& data() const
         {
             return m_bits;
+        }
+
+        uint8_t* dump(uint8_t* out){
+            uint8_t* res = out;
+            memcpy(res, &m_size, sizeof(m_size));
+            res +=sizeof(m_size);
+            
+            uint32_t size = m_bits.size();
+            memcpy(res, &size, sizeof(uint32_t));
+            res+=sizeof(uint32_t);
+            memcpy(res, m_bits.data(), m_bits.size()*sizeof(uint64_t));
+            res+=m_bits.size()*sizeof(uint64_t);
+            return res;
+        }
+
+        void rebuild(uint8_t* in){
+            uint8_t* tmpin = in;
+            memcpy(&m_size, tmpin, sizeof(m_size));
+            tmpin+=sizeof(m_size);
+            int size = 0;
+            memcpy(&size, tmpin, sizeof(uint32_t));
+            tmpin+=sizeof(uint32_t);
+
+            std::vector<uint64_t> tmp_vec(size);
+            memcpy(tmp_vec.data(), tmpin, size*sizeof(uint64_t));
+            m_bits.steal(tmp_vec);
         }
 
         struct enumerator {

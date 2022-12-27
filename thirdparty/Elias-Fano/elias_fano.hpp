@@ -23,6 +23,15 @@ namespace succinct {
                 assert(m_l < 64); // for the correctness of low_mask
                 m_low_bits.reserve(m * m_l);
             }
+            elias_fano_builder(elias_fano_builder& other){
+                m_n = other.m_n;
+                m_m = other.m_m;
+                m_pos = other.m_pos;
+                m_last = other.m_last;
+                m_l = other.m_l;
+                m_high_bits.copy(other.m_high_bits);
+                m_low_bits.copy(other.m_low_bits);
+            }
 
             inline void push_back(uint64_t i) {
                 // std::cout<<"push_back "<<i<<std::endl;
@@ -210,6 +219,46 @@ namespace succinct {
             uint64_t low_val_e = m_low_bits.get_bits((n + 1) * m_l, m_l);
             return std::make_pair(((high_val_b - n) << m_l) | low_val_b,
                                   ((high_val_e - n - 1) << m_l) | low_val_e);
+        }
+
+        uint8_t * dump(uint8_t* out){
+            uint8_t* res = out;
+            memcpy(res, &m_size, sizeof(m_size));
+            res+=sizeof(m_size);
+            memcpy(res, &m_l, sizeof(m_l));
+            res+=sizeof(m_l);
+            uint8_t* mark = res;
+            uint32_t* size_array = reinterpret_cast<uint32_t*>(mark);
+            res+= sizeof(uint32_t)*4;
+            mark = res;
+            res = m_high_bits.dump(res);
+            size_array[0] = res - mark;
+            uint8_t* mark_move = res;
+            res = m_high_bits_d1.dump(res);
+            size_array[1] = res - mark_move;
+            mark_move = res;
+            res = m_high_bits_d0.dump(res);
+            size_array[2] = res - mark_move;
+            mark_move = res;
+            res = m_low_bits.dump(res);
+            size_array[3] = res - mark_move;
+        
+            return res;
+
+        }
+
+        void rebuild(uint8_t * in){
+            uint8_t * tmpin = in;
+            memcpy(&m_size, tmpin, sizeof(m_size));
+            tmpin += sizeof(m_size);
+            m_l = tmpin[0];
+            tmpin++;
+            uint32_t * tmp = reinterpret_cast<uint32_t*>(tmpin);
+            tmpin+= sizeof(uint32_t)*4;
+            m_high_bits.rebuild(tmpin);
+            m_high_bits_d1.rebuild(tmpin+tmp[0]);
+            m_high_bits_d0.rebuild(tmpin+tmp[0]+tmp[1]);
+            m_low_bits.rebuild(tmpin+tmp[0]+tmp[1]+tmp[2]);
         }
 
         struct select_enumerator {

@@ -74,34 +74,26 @@ int main(int argc, const char* argv[])
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int binary = atoi(argv[3]);
-    // We pick a CODEC
-    // std::vector<data_type> data = load_data_binary<data_type>("/root/Learn-to-Compress/data/"+source_file);
-
 
     std::vector<data_type> data;
     if(!binary){
-        data = load_data<data_type>("" + source_file);
+        data = load_data<data_type>("/root/Learn-to-Compress/data/" + source_file);
     }
     else{
         data = load_data_binary<data_type>("/root/Learn-to-Compress/data/" + source_file);
     }
 
     int N = data.size();
-    // std::cout << "vector size = " << data.size() << std::endl;
-    // std::cout << "vector size = " << data.size() * sizeof(uint32_t) / 1024.0 << "KB"
-    //           << std::endl;
-
-    // int blocks = 1;
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
     {
         blocks++;
     } // handle with the last block, maybe < block_size
-    // std::cout << "Total blocks " << blocks << " block size " << block_size << std::endl;
+    
     int block_length = block_size;
     
-    std::vector<succinct::elias_fano*>  elias_fanos;
+    std::vector<uint8_t*> block_start_vec;
     uint64_t totalsize = 0;
     double start_cr = getNow();
     for(int i=0;i<blocks;i++)
@@ -111,15 +103,22 @@ int main(int argc, const char* argv[])
             block_length = N - (blocks - 1) * block_size;
         }
         uint64_t max_element = data[i*block_size+block_length -1];
-        // std::cout<<max_element<<std::endl;
         succinct::elias_fano::elias_fano_builder* tmp_bvb_size = new succinct::elias_fano::elias_fano_builder(max_element, block_length);
         for(int j=0;j<block_length;j++)
         {
             (*tmp_bvb_size).push_back(data[i*block_size+j]);
         } 
         succinct::elias_fano* ef = new succinct::elias_fano(tmp_bvb_size);
-        elias_fanos.emplace_back(ef);
-        totalsize +=succinct::mapper::size_tree_of(*ef)->size;
+        uint8_t* descriptor = (uint8_t*)malloc(block_length * sizeof(data_type) * 4+1000);
+        uint8_t* res = descriptor;
+        res = ef->dump(descriptor);
+        uint32_t segment_size = res - descriptor;
+        descriptor = (uint8_t*)realloc(descriptor, segment_size);
+        block_start_vec.push_back(descriptor);
+        totalsize += segment_size;
+
+        // elias_fanos.emplace_back(ef);
+        // totalsize +=succinct::mapper::size_tree_of(*ef)->size;
     
     }
     
@@ -129,10 +128,16 @@ int main(int argc, const char* argv[])
 
 
     double compressrate = (totalsize)*100.0 / (sizeof(data_type) * N * 1.0);
-    // std::cout<<"compressed size "<<totalsize<<" uncompressed size "<<4*N<<std::endl;
-    // std::cout << "total compression rate: " << std::setprecision(4) << compressrate << std::endl;
+
+    std::vector<succinct::elias_fano*>  elias_fanos;
     double decode_all_time = 0;
     double start = getNow();
+    for(int i = 0; i< blocks;i++){
+        succinct::elias_fano* ef = new succinct::elias_fano();
+        ef->rebuild(block_start_vec[i]);
+        elias_fanos.push_back(ef);
+    }
+    uint64_t mark_da = 0;
     block_length = block_size;
     for(int i=0;i<blocks;i++){
         // succinct::elias_fano ef = *(elias_fano_builders[i]);
@@ -141,14 +146,15 @@ int main(int argc, const char* argv[])
             block_length = N - (blocks - 1) * block_size;
         }
         succinct::elias_fano::select_enumerator it(*elias_fanos[i], 0);
-        uint64_t mark_da = 0;
         for (size_t i = 0; i < block_length; ++i) {
             mark_da+=it.next();
         }
     }
     
     double end = getNow();
-
+    std::ofstream outfile("fix_log", std::ios::app);
+    outfile<<mark_da<<std::endl;
+    elias_fanos.clear();
     decode_all_time = end - start;
     double da_ns = decode_all_time / N * 1000000000;
 
@@ -162,47 +168,46 @@ int main(int argc, const char* argv[])
     for(int i=0;i<N;i++)
     {
         ra_pos.push_back(random(N));
+        // ra_pos.push_back(i);
     }
 
     double randomaccesstime = 0.0;
     start = getNow();
     uint32_t mark = 0;
     int search_count = N;
+    for(int i = 0; i< blocks;i++){
+        succinct::elias_fano* ef = new succinct::elias_fano();
+        ef->rebuild(block_start_vec[i]);
+        elias_fanos.push_back(ef);
+    }
     for (auto index: ra_pos)
     {
-        // std::cout<<i<<std::endl;
-        
-        // int index = i;
-        // uint32_t tmpvalue = (*elias_fano_builders[index/block_size]).select(index%block_size);
-        // succinct::elias_fano ef(elias_fano_builders[index/block_size]);
+
+        // succinct::elias_fano ef;
+        // ef.rebuild(block_start_vec[index/block_size]);
+        // data_type tmpvalue = ef.select(index%block_size);
         data_type tmpvalue = elias_fanos[index/block_size]->select(index%block_size);
 
         mark += tmpvalue;
 
-        if (data[index] != tmpvalue)
-        {
+        // if (data[index] != tmpvalue)
+        // {
 
-            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-            flag = false;
-            std::cout << "something wrong! decompress failed" << std::endl;
-        }
-        if (!flag)
-        {
-            break;
-        }
+        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+        //     flag = false;
+        //     std::cout << "something wrong! decompress failed" << std::endl;
+        // }
+        // if (!flag)
+        // {
+        //     break;
+        // }
     }
     end = getNow();
     randomaccesstime += (end - start);
     double ra_ns = randomaccesstime / N * 1000000000;
-    std::ofstream outfile("fix_log", std::ios::app);
     outfile<<mark<<std::endl;
 
     std::cout<<"Elias-Fano"<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<0<<" "<<compressrate<<" "<<da_ns<<" "<<ra_ns<<" "<<compress_throughput<<std::endl;
 
-
-    // std::cout << "random decoding time per int: " << std::setprecision(8)
-    //           << randomaccesstime / search_count * 1000000000 << " ns" << std::endl;
-    // std::cout << "random decoding speed: " << std::setprecision(10)
-    //           << search_count / (randomaccesstime * 1000) << std::endl;
 
 }

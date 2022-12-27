@@ -108,6 +108,59 @@ namespace succinct {
                 return m_positions;
             }
 
+            uint8_t* dump(uint8_t* out){
+                uint8_t* res = out;
+                memcpy(res, &m_positions, sizeof(m_positions));
+                res+=sizeof(m_positions);
+                uint32_t size = m_block_inventory.size();
+                memcpy(res, &size, sizeof(uint32_t));
+                res+=sizeof(uint32_t);
+                size = m_subblock_inventory.size();
+                memcpy(res, &size, sizeof(uint32_t));
+                res+=sizeof(uint32_t);
+                size = m_overflow_positions.size();
+                memcpy(res, &size, sizeof(uint32_t));
+                res+=sizeof(uint32_t);
+
+                memcpy(res, m_block_inventory.data(), m_block_inventory.size()*sizeof(int64_t));
+                res+=m_block_inventory.size()*sizeof(int64_t);
+                memcpy(res, m_subblock_inventory.data(), m_subblock_inventory.size()*sizeof(uint16_t));
+                res+=m_subblock_inventory.size()*sizeof(uint16_t);
+                memcpy(res, m_overflow_positions.data(), m_overflow_positions.size()*sizeof(uint64_t));
+                res+=m_overflow_positions.size()*sizeof(uint64_t);
+                return res;
+
+            }
+
+            void rebuild(uint8_t* in){
+                uint8_t* tmpin = in;
+                memcpy(&m_positions, tmpin, sizeof(m_positions));
+                tmpin+=sizeof(m_positions);
+                uint32_t* tmp = reinterpret_cast<uint32_t*>(tmpin);
+                tmpin+=sizeof(uint32_t)*3;
+                if(tmp[0]){
+                    std::vector<int64_t> tmp_vec(tmp[0]);
+                    memcpy(tmp_vec.data(), tmpin, tmp[0]*sizeof(int64_t));
+                    tmpin+=tmp[0]*sizeof(int64_t);
+                    m_block_inventory.steal(tmp_vec);
+                }
+                if(tmp[1]){
+                    std::vector<uint16_t> tmp_vec2(tmp[1]);
+                    memcpy(tmp_vec2.data(), tmpin, tmp[1]*sizeof(uint16_t));
+                    tmpin+=tmp[1]*sizeof(uint16_t);
+                    m_subblock_inventory.steal(tmp_vec2);
+                }
+                if(tmp[2]){
+                    std::vector<uint64_t> tmp_vec3(tmp[2]);
+                    memcpy(tmp_vec3.data(), tmpin, tmp[2]*sizeof(uint64_t));
+                    m_overflow_positions.steal(tmp_vec3);
+                }
+                
+
+                
+
+            }
+
         protected:
 
             static void flush_cur_block(std::vector<uint64_t>& cur_block_positions, std::vector<int64_t>& block_inventory,
