@@ -403,7 +403,7 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
 
   while (start <= end)
   {
-    while (left >= l)
+    while (left >= l && writeind < numbers)
     {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
@@ -1132,7 +1132,7 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
 
   while (start <= end)
   {
-    while (left >= l)
+    while (left >= l && writeind<numbers)
     {
       
       int64_t tmp = decode & (((T)1 << l) - 1);
@@ -1186,7 +1186,7 @@ void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,
 
   while (start <= end)
   {
-    while (left >= l)
+    while (left >= l && writeind <numbers)
     {
       
       T tmpval = decode & (((T)1 << l) - 1);
