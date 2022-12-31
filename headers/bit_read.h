@@ -234,9 +234,9 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
     end++;
   }
 
-  while (start <= end)
+  while (start <= end && writeind < numbers)
   {
-    while (left >= l)
+    while (left >= l && writeind < numbers)
     {
       // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
@@ -257,6 +257,9 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
       *res = (T)decode_val;
       res++;
       writeind++;
+      if(writeind >= numbers){
+        return;
+      }
       left -= l;
       if (left == 0)
       {

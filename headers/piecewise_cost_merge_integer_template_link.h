@@ -172,7 +172,7 @@ namespace Codecset {
 
         void newsegment(uint32_t origin_index, uint32_t end_index) {
 
-            // if(origin_index<=2778286 && 2778286<=end_index){
+            // if(origin_index<=127452 && 127452<=end_index){
             //     std::cout<<"hello"<<std::endl;
             // }
             if (origin_index == end_index) {
@@ -181,14 +181,18 @@ namespace Codecset {
             if (end_index == origin_index + 1) {
                 return newsegment_2(origin_index, end_index);
             }
-            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T) * 4);
+            // if(origin_index==9980){
+            //     std::cout<<"heloo"<<std::endl;
+            // }
+            // std::cout<<origin_index<<" "<<(end_index - origin_index + 1) <<std::endl;
+            uint8_t* descriptor = (uint8_t*)malloc((end_index - origin_index + 1) * sizeof(T) * 4+200);
             uint8_t* out = descriptor;
             int length = end_index - origin_index + 1;
 
             lr_int_T<T> mylr;
             mylr.caltheta(array + origin_index, length);
             float final_slope = mylr.theta1;
-            float theta0 = mylr.theta0;
+            double theta0 = mylr.theta0;
 
             int64_t max_error_delta = INT64_MIN;
             int64_t min_error_delta = INT64_MAX;
@@ -243,7 +247,7 @@ namespace Codecset {
             memcpy(out, &origin_index, sizeof(origin_index));
             out += sizeof(origin_index);
             out[0] = (uint8_t)delta_final_max_bit;
-            if(abs(final_slope) >= 0.00000001){ 
+            if(abs(final_slope) >= 0.00000001 && delta_final_max_bit != sizeof(T) * 8){ 
                 out[0] += (1<<7); // if first bit of out[0] is 1 means have slope, else slope = 0
             }
             out++;
@@ -679,12 +683,17 @@ namespace Codecset {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index_total.push_back(length);
-            float theta0 = 0;
+            double theta0 = 0;
             float theta1 = 0;
             uint8_t maxerror;
             for (int i = 0;i < block_start_vec_total.size();i++) {
                 int segment_length = segment_index_total[i + 1] - segment_index_total[i];
                 uint8_t* tmpin = block_start_vec_total[i];
+                //debug
+                int start_ind = 0;
+                memcpy(&start_ind, tmpin, sizeof(int));
+
+                //debug
                 tmpin += sizeof(uint32_t);
                 maxerror = tmpin[0];
                 tmpin++;
@@ -800,7 +809,7 @@ namespace Codecset {
             }
 
 
-            float theta0;
+            double theta0;
             memcpy(&theta0, tmpin, sizeof(theta0));
             tmpin += sizeof(theta0);
 

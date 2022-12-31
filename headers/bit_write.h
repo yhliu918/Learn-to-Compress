@@ -313,7 +313,7 @@ uint8_t * write_delta_int_T(std::vector<T>& in,std::vector<bool>& signvec, uint8
         }
     }
     
-    int pad = ceil((sizeof(T)*8 - l)/8);
+    int pad = 8 - end % 8;
     for (int i = 0; i < pad; i++)
     {
         out[0] = 0;
