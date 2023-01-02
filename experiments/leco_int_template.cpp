@@ -11,6 +11,7 @@
 #include "delta_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_test.h"
 #include "piecewise_cost_merge_integer_template_link.h"
+#include "piecewise_cost_merge_integer_template_link_colcor.h"
 
 typedef uint32_t leco_type;
 
@@ -65,7 +66,8 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    Leco_cost_merge_test_link<leco_type> codec;
+    // Leco_cost_merge_test_link<leco_type> codec;
+    Leco_cost_merge_test_link_colcor<leco_type> codec;
     std::string method = "leco_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
@@ -76,7 +78,7 @@ int main(int argc, const char* argv[])
     std::vector<leco_type> data = load_data<leco_type>(  source_file);
 
     int N = data.size();
-
+    // std::sort(data.begin(), data.end())
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -98,7 +100,7 @@ int main(int argc, const char* argv[])
         {
             block_length = N - (blocks - 1) * block_size;
         }
-        uint8_t* descriptor = (uint8_t*)malloc(block_length * sizeof(leco_type) * 4);
+        uint8_t* descriptor = (uint8_t*)malloc(block_length * sizeof(leco_type) * 4+1000);
         uint8_t* res = descriptor;
         res = codec.encodeArray8_int(data.data(), block_length, descriptor, i);
         uint32_t segment_size = res - descriptor;
@@ -136,16 +138,18 @@ int main(int argc, const char* argv[])
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    // for (int j = 0; j < N; j++)
-    // {
-    //     if (data[j] != recover[j])
-    //     {
-    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-    //         std::cout << "something wrong! decompress failed" << std::endl;
-    //         flag = false;
-    //         break;
-    //     }
-    // }
+    #ifndef NDEBUG
+    for (int j = 0; j < N; j++)
+    {
+        if (data[j] != recover[j])
+        {
+            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+            std::cout << "something wrong! decompress failed" << std::endl;
+            flag = false;
+            break;
+        }
+    }
+    #endif
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / data.size() * 1000000000;
@@ -164,10 +168,8 @@ int main(int argc, const char* argv[])
     double randomaccesstime = 0.0;
     codec.search_node.reserve(8);
     start = getNow();
-    // double start2 = getNow();
     // codec.art.Build(codec.art_build_vec);
     codec.alex_tree.bulk_load(codec.alex_build_vec.data(), codec.alex_build_vec.size());
-    // double end2 = getNow();
     leco_type mark = 0;
     int segment_id = codec.get_segment_id(ra_pos[0]), next_segment_id = 0;
 
@@ -176,16 +178,18 @@ int main(int argc, const char* argv[])
         auto index=ra_pos[i];
 
         if(i<ra_pos.size()-1) next_segment_id = codec.get_segment_id(ra_pos[i+1]);
-        leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, N);
+        leco_type tmpvalue = codec.randomdecodeArray8(segment_id, block_start_vec[(int)index / block_size], index, NULL, block_size);
         mark += tmpvalue;
         segment_id=next_segment_id;
-        // if (data[index] != tmpvalue)
-        // {
-        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-        //     std::cout << "something wrong! random access failed" << std::endl;
-        //     flag = false;
-        //     break;
-        // }
+        #ifndef NDEBUG
+        if (data[index] != tmpvalue)
+        {
+            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+            std::cout << "something wrong! random access failed" << std::endl;
+            flag = false;
+            break;
+        }
+        #endif
     }
     
 
@@ -194,9 +198,6 @@ int main(int argc, const char* argv[])
     std::ofstream outfile("auto_log", std::ios::app);
     outfile<<mark<<std::endl;
     double ra_ns = randomaccesstime / (N*repeat) * 1000000000;
-    // std::cout<<(end2 - start2)* 1000000000<<std::endl;
-
-
     std::cout<<method<<" "<<source_file<<" "<<blocks<<" "<<compressrate<<" "<<cr_model<<" "<<cr_wo_model<<" "<<da_ns<<" "<<ra_ns<<" "<<cr_through<<std::endl;
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)

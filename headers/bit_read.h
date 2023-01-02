@@ -273,6 +273,60 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
   }
 }
 
+template <typename T>
+void read_group_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out, int group_num, int groupid)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  T* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  while (start <= end && writeind < numbers)
+  {
+    while (left >= l && writeind < numbers)
+    {
+      // int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
+      bool sign = (tmp >> (l - 1)) & 1;
+      T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
+      decode = (decode >> l);
+      int64_t decode_val = (long long)(start_key + (double)writeind * slope);
+      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
+      if (!sign)
+      {
+        decode_val = decode_val - tmpval;
+      }
+      else
+      {
+        decode_val = decode_val + tmpval;
+      }
+
+      res[writeind * group_num+groupid] = (T)decode_val;
+      writeind++;
+      if(writeind >= numbers){
+        return;
+      }
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+}
+
 
 template <typename T>
 int read_all_bit_fix_range(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out, int filter)
