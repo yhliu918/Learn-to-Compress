@@ -80,7 +80,7 @@ int main(int argc, const char* argv[])
     else{
         data = load_data_binary<leco_type>(source_file);
     }
-
+    // std::sort(data.begin(), data.end());
     int N = data.size();
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
@@ -135,16 +135,16 @@ int main(int argc, const char* argv[])
     // std::cout << "decompress all!" << std::endl;
     double start = getNow();
     codec.decodeArray8(N, recover.data(), N);
-    // for (int j = 0; j < N; j++)
-    // {
-    //     if (data[j] != recover[j])
-    //     {
-    //         std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
-    //         std::cout << "something wrong! decompress failed" << std::endl;
-    //         flag = false;
-    //         break;
-    //     }
-    // }
+    for (int j = 0; j < N; j++)
+    {
+        if (data[j] != recover[j])
+        {
+            std::cout <<"num: " << j << " true is: " << data[j] << " predict is: " << recover[j] << std::endl;
+            std::cout << "something wrong! decompress failed" << std::endl;
+            flag = false;
+            break;
+        }
+    }
     double end = getNow();
     totaltime += (end - start);
     double da_ns = totaltime / data.size() * 1000000000;
@@ -165,17 +165,17 @@ int main(int argc, const char* argv[])
         // mark += tmpvalue;
         assert(tmpvalue == data[index]);
 
-        // if (data[index] != tmpvalue)
-        // {
+        if (data[index] != tmpvalue)
+        {
 
-        //     std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
-        //     flag = false;
-        //     std::cout << "something wrong! decompress failed" << std::endl;
-        // }
-        // if (!flag)
-        // {
-        //     break;
-        // }
+            std::cout << "num: " << index << "true is: " << data[index] << " predict is: " << tmpvalue << std::endl;
+            flag = false;
+            std::cout << "something wrong! decompress failed" << std::endl;
+        }
+        if (!flag)
+        {
+            break;
+        }
     }
     end = getNow();
     randomaccesstime += (end - start);

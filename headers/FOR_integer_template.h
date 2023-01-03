@@ -112,6 +112,54 @@ namespace Codecset
         }
 
 
+        int filter_range(uint8_t *in, const size_t length,  T filter, uint32_t *out, size_t nvalue)
+        {
+            int block_start = nvalue * block_size;
+            uint8_t maxerror;
+            uint8_t *tmpin = in;
+            memcpy(&maxerror, tmpin, 1);
+            tmpin++;
+            int count = 0;
+            if (maxerror >= sizeof(T) * 8 - 1)
+            {
+                T *in_value = reinterpret_cast<T *>(tmpin);
+                for (int i = 0; i < length; i++)
+                {
+                    if (in_value[i] > filter)
+                    {
+                        *out = block_start + i;
+                        out++;
+                        count++;
+                    }
+                }
+                return count;
+            }
+            T base = 0;
+            memcpy(&base, tmpin, sizeof(base));
+            tmpin += sizeof(base);
+            T max = 0;
+            memcpy(&max, tmpin, sizeof(max));
+            tmpin += sizeof(max);
+
+            if (maxerror)
+            {
+                count = filter_read_all_bit_FOR<T>(tmpin, 0, length, maxerror, base, out, filter, block_start);
+            }
+            else
+            {
+                if (base > filter)
+                {
+                    for (int i = 0; i < length; i++)
+                    {
+                        out[i] = block_start+i;
+                    }
+                    count += length;
+                }
+            }
+
+            return count;
+        }
+
 
         T randomdecodeArray8(const uint8_t *in, int to_find, uint32_t *out, size_t nvalue)
         {

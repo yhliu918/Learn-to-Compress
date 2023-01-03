@@ -46,7 +46,7 @@ int main(int argc, const char *argv[])
         return 0;
     }
     
-
+    // std::sort(data.begin(),data.end());
     int block_size = data.size() / blocks;
     blocks = data.size() / block_size;
     if (blocks * block_size < N)
@@ -68,7 +68,7 @@ int main(int argc, const char *argv[])
         {
             block_length = N - (blocks - 1) * block_size;
         }
-        uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t));
+        uint8_t *descriptor = (uint8_t *)malloc(block_length * sizeof(uint64_t)+1000);
         uint8_t *res = descriptor;
 
         // std::cout<<data[i*block_size]<<" "<<data[i * block_size+block_size-1]<<std::endl;
@@ -140,7 +140,7 @@ int main(int argc, const char *argv[])
     std::vector<uint32_t> ra_pos;
     repeat = 1;
     for(int i=0;i<N*repeat;i++){
-        ra_pos.push_back(random(N));
+        ra_pos.emplace_back(random(N));
         // ra_pos.push_back(i);
     }
     std::vector<uint32_t> buffer(data.size());

@@ -64,7 +64,7 @@ int main(int argc, const char* argv[])
 {
     using namespace Codecset;
     Delta_int<leco_type> codec;
-    std::string method = "Leco_fix";
+    std::string method = "delta_my";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
     int model_size = atoi(argv[3]);
@@ -76,7 +76,7 @@ int main(int argc, const char* argv[])
         data = load_data_binary<leco_type>("../integer_data/" + source_file);
     }
     else{
-        data = load_data<leco_type>("../integer_data/" + source_file);
+        data = load_data<leco_type>("" + source_file);
     }
     int N = data.size();
 
