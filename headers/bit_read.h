@@ -387,6 +387,64 @@ int read_all_bit_fix_range(uint8_t* in, int start_byte, int start_index, int num
   return res-out;
 }
 
+template <typename T>
+int read_all_bit_fix_range_close(uint8_t* in, int start_byte, int start_index, int end_index, int numbers, int l, double slope, double start_key, uint32_t* out, T filter1, T filter2, int block_start)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = (int)(start_index * l / (sizeof(uint64_t) * 8));
+  int occupy = (start_index * l)%(sizeof(uint64_t) * 8);
+  uint64_t end = 0;
+  uint64_t total_bit = l * end_index;
+  int writeind = 0;
+  end =  (int)(total_bit / (sizeof(uint64_t) * 8));
+  uint32_t* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+  decode += tmp_64>>occupy;
+  start++;
+  left += (sizeof(uint64_t) * 8 -occupy);
+
+  while (start <= end)
+  {
+    while (left >= l && writeind+start_index<end_index)
+    {
+      int64_t tmp = decode & (((T)1 << l) - 1);
+      bool sign = (tmp >> (l - 1)) & 1;
+      T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
+      decode = (decode >> l);
+      int64_t decode_val = (long long)(start_key + (double)(writeind+start_index) * slope);
+      if (!sign)
+      {
+        decode_val = decode_val - tmpval;
+      }
+      else
+      {
+        decode_val = decode_val + tmpval;
+      }
+      if(decode_val > filter1 && decode_val < filter2){
+        *res = block_start+writeind+start_index;
+        res++;
+      }
+      
+      writeind++;
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+  return res-out;
+}
 
 template <typename T>
 void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
@@ -1313,6 +1371,50 @@ int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint
   return res-out;
 }
 
+template <typename T>
+int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, uint32_t* out, int block_start, T filter1, T filter2)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  uint32_t* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  while (start <= end)
+  {
+    while (left >= l && writeind <numbers)
+    {
+      
+      T tmpval = decode & (((T)1 << l) - 1);
+      decode = (decode >> l);
+      T decode_val = base + tmpval;
+      if(decode_val > filter1 && decode_val < filter2){
+        *res = block_start+writeind;
+        res++;
+      }
+      writeind++;
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+      // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
+    }
+    const uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    // decode = decode<<64 + tmp_64;
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+  return res-out;
+}
 
 uint32_t read_bit_fix_float_T(uint8_t* in, int l, int to_find, float slope, float start_key, int start)
 {

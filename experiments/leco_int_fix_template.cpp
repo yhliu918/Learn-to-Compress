@@ -11,7 +11,7 @@
 #include "delta_cost_merge_integer_template.h"
 #include "piecewise_cost_merge_integer_template_test.h"
 
-typedef uint32_t leco_type;
+typedef uint64_t leco_type;
 
 int random(int m)
 {
@@ -69,12 +69,20 @@ int main(int argc, const char* argv[])
     int blocks = atoi(argv[2]);
     int model_size = atoi(argv[3]);
     bool binary = atoi(argv[4]);
-    leco_type filter = 0;
+    leco_type filter1 = 0;
+    leco_type filter2 = 0;
     bool filter_experiment = false;
+    bool filter_close_experiment = false;
     if (argc > 5)
     {
-        filter = atoll(argv[5]);
+        filter1 = atoll(argv[5]);
         filter_experiment = true;
+    }
+    if (argc > 6)
+    {
+        filter2 = atoll(argv[6]);
+        filter_experiment = false;
+        filter_close_experiment = true;
     }
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
@@ -234,7 +242,7 @@ int main(int argc, const char* argv[])
         {
             for (int i = 0; i < blocks; i++)
             {
-                if(zonemap[i].second<=filter){
+                if(zonemap[i].second<=filter1){
                     continue;
                 }
                 int block_length = block_size;
@@ -242,7 +250,7 @@ int main(int argc, const char* argv[])
                 {
                     block_length = N - (blocks - 1) * block_size;
                 }
-                total_counter += codec.filter_range(block_start_vec[i], block_length, filter, bit_pos.data() + total_counter, i);
+                total_counter += codec.filter_range(block_start_vec[i], block_length, filter1, bit_pos.data() + total_counter, i);
             }
         }
         end = getNow();
@@ -250,7 +258,67 @@ int main(int argc, const char* argv[])
     double filter_totaltime = (end - start);
 
 
-    std::cout << method << " " << source_file << " " << blocks << " " << compressrate << " " << cr_model << " " << cr_wo_model << " " << da_ns << " " << ra_ns<<" "<<0<<" "<<total_counter<<" "<<filter_totaltime<< std::endl;
+    
+    if (filter_close_experiment)
+    {
+        total_counter = 0;
+        std::vector<std::pair<leco_type, leco_type>> zonemap;
+        for (int i = 0; i < blocks; i++)
+        {
+            int block_length = block_size;
+            if (i == blocks - 1)
+            {
+                block_length = N - (blocks - 1) * block_size;
+            }
+            leco_type block_min = UINT32_MAX;
+            leco_type block_max = 0;
+            for (int j = 0; j < block_length; j++)
+            {
+                if (data[i * block_size + j] < block_min)
+                {
+                    block_min = data[i * block_size + j];
+                }
+                if (data[i * block_size + j] > block_max)
+                {
+                    block_max = data[i * block_size + j];
+                }
+            }
+            zonemap.emplace_back(std::make_pair(block_min, block_max));
+        }
+        std::vector<uint32_t> bit_pos(data.size());
+        start = getNow();
+        for (int iter = 0; iter < repeat; iter++)
+        {
+            for (int i = 0; i < blocks; i++)
+            {
+                if(zonemap[i].second<=filter1 || zonemap[i].first>=filter2){
+                    continue;
+                }
+                int block_length = block_size;
+                if (i == blocks - 1)
+                {
+                    block_length = N - (blocks - 1) * block_size;
+                }
+                int tmpcount= codec.filter_range_close(block_start_vec[i], block_length, bit_pos.data() + total_counter, i, filter1, filter2);
+                total_counter+=tmpcount;
+
+                int truecount = 0;
+                for(int j = 0;j<block_length;j++){
+                    if(data[i*block_size + j]>filter1 &&data[i*block_size + j]<filter2){
+                        truecount++;
+                    }
+                }
+                if(truecount!=tmpcount){
+                    std::cout<<"wrong"<<i<<" "<<truecount<<" "<<tmpcount<<std::endl;
+                }
+            }
+        }
+        end = getNow();
+    }
+    double filter_close_totaltime = (end - start);
+
+
+    std::cout << method << " " << source_file << " " << blocks << " " << compressrate << " " << cr_model << " " << cr_wo_model << " " << da_ns << " " << ra_ns<<" "<<0<<" "<<total_counter<<" "<<filter_totaltime<<" "<<filter_close_totaltime<< std::endl;
 
 
     for (int i = 0; i < (int)block_start_vec.size(); i++)

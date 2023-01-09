@@ -192,7 +192,7 @@ namespace Codecset {
             lr_int_T<T> mylr;
             mylr.caltheta(array + origin_index, length);
             float final_slope = mylr.theta1;
-            double theta0 = mylr.theta0;
+            float theta0 = mylr.theta0;
 
             int64_t max_error_delta = INT64_MIN;
             int64_t min_error_delta = INT64_MAX;
@@ -206,7 +206,7 @@ namespace Codecset {
                 }
             }
             theta0 += (max_error_delta + min_error_delta) / 2.0;
-
+    
             T final_max_error = 0;
             std::vector<bool> signvec;
             std::vector<T> delta_final;
@@ -539,15 +539,15 @@ namespace Codecset {
                 segment_index.push_back(block_size * nvalue);
                 segment_index.push_back(block_size * nvalue + length);
                 newsegment(block_size * nvalue, block_size * nvalue+length - 1);
+                // std::cout<<nvalue<<" "<<segment_index[1]-segment_index[0]<<" "<< start_key[0]<<" "<< slope[0]<<std::endl;
             }
             else{
                 segment_index.push_back(block_size * nvalue + length);
                 for (int i = 0;i < segment_number;i++) {
-                // std::cout<<segment_index[i]<<std::endl;
-                newsegment(segment_index[i], segment_index[i + 1] - 1);
+                    newsegment(segment_index[i], segment_index[i + 1] - 1);
+                    // std::cout<<nvalue<<" "<<segment_index[i + 1]-segment_index[i]<<" "<< start_key[i]<<" "<< slope[i]<<std::endl;
                 }
             }
-            
             segment_index.pop_back();
 
             end_timer = getNow();
@@ -683,7 +683,7 @@ namespace Codecset {
             T* res = out;
             //start_index + bit + theta0 + theta1 + numbers + delta
             segment_index_total.push_back(length);
-            double theta0 = 0;
+            float theta0 = 0;
             float theta1 = 0;
             uint8_t maxerror;
             for (int i = 0;i < block_start_vec_total.size();i++) {
@@ -809,7 +809,7 @@ namespace Codecset {
             }
 
 
-            double theta0;
+            float theta0;
             memcpy(&theta0, tmpin, sizeof(theta0));
             tmpin += sizeof(theta0);
 
