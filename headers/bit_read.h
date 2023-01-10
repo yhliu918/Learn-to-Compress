@@ -1372,7 +1372,7 @@ int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint
 }
 
 template <typename T>
-int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, uint32_t* out, int block_start, T filter1, T filter2)
+int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, uint32_t* out, int block_start, T filter1, T filter2, int base_val)
 {
   int left = 0;
   uint128_t decode = 0;
@@ -1395,7 +1395,7 @@ int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers
       T tmpval = decode & (((T)1 << l) - 1);
       decode = (decode >> l);
       T decode_val = base + tmpval;
-      if(decode_val > filter1 && decode_val < filter2){
+      if(decode_val % base_val> filter1 && decode_val%base_val < filter2){
         *res = block_start+writeind;
         res++;
       }

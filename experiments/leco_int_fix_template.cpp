@@ -71,6 +71,7 @@ int main(int argc, const char* argv[])
     bool binary = atoi(argv[4]);
     leco_type filter1 = 0;
     leco_type filter2 = 0;
+    leco_type base = 0;
     bool filter_experiment = false;
     bool filter_close_experiment = false;
     if (argc > 5)
@@ -83,6 +84,7 @@ int main(int argc, const char* argv[])
         filter2 = atoll(argv[6]);
         filter_experiment = false;
         filter_close_experiment = true;
+        base = atoll(argv[7]);
     }
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
@@ -270,7 +272,7 @@ int main(int argc, const char* argv[])
             {
                 block_length = N - (blocks - 1) * block_size;
             }
-            leco_type block_min = UINT32_MAX;
+            leco_type block_min = UINT64_MAX;
             leco_type block_max = 0;
             for (int j = 0; j < block_length; j++)
             {
@@ -291,20 +293,26 @@ int main(int argc, const char* argv[])
         {
             for (int i = 0; i < blocks; i++)
             {
-                if(zonemap[i].second<=filter1 || zonemap[i].first>=filter2){
-                    continue;
+                // if(zonemap[i].second<=filter1 || zonemap[i].first>=filter2){
+                //     continue;
+                // }
+                leco_type tmp_filter1 = ceil((double)(zonemap[i].first - filter1)/(double)base)*base + filter1;
+                leco_type tmp_filter2 = ceil((double)(zonemap[i].first - filter1)/(double)base)*base + filter2;
+                if(zonemap[i].first%base < filter2 && zonemap[i].first%base> filter1){
+                    tmp_filter1-=base;
+                    tmp_filter2-=base;
                 }
                 int block_length = block_size;
                 if (i == blocks - 1)
                 {
                     block_length = N - (blocks - 1) * block_size;
                 }
-                int tmpcount= codec.filter_range_close(block_start_vec[i], block_length, bit_pos.data() + total_counter, i, filter1, filter2);
+                int tmpcount= codec.filter_range_close(block_start_vec[i], block_length, bit_pos.data() + total_counter, i, tmp_filter1, tmp_filter2, base);
                 total_counter+=tmpcount;
 
                 int truecount = 0;
                 for(int j = 0;j<block_length;j++){
-                    if(data[i*block_size + j]>filter1 &&data[i*block_size + j]<filter2){
+                    if(data[i*block_size + j]%base>filter1 &&data[i*block_size + j]%base<filter2){
                         truecount++;
                     }
                 }

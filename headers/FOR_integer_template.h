@@ -163,7 +163,7 @@ namespace Codecset
             return count;
         }
 
-        int filter_range_close(uint8_t *in, const size_t length, uint32_t *out, size_t nvalue, T filter1, T filter2)
+        int filter_range_close(uint8_t *in, const size_t length, uint32_t *out, size_t nvalue, T filter1, T filter2, int base_val)
         {
             int block_start = nvalue * block_size;
             uint8_t maxerror;
@@ -176,7 +176,7 @@ namespace Codecset
                 T *in_value = reinterpret_cast<T *>(tmpin);
                 for (int i = 0; i < length; i++)
                 {
-                    if (in_value[i] > filter1 && in_value[i]< filter2)
+                    if (in_value[i]%base_val > filter1 && in_value[i]%base_val< filter2)
                     {
                         *out = block_start + i;
                         out++;
@@ -191,17 +191,17 @@ namespace Codecset
             T max = 0;
             memcpy(&max, tmpin, sizeof(max));
             tmpin += sizeof(max);
-            if(max<=filter1 || base >=filter2 ){
-                return count;
-            }
+            // if(max<=filter1 || base >=filter2 ){
+            //     return count;
+            // }
 
             if (maxerror)
             {
-                count = filter_read_all_bit_FOR_close<T>(tmpin, 0, length, maxerror, base, out, block_start, filter1, filter2);
+                count = filter_read_all_bit_FOR_close<T>(tmpin, 0, length, maxerror, base, out, block_start, filter1, filter2, base_val);
             }
             else
             {
-                if (base > filter1 && base < filter2)
+                if (base%base_val > filter1 && base%base_val < filter2)
                 {
                     for (int i = 0; i < length; i++)
                     {
