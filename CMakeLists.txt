@@ -25,6 +25,8 @@ add_library(leco ${SRC_LIST})
 target_link_libraries(leco Snappy::snappy gmp gmpxx fsst)
 #  .so/.a
 # make executable doc
+add_executable(snappy_int experiments/snappy_int.cpp)
+target_link_libraries(snappy_int docs Snappy::snappy gmp gmpxx )
 add_executable(fix_int experiments/fix_int.cpp)
 target_link_libraries(fix_int docs Snappy::snappy gmp gmpxx )
 add_executable(auto_int experiments/auto_int.cpp)
