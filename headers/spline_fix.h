@@ -181,6 +181,9 @@ uint32_t randomdecodeArray(uint32_t *in, const size_t l,uint32_t *out, size_t nv
     std::cout<<"Haven't implement. Please try uint8_t one..."<<std::endl;
     return 1;
 }
+uint64_t summation(uint8_t* in, const size_t l, size_t nvalue) {
+    return 0;
+}
 uint32_t get_block_nums(){
       return 1;
 }    

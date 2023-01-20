@@ -46,6 +46,7 @@
 #include "snappy.h"
 #include "delta_my.h"
 #include "piecewise_fix_delta.h"
+#include "spline_fix.h"
 
 
 namespace Codecset {
@@ -116,7 +117,8 @@ static inline CodecMap initializefactory() {
   map["piecewise_fix_op_float"]= new piecewise_fix_op_float();
   map["piecewise_fix_merge"]= new piecewise_fix_merge();
   map["MaskVByte"] = new Codecset::MaskVByte();
-  //map["snappy"] = new Codecset::JustSnappy();
+  map["spline_fix"] = new spline_fix();
+  // map["snappy"] = new Codecset::JustSnappy();
   map["copy"] = new Codecset::JustCopy();
 
   return map;

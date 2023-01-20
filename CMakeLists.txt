@@ -25,6 +25,10 @@ add_library(leco ${SRC_LIST})
 target_link_libraries(leco Snappy::snappy gmp gmpxx fsst)
 #  .so/.a
 # make executable doc
+add_executable(RNS_int experiments/RNS_int.cpp)
+target_link_libraries(RNS_int docs Snappy::snappy gmp gmpxx )
+add_executable(huffman_int experiments/huffman_int.cpp)
+target_link_libraries(huffman_int docs Snappy::snappy gmp gmpxx )
 add_executable(snappy_int experiments/snappy_int.cpp)
 target_link_libraries(snappy_int docs Snappy::snappy gmp gmpxx )
 add_executable(fix_int experiments/fix_int.cpp)
