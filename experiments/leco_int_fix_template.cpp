@@ -90,10 +90,10 @@ int main(int argc, const char* argv[])
 
     std::vector<leco_type> data;
     if(binary){
-        data = load_data_binary<leco_type>("../integer_data/" + source_file);
+        data = load_data_binary<leco_type>("../data/" + source_file);
     }
     else{
-        data = load_data<leco_type>("" + source_file);
+        data = load_data<leco_type>("../data/" + source_file);
     }
     int N = data.size();
 

@@ -357,7 +357,7 @@ int main(int argc, const char *argv[]) {
     int model_size = atoi(argv[3]);
     bool binary = atoi(argv[4]);
     std::vector<leco_type> data;
-    source_file = "/root/Learn-to-Compress/data/"+source_file;
+    source_file = "../data/"+source_file;
 
     if(binary){
         data = load_data_binary<leco_type>(source_file);

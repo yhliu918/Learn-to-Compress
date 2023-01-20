@@ -66,8 +66,8 @@ static std::vector<T> load_data(const std::string& filename) {
 int main(int argc, const char* argv[])
 {
     using namespace Codecset;
-    // Leco_cost_merge_test_link<leco_type> codec;
-    Leco_cost_merge_test_link_colcor<leco_type> codec;
+    Leco_cost_merge_test_link<leco_type> codec;
+    // Leco_cost_merge_test_link_colcor<leco_type> codec;
     std::string method = "leco_cost";
     std::string source_file = std::string(argv[1]);
     int blocks = atoi(argv[2]);
@@ -75,7 +75,7 @@ int main(int argc, const char* argv[])
     int model_size = atoi(argv[4]);
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
 
-    std::vector<leco_type> data = load_data<leco_type>(  source_file);
+    std::vector<leco_type> data = load_data<leco_type>( "../data/"+ source_file);
 
     int N = data.size();
     // std::sort(data.begin(), data.end())

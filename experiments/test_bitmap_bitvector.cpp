@@ -15,7 +15,7 @@ int main()
   IntegerCODEC &codec = *CODECFactory::getFromName("FOR");
 
   std::vector<uint32_t> data;
-  std::ifstream srcFile("../integer_data/books_200M_uint32.txt", std::ios::in);
+  std::ifstream srcFile("../data/books_200M_uint32.txt", std::ios::in);
   if (!srcFile)
   {
     std::cout << "error opening source file." << std::endl;

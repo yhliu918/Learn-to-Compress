@@ -73,10 +73,10 @@ int main(int argc, const char* argv[])
     // alternatives : Delta_int, Delta_cost, Delta_cost_merge, FOR_int, Leco_int, Leco_cost, Leco_cost_merge_hc,  Leco_cost_merge, Leco_cost_merge_double
     std::vector<leco_type> data;
     if(!binary){
-        data = load_data<leco_type>("../integer_data/" + source_file);
+        data = load_data<leco_type>("../data/" + source_file);
     }
     else{
-        data = load_data_binary<leco_type>("../integer_data/" + source_file);
+        data = load_data_binary<leco_type>("../data/" + source_file);
     }
     
     int N = data.size();

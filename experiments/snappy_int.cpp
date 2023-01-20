@@ -62,7 +62,7 @@ int main(int argc, const char *argv[])
     // We pick a CODEC
 
     std::vector<leco_type> data;
-    source_file = "/root/Learn-to-Compress/data/"+source_file;
+    source_file = "../data/"+source_file;
 
     if(binary){
         data = load_data_binary<leco_type>(source_file);

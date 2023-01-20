@@ -18,7 +18,7 @@ int main(int argc, const char *argv[])
     IntegerCODEC &codec = *CODECFactory::getFromName(method);
 
     std::vector<uint32_t> data;
-    std::ifstream srcFile("" + source_file, std::ios::in);
+    std::ifstream srcFile("../data/" + source_file, std::ios::in);
 
     if (!srcFile)
     {
