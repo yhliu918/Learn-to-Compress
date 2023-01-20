@@ -23,7 +23,7 @@ Data sets used in the Evaluation part can be downloaded using `./script/download
 https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset?select=realtor-dataset-100k.csv
 https://www.kaggle.com/datasets/grouplens/movielens-20m-dataset?select=rating.csv
 ```
-You can download and generate the data sets and store them in a directory `integer_data` under the project root directory.
+You can download and generate the data sets and store them in a directory `data` under the project root directory.
 
 ### Microbenchmark
 The Microbenchmark of LeCo is located in `benchmark`, which can be run by:
