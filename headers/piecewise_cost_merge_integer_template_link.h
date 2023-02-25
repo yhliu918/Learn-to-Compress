@@ -550,7 +550,7 @@ namespace Codecset {
             merge_time += (end_timer - start_timer);
 
             for (auto item : segment_index) {
-                art_build_vec.push_back((KeyValue<uint32_t>) { item, segment_index_total_idx });
+                art_build_vec.push_back((KeyValue<uint32_t>) { item, static_cast<uint32_t>(segment_index_total_idx) });
                 // std::cout<<item<<std::endl;
                 // auto tmp = btree_total.insert(std::make_pair(item, segment_index_total_idx));
                 // auto tmp = alex_tree.insert(item, segment_index_total_idx);
@@ -562,7 +562,7 @@ namespace Codecset {
                 // auto tmp = btree_total.insert(std::make_pair(block_num * block_size, segment_index_total_idx));
                 // std::cout<<block_num * block_size<<" "<<segment_index_total_idx<<std::endl;
                 // auto tmp = alex_tree.insert(block_num * block_size, segment_index_total_idx);
-                art_build_vec.push_back((KeyValue<uint32_t>) { block_num* block_size, segment_index_total_idx });
+                art_build_vec.push_back((KeyValue<uint32_t>) { static_cast<uint32_t>(block_num* block_size), static_cast<uint32_t>(segment_index_total_idx )});
                 alex_build_vec.push_back(std::make_pair(block_num * block_size, segment_index_total_idx));
 
             }

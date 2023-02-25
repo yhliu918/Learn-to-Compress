@@ -67,39 +67,39 @@ namespace Codecset
                 }
             }
 
-            // double pred = theta0;
-            // T max_error = 0;
-            // for (auto i = 0; i < length; i++)
-            // {
-            //     T pred_mul = (theta0 + theta1 * (double)i);
-            //     T pred_add = pred;
-            //     if(pred_mul> pred_add){
-            //         mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,pred_mul - pred_add));
-            //     }
-            //     if(pred_mul< pred_add){
-            //         mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,-(int)(pred_add - pred_mul)));
-            //     }
-            //     pred +=theta1;
+            /* double pred = theta0;
+            T max_error = 0;
+            for (auto i = 0; i < length; i++)
+            {
+                T pred_mul = (theta0 + theta1 * (double)i);
+                T pred_add = pred;
+                if(pred_mul> pred_add){
+                    mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,pred_mul - pred_add));
+                }
+                if(pred_mul< pred_add){
+                    mul_add_diff_set.push_back(std::make_pair(i+nvalue*block_size,-(int)(pred_add - pred_mul)));
+                }
+                pred +=theta1;
 
-            //     T tmp_val;
-            //     if (data[i] > pred_mul)
-            //     {
-            //         tmp_val = data[i] - pred_mul;
-            //         signvec.emplace_back(true); // means positive
-            //     }
-            //     else
-            //     {
-            //         tmp_val = pred_mul - data[i];
-            //         signvec.emplace_back(false); // means negative
-            //     }
+                T tmp_val;
+                if (data[i] > pred_mul)
+                {
+                    tmp_val = data[i] - pred_mul;
+                    signvec.emplace_back(true); // means positive
+                }
+                else
+                {
+                    tmp_val = pred_mul - data[i];
+                    signvec.emplace_back(false); // means negative
+                }
 
-            //     delta.emplace_back(tmp_val);
+                delta.emplace_back(tmp_val);
 
-            //     if (tmp_val > max_error)
-            //     {
-            //         max_error = tmp_val;
-            //     }
-            // }
+                if (tmp_val > max_error)
+                {
+                    max_error = tmp_val;
+                }
+            } */
 
             uint8_t max_bit = 0;
             if (max_error)
@@ -193,7 +193,170 @@ namespace Codecset
             return out;
         }
 
+        int filter_range(const uint8_t *in, const size_t length, T filter, uint32_t *out, int block_start)
+        {
+            // only consider > filter, return [return_value, end] for demo
+            int counter = 0;
+            double theta0;
+            double theta1;
+            uint8_t maxerror;
+            const uint8_t *tmpin = in;
+            maxerror = tmpin[0];
+            tmpin++;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
+            int64_t delta_interval = 0;
+            if (maxerror)
+            {
+                delta_interval = (1L << (maxerror - 1));
+            }
+            int thre = std::max((double)(filter + 1 - delta_interval - theta0) / theta1, 0.);
+            if (thre >= length)
+            {
+                return counter;
+            }
+            else
+            {
+                if (maxerror)
+                {
+                    counter = read_all_bit_fix_range<T>(tmpin, 0, thre, length, maxerror, theta1, theta0, out, filter, block_start);
+                }
+                else
+                {
+                    for (int i = thre; i < length; i++)
+                    {
+                        long long pred = (long long)(theta0 + theta1 * (double)i);
+                        if (pred > filter)
+                        {
+                            out[0] = block_start+i;
+                            out++;
+                            counter++;
+                        }
+                    }
+                }
+            }
+            return counter;
+        }
 
+        int filter_range_close(const uint8_t *in, const size_t length, uint32_t *out, int block_id, T filter1, T filter2)
+        {
+            // only  filter2 > consider > filter1, return [return_value, end] for demo
+            int block_start = block_id * block_size;
+            int counter = 0;
+            double theta0;
+            double theta1;
+            uint8_t maxerror;
+            const uint8_t *tmpin = in;
+            maxerror = tmpin[0];
+            tmpin++;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
+            int64_t delta_interval = 0;
+            if (maxerror)
+            {
+                delta_interval = (1L << (maxerror - 1));
+            }
+            int thre1 = std::max((double)(filter1 - delta_interval - theta0) / theta1 -1, 0.);
+            int thre2 = std::min((double)(filter2 + delta_interval - theta0) / theta1 +1, (double)length);
+            if (thre1 >= length || thre2 <= 0)
+            {
+                return counter;
+            }
+            else
+            {
+                if (maxerror)
+                {
+                    counter = read_all_bit_fix_range_close<T>(tmpin, 0, thre1, thre2, length, maxerror, theta1, theta0, out, filter1, filter2, block_start);
+                }
+                else
+                {
+                    for (int i = thre1; i <= thre2; i++)
+                    {
+                        long long pred = (long long)(theta0 + theta1 * (double)i);
+                        if (pred > filter1 && pred < filter2)
+                        {
+                            out[0] = block_start + i;
+                            out++;
+                            counter++;
+                        }
+                    }
+                }
+            }
+            return counter;
+        }
+
+        int filter_range_close_mod(const uint8_t *in, const size_t length, uint32_t *out, int block_id, T filter1, T filter2, T base)
+        {
+            // only  filter2 > consider > filter1, return [return_value, end] for demo
+            int block_start = block_id * block_size;
+            int counter = 0;
+            double theta0;
+            double theta1;
+            uint8_t maxerror;
+            const uint8_t *tmpin = in;
+            maxerror = tmpin[0];
+            tmpin++;
+            memcpy(&theta0, tmpin, sizeof(theta0));
+            tmpin += sizeof(theta0);
+            memcpy(&theta1, tmpin, sizeof(theta1));
+            tmpin += sizeof(theta1);
+            int64_t delta_interval = 0;
+            if (maxerror)
+            {
+                delta_interval = (1L << (maxerror - 1));
+            }
+            int64_t min_val = theta0 - delta_interval;
+            int64_t tmp_filter1 = ceil((double)(min_val - filter1)/(double)base)*base + filter1;
+            int64_t tmp_filter2 = ceil((double)(min_val - filter1)/(double)base)*base + filter2;
+            if(min_val%base < filter2 && min_val%base> filter1){
+                tmp_filter1-=base;
+                tmp_filter2-=base;
+            }
+
+            int thre1 = std::max((double)(tmp_filter1 - delta_interval - theta0) / theta1 -1, 0.);
+            int thre2 = std::min((double)(tmp_filter2 + delta_interval - theta0) / theta1 +1, (double)length);
+            
+            if(thre1 >=length || thre2 <= 0){
+                // std::cout<<thre1<<" "<<thre2<<std::endl;
+                tmp_filter1 += base;
+                tmp_filter2 += base;
+                thre1 = std::max((double)(tmp_filter1 - delta_interval - theta0) / theta1 -1, 0.);
+                thre2 = std::min((double)(tmp_filter2 + delta_interval - theta0) / theta1 +1, (double)length);
+
+            }
+            while(thre1 <length && thre2 > 0){
+                // std::cout<<thre1<<" "<<thre2<<std::endl;
+                if (maxerror)
+                {
+                    counter += read_all_bit_fix_range_close<T>(tmpin, 0, thre1, thre2, length, maxerror, theta1, theta0, out, tmp_filter1, tmp_filter2, block_start);
+                }
+                else
+                {
+                    for (int i = thre1; i <= thre2; i++)
+                    {
+                        long long pred = (long long)(theta0 + theta1 * (double)i);
+                        if (pred > tmp_filter1 && pred < tmp_filter2)
+                        {
+                            out[0] = block_start + i;
+                            out++;
+                            counter++;
+                        }
+                    }
+                }
+                tmp_filter1 += base;
+                tmp_filter2 += base;
+                thre1 = std::max((double)(tmp_filter1 - delta_interval - theta0) / theta1 -1, 0.);
+                thre2 = std::min((double)(tmp_filter2 + delta_interval - theta0) / theta1 +1, (double)length);
+
+            }
+
+          
+            return counter;
+        }
 
         T randomdecodeArray8(const uint8_t* in, int to_find, uint32_t* out, size_t nvalue)
         {

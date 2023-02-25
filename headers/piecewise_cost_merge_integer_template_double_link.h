@@ -486,12 +486,12 @@ namespace Codecset {
             merge_time += (end_timer - start_timer);
 
             for (auto item : segment_index) {
-                art_build_vec.push_back((KeyValue<uint32_t>) { item, segment_index_total_idx });
+                art_build_vec.push_back((KeyValue<uint32_t>) { item, static_cast<unsigned int>(segment_index_total_idx) });
                 alex_build_vec.push_back(std::make_pair(item, segment_index_total_idx));
                 segment_index_total_idx++;
             }
             if(nvalue == block_num - 1){
-                art_build_vec.push_back((KeyValue<uint32_t>){block_num * block_size, segment_index_total_idx});
+                art_build_vec.push_back((KeyValue<uint32_t>){static_cast<unsigned int>(block_num * block_size), static_cast<uint32_t>(segment_index_total_idx)});
                 alex_build_vec.push_back(std::make_pair(block_num * block_size, segment_index_total_idx));
                 // art.Build(art_build_vec);
                 alex_tree.bulk_load(alex_build_vec.data(), alex_build_vec.size());
