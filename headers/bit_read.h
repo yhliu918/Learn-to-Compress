@@ -18,6 +18,7 @@
 #include <string>
 #include <time.h>
 #include <vector>
+#include "Polynomial.hpp"
 
 
 //given a bit number l(how does it save),should return a vector of numbers
@@ -244,6 +245,61 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)(start_key + (double)writeind * slope);
+      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
+      if (!sign)
+      {
+        decode_val = decode_val - tmpval;
+      }
+      else
+      {
+        decode_val = decode_val + tmpval;
+      }
+
+      *res = (T)decode_val;
+      res++;
+      writeind++;
+      if(writeind >= numbers){
+        return;
+      }
+      left -= l;
+      if (left == 0)
+      {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+}
+
+template <typename T, int degree, typename P>
+void read_all_bit_fix_poly(const uint8_t* in, int start_byte, int start_index, int numbers, int l, T* out, andviane::Polynomial<degree,P>* poly)
+{
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  T* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0)
+  {
+    end++;
+  }
+
+  while (start <= end && writeind < numbers)
+  {
+    while (left >= l && writeind < numbers)
+    {
+      // int128_t tmp = decode & (((T)1 << l) - 1);
+      int64_t tmp = decode & (((T)1 << l) - 1);
+      bool sign = (tmp >> (l - 1)) & 1;
+      T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
+      decode = (decode >> l);
+      int64_t decode_val = (long long)((*poly)(writeind));
       // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
       if (!sign)
       {
@@ -1129,6 +1185,37 @@ T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double sl
   bool sign = (decode_64 >> (l - 1)) & 1;
   T value = (decode_64 & (((T)1 << (uint8_t)(l - 1)) - 1));
   int64_t out = (start_key + (double)to_find * slope);
+  if (!sign)
+  {
+    out = out - value;
+  }
+  else
+  {
+    out = out + value;
+  }
+
+  return (T)out;
+
+}
+
+template <typename T, int degree, typename P>
+T read_bit_fix_int_wo_round_poly(const uint8_t* in, uint8_t l, int to_find, andviane::Polynomial<degree,P>* poly)
+{
+  uint64_t find_bit = to_find * (int)l;
+  uint64_t start_byte = find_bit / 8;
+  uint8_t start_bit = find_bit % 8;
+  uint64_t occupy = start_bit;
+  uint64_t total = 0;
+
+  uint128_t decode = (reinterpret_cast<const uint128_t*>(in + start_byte))[0];
+  // memcpy(&decode, in+start_byte, sizeof(uint64_t));
+  decode >>= start_bit;
+  uint64_t decode_64 = decode & (((T)1 << l) - 1);
+  // decode &= (((T)1 << l) - 1);
+
+  bool sign = (decode_64 >> (l - 1)) & 1;
+  T value = (decode_64 & (((T)1 << (uint8_t)(l - 1)) - 1));
+  int64_t out = (*poly)(to_find);
   if (!sign)
   {
     out = out - value;
