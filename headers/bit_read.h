@@ -3,30 +3,30 @@
 #ifndef BIT_READ_H_
 #define BIT_READ_H_
 
-#include <algorithm>
-#include <cmath>
-#include <cmath>
-#include <fstream>
+#include <bits/stdint-intn.h>
 #include <getopt.h>
-#include <iostream>
-#include "popcount.h"
-#include <queue>
-#include "rank.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <time.h>
+
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <queue>
+#include <string>
 #include <vector>
+
 #include "Polynomial.hpp"
+#include "popcount.h"
+#include "rank.h"
 
+// given a bit number l(how does it save),should return a vector of numbers
 
-//given a bit number l(how does it save),should return a vector of numbers
-
-void read_all_default(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out)
-{
-  for (int i = 0; i < numbers; i++)
-  {
+void read_all_default(uint8_t* in, int start_byte, int start_index, int numbers,
+                      int l, double slope, double start_key, uint32_t* out) {
+  for (int i = 0; i < numbers; i++) {
     uint32_t code = in[0];
     in++;
     code += (in[0] << 8);
@@ -40,11 +40,10 @@ void read_all_default(uint8_t* in, int start_byte, int start_index, int numbers,
   }
 }
 
-long long sum_all_default(uint8_t* in, int start_byte, int start_index, int numbers, int l)
-{
+long long sum_all_default(uint8_t* in, int start_byte, int start_index,
+                          int numbers, int l) {
   long long sum = 0;
-  for (int i = 0; i < numbers; i++)
-  {
+  for (int i = 0; i < numbers; i++) {
     uint32_t code = in[0];
     in++;
     code += (in[0] << 8);
@@ -58,8 +57,8 @@ long long sum_all_default(uint8_t* in, int start_byte, int start_index, int numb
   return sum;
 }
 
-uint32_t read_bit_default(uint8_t* in, int l, int to_find, double slope, double start_key, int start)
-{
+uint32_t read_bit_default(uint8_t* in, int l, int to_find, double slope,
+                          double start_key, int start) {
   in += 4 * to_find;
   uint32_t code = in[0];
   in++;
@@ -73,9 +72,9 @@ uint32_t read_bit_default(uint8_t* in, int l, int to_find, double slope, double 
   return code;
 }
 
-uint32_t* read_all_bit_double(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out)
-{
-
+uint32_t* read_all_bit_double(uint8_t* in, int start_byte, int start_index,
+                              int numbers, int l, double slope,
+                              double start_key, uint32_t* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = start_byte;
@@ -83,29 +82,26 @@ uint32_t* read_all_bit_double(uint8_t* in, int start_byte, int start_index, int 
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
-      if (!(tmp >> (l - 1)))
-      {
+      if (!(tmp >> (l - 1))) {
         tmpval = -tmpval;
       }
       decode = (decode >> l);
       /*
       if(start_index==0 && writeind<=1315){
-      std::cout<<"writeind "<<writeind<<" theta0 "<<start_key<<" theta1 "<<slope<<" delta "<<tmpval<<" predict "<<(long long)(start_key + ((double)writeind*slope))<<std::endl;
+      std::cout<<"writeind "<<writeind<<" theta0 "<<start_key<<" theta1
+      "<<slope<<" delta "<<tmpval<<" predict "<<(long long)(start_key +
+      ((double)writeind*slope))<<std::endl;
       }
       */
       tmpval += (long long)(start_key + ((double)writeind * slope));
@@ -121,9 +117,9 @@ uint32_t* read_all_bit_double(uint8_t* in, int start_byte, int start_index, int 
   return out + numbers;
 }
 
-uint32_t* read_all_bit(uint8_t* in, int start_byte, int start_index, int numbers, int l, float slope, uint32_t start_key, uint32_t* out)
-{
-
+uint32_t* read_all_bit(uint8_t* in, int start_byte, int start_index,
+                       int numbers, int l, float slope, uint32_t start_key,
+                       uint32_t* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = start_byte;
@@ -131,31 +127,26 @@ uint32_t* read_all_bit(uint8_t* in, int start_byte, int start_index, int numbers
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
-      if (!(tmp >> (l - 1)))
-      {
+      if (!(tmp >> (l - 1))) {
         tmpval = -tmpval;
       }
       decode = (decode >> l);
 
-      tmpval += ((long long)start_key + (long long)((float)writeind * (float)slope));
+      tmpval +=
+          ((long long)start_key + (long long)((float)writeind * (float)slope));
       left -= l;
-      if (writeind >= numbers)
-        break;
+      if (writeind >= numbers) break;
       out[writeind] = tmpval;
       writeind++;
     }
@@ -166,8 +157,9 @@ uint32_t* read_all_bit(uint8_t* in, int start_byte, int start_index, int numbers
   return out + numbers;
 }
 
-void read_all_bit_fix32(uint32_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out)
-{
+void read_all_bit_fix32(uint32_t* in, int start_byte, int start_index,
+                        int numbers, int l, double slope, double start_key,
+                        uint32_t* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = start_byte;
@@ -178,39 +170,34 @@ void read_all_bit_fix32(uint32_t* in, int start_byte, int start_index, int numbe
   uint32_t mask1 = (1L << (l - 1)) - 1;
   uint32_t* res = out;
   end = start + (int)(total_bit / 32);
-  if (total_bit % 32 != 0)
-  {
+  if (total_bit % 32 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
+  while (start <= end) {
     /*
     if(writeind>= numbers){
       break;
     }
     */
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & mask0;
       long tmpval = tmp & mask1;
-      if (!(tmp >> (l - 1)))
-      {
+      if (!(tmp >> (l - 1))) {
         tmpval = -tmpval;
       }
       decode = (decode >> l);
 
       tmpval += ((long long)start_key + (long long)((double)writeind * slope));
-      //out[writeind]=tmpval;
+      // out[writeind]=tmpval;
       *res = tmpval;
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
-      //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      // std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
     }
     decode += ((long long)in[start] << left);
 
@@ -220,8 +207,13 @@ void read_all_bit_fix32(uint32_t* in, int start_byte, int start_index, int numbe
 }
 
 template <typename T>
-void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
-{
+void read_all_bit_fix_no_branch(const uint8_t* in, int start_byte,
+                                int start_index, int numbers, int l,
+                                double slope, double start_key, T* out) {
+  /* generate the sign bit mask. 'l' is the extracted number of bits */
+  // https://stackoverflow.com/a/17719010/19773052
+  int m = 1U << (l - 1);
+
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -230,40 +222,79 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end && writeind < numbers)
-  {
-    while (left >= l && writeind < numbers)
-    {
+  while (start <= end && writeind < numbers) {
+    while (left >= l && writeind < numbers) {
+      // int128_t tmp = decode & (((T)1 << l) - 1);
+      /* Transform a 'l' bits unsigned number 'x' into a signed number 'tmp' */
+      int64_t tmp = ((decode & (((T)1 << l) - 1)) ^ m) - m;
+      decode = (decode >> l);
+      int64_t decode_val = (long long)(start_key + (double)writeind * slope);
+      // int128_t decode_val = (long long)(start_key + (double)writeind *
+      // slope);
+      decode_val = decode_val + tmp;
+
+      *res = (T)decode_val;
+      res++;
+      writeind++;
+      if (writeind >= numbers) {
+        return;
+      }
+      left -= l;
+      if (left == 0) {
+        decode = 0;
+      }
+    }
+    uint64_t tmp_64 = (reinterpret_cast<const uint64_t*>(in))[start];
+    decode += ((uint128_t)tmp_64 << left);
+    start++;
+    left += sizeof(uint64_t) * 8;
+  }
+}
+
+template <typename T>
+void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index,
+                      int numbers, int l, double slope, double start_key,
+                      T* out) {
+  int left = 0;
+  uint128_t decode = 0;
+  uint64_t start = start_byte;
+  uint64_t end = 0;
+  uint64_t total_bit = l * numbers;
+  int writeind = 0;
+  end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
+  T* res = out;
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
+    end++;
+  }
+
+  while (start <= end && writeind < numbers) {
+    while (left >= l && writeind < numbers) {
       // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)(start_key + (double)writeind * slope);
-      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
-      if (!sign)
-      {
+      // int128_t decode_val = (long long)(start_key + (double)writeind *
+      // slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
       *res = (T)decode_val;
       res++;
       writeind++;
-      if(writeind >= numbers){
+      if (writeind >= numbers) {
         return;
       }
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -275,8 +306,9 @@ void read_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int nu
 }
 
 template <typename T, int degree, typename P>
-void read_all_bit_fix_poly(const uint8_t* in, int start_byte, int start_index, int numbers, int l, T* out, andviane::Polynomial<degree,P>* poly)
-{
+void read_all_bit_fix_poly(const uint8_t* in, int start_byte, int start_index,
+                           int numbers, int l, T* out,
+                           andviane::Polynomial<degree, P>* poly) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -285,40 +317,34 @@ void read_all_bit_fix_poly(const uint8_t* in, int start_byte, int start_index, i
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end && writeind < numbers)
-  {
-    while (left >= l && writeind < numbers)
-    {
+  while (start <= end && writeind < numbers) {
+    while (left >= l && writeind < numbers) {
       // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)((*poly)(writeind));
-      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
-      if (!sign)
-      {
+      // int128_t decode_val = (long long)(start_key + (double)writeind *
+      // slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
       *res = (T)decode_val;
       res++;
       writeind++;
-      if(writeind >= numbers){
+      if (writeind >= numbers) {
         return;
       }
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -330,8 +356,9 @@ void read_all_bit_fix_poly(const uint8_t* in, int start_byte, int start_index, i
 }
 
 template <typename T>
-void read_group_all_bit_fix(const uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out, int group_num, int groupid)
-{
+void read_group_all_bit_fix(const uint8_t* in, int start_byte, int start_index,
+                            int numbers, int l, double slope, double start_key,
+                            T* out, int group_num, int groupid) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -340,39 +367,33 @@ void read_group_all_bit_fix(const uint8_t* in, int start_byte, int start_index, 
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end && writeind < numbers)
-  {
-    while (left >= l && writeind < numbers)
-    {
+  while (start <= end && writeind < numbers) {
+    while (left >= l && writeind < numbers) {
       // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)(start_key + (double)writeind * slope);
-      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
-      if (!sign)
-      {
+      // int128_t decode_val = (long long)(start_key + (double)writeind *
+      // slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
-      res[writeind * group_num+groupid] = (T)decode_val;
+      res[writeind * group_num + groupid] = (T)decode_val;
       writeind++;
-      if(writeind >= numbers){
+      if (writeind >= numbers) {
         return;
       }
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -383,55 +404,49 @@ void read_group_all_bit_fix(const uint8_t* in, int start_byte, int start_index, 
   }
 }
 
-
 template <typename T>
-int read_all_bit_fix_range(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out, T filter, int block_start)
-{
+int read_all_bit_fix_range(uint8_t* in, int start_byte, int start_index,
+                           int numbers, int l, double slope, double start_key,
+                           uint32_t* out, T filter, int block_start) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = (int)(start_index * l / (sizeof(uint64_t) * 8));
-  int occupy = (start_index * l)%(sizeof(uint64_t) * 8);
+  int occupy = (start_index * l) % (sizeof(uint64_t) * 8);
   uint64_t end = 0;
   uint64_t total_bit = l * numbers;
   int writeind = 0;
-  end =  (int)(total_bit / (sizeof(uint64_t) * 8));
+  end = (int)(total_bit / (sizeof(uint64_t) * 8));
   uint32_t* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
   uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
-  decode += tmp_64>>occupy;
+  decode += tmp_64 >> occupy;
   start++;
-  left += (sizeof(uint64_t) * 8 -occupy);
+  left += (sizeof(uint64_t) * 8 - occupy);
 
-  while (start <= end)
-  {
-    while (left >= l && writeind+start_index<numbers)
-    {
+  while (start <= end) {
+    while (left >= l && writeind + start_index < numbers) {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      int64_t decode_val = (long long)(start_key + (double)(writeind+start_index) * slope);
-      if (!sign)
-      {
+      int64_t decode_val =
+          (long long)(start_key + (double)(writeind + start_index) * slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
-      if(decode_val > filter){
-        *res = block_start+writeind+start_index;
+      if (decode_val > filter) {
+        *res = block_start + writeind + start_index;
         res++;
       }
-      
+
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -440,57 +455,53 @@ int read_all_bit_fix_range(uint8_t* in, int start_byte, int start_index, int num
     start++;
     left += sizeof(uint64_t) * 8;
   }
-  return res-out;
+  return res - out;
 }
 
 template <typename T>
-int read_all_bit_fix_range_close(uint8_t* in, int start_byte, int start_index, int end_index, int numbers, int l, double slope, double start_key, uint32_t* out, T filter1, T filter2, int block_start)
-{
+int read_all_bit_fix_range_close(uint8_t* in, int start_byte, int start_index,
+                                 int end_index, int numbers, int l,
+                                 double slope, double start_key, uint32_t* out,
+                                 T filter1, T filter2, int block_start) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = (int)(start_index * l / (sizeof(uint64_t) * 8));
-  int occupy = (start_index * l)%(sizeof(uint64_t) * 8);
+  int occupy = (start_index * l) % (sizeof(uint64_t) * 8);
   uint64_t end = 0;
   uint64_t total_bit = l * end_index;
   int writeind = 0;
-  end =  (int)(total_bit / (sizeof(uint64_t) * 8));
+  end = (int)(total_bit / (sizeof(uint64_t) * 8));
   uint32_t* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
   uint64_t tmp_64 = (reinterpret_cast<uint64_t*>(in))[start];
-  decode += tmp_64>>occupy;
+  decode += tmp_64 >> occupy;
   start++;
-  left += (sizeof(uint64_t) * 8 -occupy);
+  left += (sizeof(uint64_t) * 8 - occupy);
 
-  while (start <= end)
-  {
-    while (left >= l && writeind+start_index<end_index)
-    {
+  while (start <= end) {
+    while (left >= l && writeind + start_index < end_index) {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      int64_t decode_val = (long long)(start_key + (double)(writeind+start_index) * slope);
-      if (!sign)
-      {
+      int64_t decode_val =
+          (long long)(start_key + (double)(writeind + start_index) * slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
-      if(decode_val > filter1 && decode_val < filter2){
-        *res = block_start+writeind+start_index;
+      if (decode_val > filter1 && decode_val < filter2) {
+        *res = block_start + writeind + start_index;
         res++;
       }
-      
+
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -499,12 +510,13 @@ int read_all_bit_fix_range_close(uint8_t* in, int start_byte, int start_index, i
     start++;
     left += sizeof(uint64_t) * 8;
   }
-  return res-out;
+  return res - out;
 }
 
 template <typename T>
-void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
-{
+void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index,
+                               int numbers, int l, double slope,
+                               double start_key, T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -513,28 +525,23 @@ void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l)
-    {
+  while (start <= end) {
+    while (left >= l) {
       // int128_t tmp = decode & (((T)1 << l) - 1);
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       uint64_t decode_val = (start_key + (double)writeind * slope);
-      // int128_t decode_val = (long long)(start_key + (double)writeind * slope);
-      if (!sign)
-      {
+      // int128_t decode_val = (long long)(start_key + (double)writeind *
+      // slope);
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
@@ -542,8 +549,7 @@ void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -554,10 +560,10 @@ void read_all_bit_fix_wo_round(uint8_t* in, int start_byte, int start_index, int
   }
 }
 
-
 template <typename T>
-void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
-{
+void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index,
+                          int numbers, int l, double slope, double start_key,
+                          T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -566,27 +572,21 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
   double pred = start_key;
 
-  while (start <= end)
-  {
-    while (left >= l && writeind < numbers)
-    {
+  while (start <= end) {
+    while (left >= l && writeind < numbers) {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int64_t decode_val = (long long)pred;
-      if (!sign)
-      {
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
       pred += slope;
@@ -595,8 +595,7 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -608,8 +607,9 @@ void read_all_bit_fix_add(uint8_t* in, int start_byte, int start_index, int numb
 }
 
 template <typename T>
-void read_all_bit_fix_float(uint8_t* in, int start_byte, int start_index, int numbers, int l, float slope, float start_key, T* out)
-{
+void read_all_bit_fix_float(uint8_t* in, int start_byte, int start_index,
+                            int numbers, int l, float slope, float start_key,
+                            T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -618,26 +618,20 @@ void read_all_bit_fix_float(uint8_t* in, int start_byte, int start_index, int nu
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l)
-    {
+  while (start <= end) {
+    while (left >= l) {
       int128_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       int128_t decode_val = (long long)(start_key + (float)writeind * slope);
-      if (!sign)
-      {
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
@@ -645,8 +639,7 @@ void read_all_bit_fix_float(uint8_t* in, int start_byte, int start_index, int nu
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -660,8 +653,9 @@ void read_all_bit_fix_float(uint8_t* in, int start_byte, int start_index, int nu
 }
 
 template <typename T>
-void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, T* out)
-{
+void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index,
+                            int numbers, int l, double slope, double start_key,
+                            T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -670,26 +664,20 @@ void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int nu
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l)
-    {
+  while (start <= end) {
+    while (left >= l) {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
       uint64_t decode_val = round(start_key + (double)writeind * slope);
-      if (!sign)
-      {
+      if (!sign) {
         decode_val = decode_val - tmpval;
-      }
-      else
-      {
+      } else {
         decode_val = decode_val + tmpval;
       }
 
@@ -697,8 +685,7 @@ void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int nu
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -712,47 +699,40 @@ void read_all_bit_fix_round(uint8_t* in, int start_byte, int start_index, int nu
 }
 
 template <typename T>
-int64_t sum_all_deltas(uint8_t* in,  int numbers, int l)
-{
+int64_t sum_all_deltas(uint8_t* in, int numbers, int l) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = 0;
   uint64_t end = 0;
   uint64_t total_bit = l * numbers;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
   int writeind = 0;
   int64_t summation = 0;
-  while (start <= end)
-  {
-    while (left >= l)
-    {
-      
+  while (start <= end) {
+    while (left >= l) {
       int128_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       uint32_t tmpval = (tmp & (((int32_t)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-      if (!sign)
-      {
+      if (!sign) {
         summation = summation - tmpval;
         // tmpval = -tmpval;
         // summation -= tmpval;
-      }
-      else{
+      } else {
         summation = summation + tmpval;
       }
       writeind++;
-      if(writeind>=numbers){return summation;}
+      if (writeind >= numbers) {
+        return summation;
+      }
       //  summation += tmpval;
       //  std::cout<<"tmpval "<<tmpval<<"  summation "<<summation<<std::endl;
-      
 
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -764,10 +744,8 @@ int64_t sum_all_deltas(uint8_t* in,  int numbers, int l)
   return summation;
 }
 
-
-
-long long sum_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope)
-{
+long long sum_all_bit_fix(uint8_t* in, int start_byte, int start_index,
+                          int numbers, int l, double slope) {
   long long sum = 0;
   int left = 0;
   uint64_t decode = 0;
@@ -776,23 +754,18 @@ long long sum_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numb
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
-      if (!(((tmp >> (l - 1)) & 1)))
-      {
+      if (!(((tmp >> (l - 1)) & 1))) {
         tmpval = -tmpval;
       }
       decode = (decode >> l);
@@ -800,8 +773,7 @@ long long sum_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numb
       sum += (long long)((double)writeind * slope);
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
     }
@@ -813,32 +785,26 @@ long long sum_all_bit_fix(uint8_t* in, int start_byte, int start_index, int numb
   return sum;
 }
 
-void read_all_bit_only(uint8_t* in, int numbers, int l, int* out)
-{
+void read_all_bit_only(uint8_t* in, int numbers, int l, int* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = 0;
   int total_bit = l * numbers;
   int writeind = 0;
   int end = (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
 
-      if (!(((tmp >> (l - 1)) & 1)))
-      {
+      if (!(((tmp >> (l - 1)) & 1))) {
         tmpval = -tmpval;
       }
       decode = (decode >> l);
@@ -846,11 +812,10 @@ void read_all_bit_only(uint8_t* in, int numbers, int l, int* out)
 
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
-      //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      // std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
     }
     decode += ((long long)in[start] << left);
 
@@ -859,8 +824,9 @@ void read_all_bit_only(uint8_t* in, int numbers, int l, int* out)
   }
 }
 
-void read_all_bit_nonlinear(uint8_t* in, int start_byte, int start_index, int numbers, int l, double alpha, double theta1, double theta2, uint32_t* out)
-{
+void read_all_bit_nonlinear(uint8_t* in, int start_byte, int start_index,
+                            int numbers, int l, double alpha, double theta1,
+                            double theta2, uint32_t* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = start_byte;
@@ -868,55 +834,51 @@ void read_all_bit_nonlinear(uint8_t* in, int start_byte, int start_index, int nu
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
-
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
 
-      //std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
-      if (!(((tmp >> (l - 1)) & 1)))
-      {
+      // std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
+      if (!(((tmp >> (l - 1)) & 1))) {
         tmpval = -tmpval;
       }
-      //std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval: "<<tmpval<<" l: "<<l<<std::endl;
+      // std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval:
+      // "<<tmpval<<" l: "<<l<<std::endl;
       decode = (decode >> l);
 
-      tmpval += (long long)(alpha + theta1 * (double)writeind + theta2 * (double)writeind * (double)writeind);
+      tmpval += (long long)(alpha + theta1 * (double)writeind +
+                            theta2 * (double)writeind * (double)writeind);
 
       out[writeind + start_index] = tmpval;
 
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
-      //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      // std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
     }
     decode += ((long long)in[start] << left);
 
-    //std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
-    //std::cout<<"decode"<<decode<<std::endl;
+    // std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
+    // std::cout<<"decode"<<decode<<std::endl;
 
     start++;
     left += 8;
   }
 }
 
-void read_all_bit_spline(uint8_t* in, int start_byte, int start_index, int numbers, int l, double alpha, double theta1, double theta2, double theta3, uint32_t* out)
-{
+void read_all_bit_spline(uint8_t* in, int start_byte, int start_index,
+                         int numbers, int l, double alpha, double theta1,
+                         double theta2, double theta3, uint32_t* out) {
   int left = 0;
   uint64_t decode = 0;
   int start = start_byte;
@@ -924,54 +886,53 @@ void read_all_bit_spline(uint8_t* in, int start_byte, int start_index, int numbe
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
-
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
 
-      //std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
-      if (!(((tmp >> (l - 1)) & 1)))
-      {
+      // std::cout<<"tmp "<<tmp<<" tmpval "<<tmpval<<std::endl;
+      if (!(((tmp >> (l - 1)) & 1))) {
         tmpval = -tmpval;
       }
-      //std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval: "<<tmpval<<" l: "<<l<<std::endl;
+      // std::cout<<"writeind: "<<writeind<<" decode "<<decode<<" tmpval:
+      // "<<tmpval<<" l: "<<l<<std::endl;
       decode = (decode >> l);
-      tmpval += (long long)(alpha + theta1 * (double)writeind + theta2 * (double)writeind * (double)writeind + theta3 * (double)writeind * (double)writeind * (double)writeind);
+      tmpval += (long long)(alpha + theta1 * (double)writeind +
+                            theta2 * (double)writeind * (double)writeind +
+                            theta3 * (double)writeind * (double)writeind *
+                                (double)writeind);
 
       out[writeind + start_index] = tmpval;
 
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
-      //std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
+      // std::cout<<"decode "<<decode<<"left"<<left<<std::endl;
     }
     decode += ((long long)in[start] << left);
 
-    //std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
-    //std::cout<<"decode"<<decode<<std::endl;
+    // std::cout<<"in["<<start<<"] "<<unsigned(in[start])<<std::endl;
+    // std::cout<<"decode"<<decode<<std::endl;
 
     start++;
     left += 8;
   }
 }
 
-void read_all_bit_ransac(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out, uint8_t* outlier_pos, int outlier_num, uint8_t* bitmap_pos)
-{
+void read_all_bit_ransac(uint8_t* in, int start_byte, int start_index,
+                         int numbers, int l, double slope, double start_key,
+                         uint32_t* out, uint8_t* outlier_pos, int outlier_num,
+                         uint8_t* bitmap_pos) {
   int temp = ceil((double)numbers / 64.);
   uint64_t* bitmap = new uint64_t[temp];
   memcpy(bitmap, bitmap_pos, temp * 8);
@@ -989,41 +950,35 @@ void read_all_bit_ransac(uint8_t* in, int start_byte, int start_index, int numbe
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
   int ones = 0;
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
-      //std::cout<<"decode: "<<decode<<"tmp: "<<tmp<<" l: "<<l<<std::endl;
-      if (!(tmp >> (l - 1)))
-      {
+      // std::cout<<"decode: "<<decode<<"tmp: "<<tmp<<" l: "<<l<<std::endl;
+      if (!(tmp >> (l - 1))) {
         tmpval = -tmpval;
       }
-      //std::cout<<"writeind "<<writeind<<" delta is "<<tmpval<<std::endl;
+      // std::cout<<"writeind "<<writeind<<" delta is "<<tmpval<<std::endl;
       decode = (decode >> l);
-      //int ranktmp = popcountLinear(bitmap,0,writeind+1);
+      // int ranktmp = popcountLinear(bitmap,0,writeind+1);
 
-      if (((bitmap[writeind / 64] >> (63 - writeind % 64)) & 1))
-      {
+      if (((bitmap[writeind / 64] >> (63 - writeind % 64)) & 1)) {
         ones++;
-        //std::cout<<"this is a outlier "<<writeind<<"temp rank is "<<ranktmp<<" value is "<<outlier[ranktmp-1]<<std::endl;
+        // std::cout<<"this is a outlier "<<writeind<<"temp rank is
+        // "<<ranktmp<<" value is "<<outlier[ranktmp-1]<<std::endl;
         out[writeind + start_index] = outlier[ones - 1];
         writeind++;
-      }
-      else
-      {
+      } else {
         tmpval += (long long)(start_key + ((double)(writeind - ones) * slope));
-        //std::cout<<"this is not a outlier "<<writeind<<" value is "<<tmpval<<std::endl;
+        // std::cout<<"this is not a outlier "<<writeind<<" value is
+        // "<<tmpval<<std::endl;
         out[writeind + start_index] = tmpval;
         writeind++;
       }
@@ -1036,8 +991,11 @@ void read_all_bit_ransac(uint8_t* in, int start_byte, int start_index, int numbe
   }
 }
 
-void read_all_bit_outlier_detection(uint8_t* in, int start_byte, int start_index, int numbers, int l, double slope, double start_key, uint32_t* out, uint8_t* outlier_pos, int outlier_num, uint8_t* bitmap_pos)
-{
+void read_all_bit_outlier_detection(uint8_t* in, int start_byte,
+                                    int start_index, int numbers, int l,
+                                    double slope, double start_key,
+                                    uint32_t* out, uint8_t* outlier_pos,
+                                    int outlier_num, uint8_t* bitmap_pos) {
   int temp = ceil((double)numbers / 64.);
   uint64_t* bitmap = new uint64_t[temp];
   memcpy(bitmap, bitmap_pos, temp * 8);
@@ -1055,41 +1013,35 @@ void read_all_bit_outlier_detection(uint8_t* in, int start_byte, int start_index
   int total_bit = l * numbers;
   int writeind = 0;
   end = start + (int)(total_bit / 8);
-  if (total_bit % 8 != 0)
-  {
+  if (total_bit % 8 != 0) {
     end++;
   }
   int ones = 0;
-  while (start <= end)
-  {
-    if (writeind >= numbers)
-    {
+  while (start <= end) {
+    if (writeind >= numbers) {
       break;
     }
-    while (left >= l)
-    {
+    while (left >= l) {
       uint64_t tmp = decode & ((1L << l) - 1);
       long long tmpval = tmp & ((1L << (l - 1)) - 1);
-      //std::cout<<"decode: "<<decode<<"tmp: "<<tmp<<" l: "<<l<<std::endl;
-      if (!(tmp >> (l - 1)))
-      {
+      // std::cout<<"decode: "<<decode<<"tmp: "<<tmp<<" l: "<<l<<std::endl;
+      if (!(tmp >> (l - 1))) {
         tmpval = -tmpval;
       }
-      //std::cout<<"writeind "<<writeind<<" delta is "<<tmpval<<std::endl;
+      // std::cout<<"writeind "<<writeind<<" delta is "<<tmpval<<std::endl;
       decode = (decode >> l);
-      //int ranktmp = popcountLinear(bitmap,0,writeind+1);
+      // int ranktmp = popcountLinear(bitmap,0,writeind+1);
 
-      if (((bitmap[writeind / 64] >> (63 - writeind % 64)) & 1))
-      {
+      if (((bitmap[writeind / 64] >> (63 - writeind % 64)) & 1)) {
         ones++;
-        //std::cout<<"this is a outlier "<<writeind<<"temp rank is "<<ranktmp<<" value is "<<outlier[ranktmp-1]<<std::endl;
+        // std::cout<<"this is a outlier "<<writeind<<"temp rank is
+        // "<<ranktmp<<" value is "<<outlier[ranktmp-1]<<std::endl;
         out[writeind + start_index] = outlier[ones - 1];
         writeind++;
-      }
-      else
-      {
+      } else {
         tmpval += (long long)(start_key + ((double)(writeind)*slope));
-        //std::cout<<"this is not a outlier "<<writeind<<" value is "<<tmpval<<std::endl;
+        // std::cout<<"this is not a outlier "<<writeind<<" value is
+        // "<<tmpval<<std::endl;
         out[writeind + start_index] = tmpval;
         writeind++;
       }
@@ -1102,10 +1054,8 @@ void read_all_bit_outlier_detection(uint8_t* in, int start_byte, int start_index
   }
 }
 
-
-
-uint32_t read_bit_fix_T(uint8_t* in, int l, int to_find, double slope, double start_key, int start)
-{
+uint32_t read_bit_fix_T(uint8_t* in, int l, int to_find, double slope,
+                        double start_key, int start) {
   uint64_t find_bit = to_find * l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1122,20 +1072,18 @@ uint32_t read_bit_fix_T(uint8_t* in, int l, int to_find, double slope, double st
 
   bool sign = (decode >> (uint8_t)(l - 1)) & 1;
   int64_t value = (decode & ((1UL << (uint8_t)(l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
   double pred = start_key + to_find * slope;
   uint32_t out = value + (long long)pred;
   // uint32_t out = value + (long long)(start_key + (double)to_find * slope);
   return out;
-
 }
 
 template <typename T>
-T read_bit_fix_int(uint8_t* in, uint8_t l, int to_find, double slope, double start_key)
-{
+T read_bit_fix_int(uint8_t* in, uint8_t l, int to_find, double slope,
+                   double start_key) {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1153,23 +1101,18 @@ T read_bit_fix_int(uint8_t* in, uint8_t l, int to_find, double slope, double sta
   bool sign = (decode >> (l - 1)) & 1;
   T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
   int128_t out = (int128_t)round(start_key + (double)to_find * slope);
-  if (!sign)
-  {
+  if (!sign) {
     out = out - value;
-  }
-  else
-  {
+  } else {
     out = out + value;
   }
 
   return (T)out;
-
 }
 
-
 template <typename T>
-T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double slope, double start_key)
-{
+T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find,
+                            double slope, double start_key) {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1185,22 +1128,18 @@ T read_bit_fix_int_wo_round(const uint8_t* in, uint8_t l, int to_find, double sl
   bool sign = (decode_64 >> (l - 1)) & 1;
   T value = (decode_64 & (((T)1 << (uint8_t)(l - 1)) - 1));
   int64_t out = (start_key + (double)to_find * slope);
-  if (!sign)
-  {
+  if (!sign) {
     out = out - value;
-  }
-  else
-  {
+  } else {
     out = out + value;
   }
 
   return (T)out;
-
 }
 
 template <typename T, int degree, typename P>
-T read_bit_fix_int_wo_round_poly(const uint8_t* in, uint8_t l, int to_find, andviane::Polynomial<degree,P>* poly)
-{
+T read_bit_fix_int_wo_round_poly(const uint8_t* in, uint8_t l, int to_find,
+                                 andviane::Polynomial<degree, P>* poly) {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1216,24 +1155,18 @@ T read_bit_fix_int_wo_round_poly(const uint8_t* in, uint8_t l, int to_find, andv
   bool sign = (decode_64 >> (l - 1)) & 1;
   T value = (decode_64 & (((T)1 << (uint8_t)(l - 1)) - 1));
   int64_t out = (*poly)(to_find);
-  if (!sign)
-  {
+  if (!sign) {
     out = out - value;
-  }
-  else
-  {
+  } else {
     out = out + value;
   }
 
   return (T)out;
-
 }
 
-
-
 template <typename T>
-T read_bit_fix_int_float(uint8_t* in, uint8_t l, int to_find, float slope, float start_key)
-{
+T read_bit_fix_int_float(uint8_t* in, uint8_t l, int to_find, float slope,
+                         float start_key) {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1252,23 +1185,17 @@ T read_bit_fix_int_float(uint8_t* in, uint8_t l, int to_find, float slope, float
   T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
   // int128_t out = (int128_t)((double)start_key + (float)to_find * slope);
   int128_t out = (T)(start_key + slope * (float)to_find);
-  if (!sign)
-  {
+  if (!sign) {
     out = out - value;
-  }
-  else
-  {
+  } else {
     out = out + value;
   }
 
   return (T)out;
-
 }
 
-
 template <typename T>
-T read_FOR_int(const uint8_t* in, uint8_t l, int to_find)
-{
+T read_FOR_int(const uint8_t* in, uint8_t l, int to_find) {
   uint64_t find_bit = to_find * (int)l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
@@ -1283,16 +1210,12 @@ T read_FOR_int(const uint8_t* in, uint8_t l, int to_find)
   // one.left_shift((uint8_t)(l+8) ,*result);
   // decode &= (*result - 1);
 
-
   return (T)decode;
-
 }
 
-
 template <typename T>
-T read_Delta_int(uint8_t* in, uint8_t l, int to_find, T base)
-{
-  for (int i = 0;i < to_find;i++) {
+T read_Delta_int(uint8_t* in, uint8_t l, int to_find, T base) {
+  for (int i = 0; i < to_find; i++) {
     uint64_t find_bit = i * (int)l;
     uint64_t start_byte = find_bit / 8;
     uint8_t start_bit = find_bit % 8;
@@ -1306,19 +1229,16 @@ T read_Delta_int(uint8_t* in, uint8_t l, int to_find, T base)
     T value = (decode & (((T)1 << (uint8_t)(l - 1)) - 1));
     if (!sign) {
       base -= value;
-    }
-    else {
+    } else {
       base += value;
     }
-
   }
   return base;
-
 }
 
 template <typename T>
-void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
-{
+void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,
+                        T base, T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -1327,27 +1247,20 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l && writeind<numbers)
-    {
-      
+  while (start <= end) {
+    while (left >= l && writeind < numbers) {
       int64_t tmp = decode & (((T)1 << l) - 1);
       bool sign = (tmp >> (l - 1)) & 1;
       T tmpval = (tmp & (((T)1 << (uint8_t)(l - 1)) - 1));
       decode = (decode >> l);
-    
-      if (!sign)
-      {
+
+      if (!sign) {
         base -= tmpval;
-      }
-      else
-      {
+      } else {
         base += tmpval;
       }
 
@@ -1355,8 +1268,7 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -1369,10 +1281,9 @@ void read_all_bit_Delta(uint8_t* in, int start_byte, int numbers, uint8_t l,T ba
   }
 }
 
-
 template <typename T>
-void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, T* out)
-{
+void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,
+                      T base, T* out) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -1381,26 +1292,21 @@ void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   T* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l && writeind <numbers)
-    {
-      
+  while (start <= end) {
+    while (left >= l && writeind < numbers) {
       T tmpval = decode & (((T)1 << l) - 1);
       decode = (decode >> l);
       T decode_val = base + tmpval;
-      
+
       *res = decode_val;
       res++;
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -1414,8 +1320,9 @@ void read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,
 }
 
 template <typename T>
-int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, uint32_t* out, T filter, int block_start)
-{
+int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers,
+                            uint8_t l, T base, uint32_t* out, T filter,
+                            int block_start) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -1424,27 +1331,22 @@ int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   uint32_t* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l && writeind <numbers)
-    {
-      
+  while (start <= end) {
+    while (left >= l && writeind < numbers) {
       T tmpval = decode & (((T)1 << l) - 1);
       decode = (decode >> l);
       T decode_val = base + tmpval;
-      if(decode_val > filter){
-        *res = block_start+writeind;
+      if (decode_val > filter) {
+        *res = block_start + writeind;
         res++;
       }
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -1455,12 +1357,14 @@ int filter_read_all_bit_FOR(const uint8_t* in, int start_byte, int numbers, uint
     start++;
     left += sizeof(uint64_t) * 8;
   }
-  return res-out;
+  return res - out;
 }
 
 template <typename T>
-int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers, uint8_t l,T base, uint32_t* out, int block_start, T filter1, T filter2, int base_val)
-{
+int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte,
+                                  int numbers, uint8_t l, T base, uint32_t* out,
+                                  int block_start, T filter1, T filter2,
+                                  int base_val) {
   int left = 0;
   uint128_t decode = 0;
   uint64_t start = start_byte;
@@ -1469,27 +1373,22 @@ int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers
   int writeind = 0;
   end = start + (int)(total_bit / (sizeof(uint64_t) * 8));
   uint32_t* res = out;
-  if (total_bit % (sizeof(uint64_t) * 8) != 0)
-  {
+  if (total_bit % (sizeof(uint64_t) * 8) != 0) {
     end++;
   }
 
-  while (start <= end)
-  {
-    while (left >= l && writeind <numbers)
-    {
-      
+  while (start <= end) {
+    while (left >= l && writeind < numbers) {
       T tmpval = decode & (((T)1 << l) - 1);
       decode = (decode >> l);
       T decode_val = base + tmpval;
-      if(decode_val % base_val> filter1 && decode_val%base_val < filter2){
-        *res = block_start+writeind;
+      if (decode_val % base_val > filter1 && decode_val % base_val < filter2) {
+        *res = block_start + writeind;
         res++;
       }
       writeind++;
       left -= l;
-      if (left == 0)
-      {
+      if (left == 0) {
         decode = 0;
       }
       // std::cout<<"decode "<<(T)decode_val<<"left"<<left<<std::endl;
@@ -1500,17 +1399,16 @@ int filter_read_all_bit_FOR_close(const uint8_t* in, int start_byte, int numbers
     start++;
     left += sizeof(uint64_t) * 8;
   }
-  return res-out;
+  return res - out;
 }
 
-uint32_t read_bit_fix_float_T(uint8_t* in, int l, int to_find, float slope, float start_key, int start)
-{
+uint32_t read_bit_fix_float_T(uint8_t* in, int l, int to_find, float slope,
+                              float start_key, int start) {
   uint64_t find_bit = to_find * l;
   uint64_t start_byte = find_bit / 8;
   uint8_t start_bit = find_bit % 8;
   uint64_t occupy = start_bit;
   uint64_t total = 0;
-
 
   uint64_t decode = reinterpret_cast<uint64_t*>(in + start_byte)[0];
   // memcpy(&decode, in+start_byte, sizeof(uint64_t));
@@ -1522,28 +1420,23 @@ uint32_t read_bit_fix_float_T(uint8_t* in, int l, int to_find, float slope, floa
 
   bool sign = (decode >> (uint8_t)(l - 1)) & 1;
   int64_t value = (decode & ((1UL << (uint8_t)(l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
   // uint32_t out = value + (long long)(start_key + (double)to_find * slope);
   uint32_t out = value + (long long)(start_key + (float)(to_find)*slope);
   return out;
-
 }
 
-
-
-uint32_t read_bit_double(uint8_t* in, int l, int to_find, double slope, double start_key, int start)
-{
+uint32_t read_bit_double(uint8_t* in, int l, int to_find, double slope,
+                         double start_key, int start) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   int decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
     decode += ((val >> occupy) << total);
     total += (8 - occupy);
@@ -1554,8 +1447,7 @@ uint32_t read_bit_double(uint8_t* in, int l, int to_find, double slope, double s
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   int value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
 
@@ -1563,19 +1455,19 @@ uint32_t read_bit_double(uint8_t* in, int l, int to_find, double slope, double s
   return out;
 }
 
-uint32_t read_bit(uint8_t* in, int l, int to_find, float slope, uint32_t start_key, int start)
-{
+uint32_t read_bit(uint8_t* in, int l, int to_find, float slope,
+                  uint32_t start_key, int start) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   uint32_t decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
     decode += ((val >> occupy) << total);
-    //std::cout<<"l "<<to_find<<" val "<<val<<" decode "<<decode<<" occupy "<<occupy<<" total "<<total<<std::endl;
+    // std::cout<<"l "<<to_find<<" val "<<val<<" decode "<<decode<<" occupy
+    // "<<occupy<<" total "<<total<<std::endl;
     total += (8 - occupy);
     occupy = 0;
     start_byte++;
@@ -1584,25 +1476,24 @@ uint32_t read_bit(uint8_t* in, int l, int to_find, float slope, uint32_t start_k
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   int value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< start_key +(long long) ((float)(to_find)*slope)<<std::endl;
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< start_key +(long
+  // long) ((float)(to_find)*slope)<<std::endl;
   uint32_t out = value + start_key + (long long)((float)(to_find)*slope);
   return out;
 }
 
-uint32_t read_bit_fix(uint8_t* in, int l, int to_find, double slope, double start_key, int start)
-{
+uint32_t read_bit_fix(uint8_t* in, int l, int to_find, double slope,
+                      double start_key, int start) {
   int find_bit = to_find * l;
   int start_byte = start + find_bit / 8;
   int start_bit = find_bit % 8;
   int occupy = start_bit;
   int decode = 0;
   int total = 0;
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
     decode += ((val >> occupy) << total);
     total += (8 - occupy);
@@ -1613,25 +1504,24 @@ uint32_t read_bit_fix(uint8_t* in, int l, int to_find, double slope, double star
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   int value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long)
+  // (start_key +((float)to_find*slope))<<std::endl;
   uint32_t out = value + (long long)(start_key + (double)to_find * slope);
   return out;
 }
 
-uint32_t read_bit_nonlinear(uint8_t* in, int l, int to_find, double alpha, double theta0, double theta1, int start)
-{
+uint32_t read_bit_nonlinear(uint8_t* in, int l, int to_find, double alpha,
+                            double theta0, double theta1, int start) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   int decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
     decode += ((val >> occupy) << total);
     total += (8 - occupy);
@@ -1641,26 +1531,27 @@ uint32_t read_bit_nonlinear(uint8_t* in, int l, int to_find, double alpha, doubl
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   int value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
-  //uint32_t out = value;
-  uint32_t out = value + (long long)(alpha + ((double)to_find * theta0) + (double)to_find * (double)to_find * theta1);
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long)
+  // (start_key +((float)to_find*slope))<<std::endl; uint32_t out = value;
+  uint32_t out =
+      value + (long long)(alpha + ((double)to_find * theta0) +
+                          (double)to_find * (double)to_find * theta1);
   return out;
 }
 
-uint32_t read_bit_spline(uint8_t* in, int l, int to_find, double alpha, double theta0, double theta1, double theta2, int start)
-{
+uint32_t read_bit_spline(uint8_t* in, int l, int to_find, double alpha,
+                         double theta0, double theta1, double theta2,
+                         int start) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   int decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
     decode += ((val >> occupy) << total);
     total += (8 - occupy);
@@ -1671,28 +1562,31 @@ uint32_t read_bit_spline(uint8_t* in, int l, int to_find, double alpha, double t
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   int value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long)
+  // (start_key +((float)to_find*slope))<<std::endl;
 
-  uint32_t out = value + (long long)(alpha + ((double)to_find * theta0) + (double)to_find * (double)to_find * theta1 + (double)to_find * (double)to_find * (double)to_find * theta2);
+  uint32_t out =
+      value +
+      (long long)(alpha + ((double)to_find * theta0) +
+                  (double)to_find * (double)to_find * theta1 +
+                  (double)to_find * (double)to_find * (double)to_find * theta2);
   return out;
 }
 
-uint32_t read_bit_ransac(uint8_t* in, int l, int to_find, double slope, double start_key, int start, int rank)
-{
+uint32_t read_bit_ransac(uint8_t* in, int l, int to_find, double slope,
+                         double start_key, int start, int rank) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   uint64_t decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
-    //std::cout<<"in["<<start_byte<<"] "<<unsigned(in[start_byte])<<std::endl;
+    // std::cout<<"in["<<start_byte<<"] "<<unsigned(in[start_byte])<<std::endl;
     decode += ((long long)(val >> occupy) << total);
     total += (8 - occupy);
     occupy = 0;
@@ -1702,27 +1596,28 @@ uint32_t read_bit_ransac(uint8_t* in, int l, int to_find, double slope, double s
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   uint32_t value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
-  uint32_t out = value + (long long)(start_key + ((double)(to_find - rank) * slope));
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long)
+  // (start_key +((float)to_find*slope))<<std::endl;
+  uint32_t out =
+      value + (long long)(start_key + ((double)(to_find - rank) * slope));
   return out;
 }
 
-uint32_t read_bit_outlier_detection(uint8_t* in, int l, int to_find, double slope, double start_key, int start, int rank)
-{
+uint32_t read_bit_outlier_detection(uint8_t* in, int l, int to_find,
+                                    double slope, double start_key, int start,
+                                    int rank) {
   int start_byte = start + to_find * l / 8;
   int start_bit = to_find * l % 8;
   int occupy = start_bit;
   uint64_t decode = 0;
   int total = 0;
 
-  while (total < l)
-  {
+  while (total < l) {
     uint8_t val = in[start_byte];
-    //std::cout<<"in["<<start_byte<<"] "<<unsigned(in[start_byte])<<std::endl;
+    // std::cout<<"in["<<start_byte<<"] "<<unsigned(in[start_byte])<<std::endl;
     decode += ((long long)(val >> occupy) << total);
     total += (8 - occupy);
     occupy = 0;
@@ -1732,15 +1627,13 @@ uint32_t read_bit_outlier_detection(uint8_t* in, int l, int to_find, double slop
   decode = decode & ((1L << l) - 1);
   bool sign = (decode & (1L << (l - 1)));
   uint32_t value = (decode & ((1L << (l - 1)) - 1));
-  if (!sign)
-  {
+  if (!sign) {
     value = -value;
   }
-  //std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long) (start_key +((float)to_find*slope))<<std::endl;
+  // std::cout<<"l: "<<l<<" value: "<<value<<" predict: "<< (long long)
+  // (start_key +((float)to_find*slope))<<std::endl;
   uint32_t out = value + (long long)(start_key + ((double)(to_find)*slope));
   return out;
 }
-
-
 
 #endif

@@ -1,0 +1,7 @@
+---
+BasedOnStyle: Google
+IndentWidth: 2
+DerivePointerAlignment: false
+TabWidth: 2
+ColumnLimit: 80
+SortIncludes: true

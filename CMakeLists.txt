@@ -33,6 +33,7 @@ foreach(A_CPP_FILE ${CPP_FILES})
     target_link_libraries(${EXECUTABLE_NAME} docs Snappy::snappy gmp gmpxx fsst)
 endforeach(A_CPP_FILE ${CPP_FILES})
 
+target_compile_options(leco_int_simd_template PRIVATE -mavx512dq -mavx512vl)
 
 # add_executable(RNS_int experiments/RNS_int.cpp)
 # target_link_libraries(RNS_int docs Snappy::snappy gmp gmpxx )
