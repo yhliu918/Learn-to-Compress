@@ -1,4 +1,20 @@
 # Leco: Learn-to-Compress
+Related Research Paper:
+
+**LeCo: Lightweight Compression via Learning Serial Correlations**
+
+Author: Yihao Liu, Xinyu Zeng, Huanchen Zhang
+
+[About to show up at **SIGMOD2024**]
+
+```
+@article{liu2023leco,
+  title={LeCo: Lightweight Compression via Learning Serial Correlations},
+  author={Liu, Yihao and Zeng, Xinyu and Zhang, Huanchen},
+  journal={arXiv preprint arXiv:2306.15374},
+  year={2023}
+}
+```
 
 ### Requirements:
 Ubuntu 20.04.4 LTS
