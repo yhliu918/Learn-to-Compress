@@ -9,6 +9,7 @@
 #include "bit_write.h"
 #include "caltime.h"
 #include "lr.h"
+#include "piecewise_cost_merge_integer_template_link.h"
 #define INF 0x7f7fffff
 #include "stx-btree/btree.h"
 #include "stx-btree/btree_map.h"
